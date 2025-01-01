@@ -1,12 +1,11 @@
 from django.db import models
-
-# Create your models here.
-import profile
-from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
 from .managers import MyAccountManager
+
 # Create your models here.
+
+
 class CustomUser(AbstractBaseUser):
     first_name      = models.CharField(max_length=50)
     last_name       = models.CharField(max_length=50)
@@ -31,11 +30,11 @@ class CustomUser(AbstractBaseUser):
     def __str__(self):
         return self.email
     
-    def has_perm(self, perm, obj=None):
-        return self.is_admin
+    # def has_perm(self, perm, obj=None):
+    #     return self.is_admin
     
-    def has_module_perms(self,app_label):
-        return True
+    # def has_module_perms(self,app_label):
+    #     return True
     
     
     
