@@ -1,85 +1,105 @@
-import React, { useState } from 'react'
-import { useLocation } from 'react-router-dom';
-import Header from '../header/header';
-import Footer from '../footer/Footer';
-
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
+import './Singleproduct.css'
+import axiosInstance from "../../axiosconfig";
 function Singleprodct() {
-  const location = useLocation()
-  const productDetails= location.state.spiceDetails
+  const location = useLocation();
+  const productDetails = location.state.spiceDetails;
 
   const [quantity, setQuantity] = useState(1);
+  const [rating, setRating] = useState();
 
+  const fetchRating = async () => {
+    try {
+      const response = await axiosInstance.get(`/rating/${productDetails.id}`);
+      setRating(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
   const handleQuantityChange = (event) => {
     setQuantity(Number(event.target.value));
   };
 
   const addToCart = () => {
-    console.log('Add to Cart clicked with quantity:', quantity);
+    console.log("Add to Cart clicked with quantity:", quantity);
   };
 
   const buyNow = () => {
-    console.log('Buy Now clicked');
+    console.log("Buy Now clicked");
   };
 
   return (
-    
-      <div className="container-fluid py-4">
-      <div className="row">
-        {/* Product Image Section */}
-        <div className="col-md-6">
-          <div className="product-image mb-4">
-            <img
-              src={productDetails.image1}
-              alt={productDetails.name}
-              className="img-fluid rounded shadow"
-            />
-          </div>
-        </div>
+    <div className="conatiner-fluid">
+      <div className="row m-2">
+        <h4 className="d-flex"></h4>
+        <hr />
 
-        {/* Product Details Section */}
-        <div className="col-md-6">
-          <h1 className="mb-3">{productDetails.name}</h1>
-          <p className="text-muted">{productDetails.description}</p>
-          <p>
-            <strong>Category:</strong> Seeds and Nuts
-          </p>
-          <p>
-            <strong>Ingredients:</strong> White Sesame Seeds
-          </p>
-          <p>
-            <strong>Price:</strong> ₹499.00
-          </p>
+        <div className="col-12">
+          <div className="card">
+            <div className="d-flex ">
+              <div className="col-5 me-5">
+                <img src={`http://127.0.0.1:8000/media/${productDetails.product_img1}`}
 
-          {/* Quantity Selector */}
-          <div className="d-flex align-items-center mb-3">
-            <label htmlFor="quantity" className="me-2">
-              Quantity:
-            </label>
-            <input
+                  alt=""
+                  width={565}
+                  height={400}
+                />
+                <div className="pt-3 d-flex align-items-center">
+                  <img
+                    className=" m-1"
+                    src={`http://127.0.0.1:8000/media/${productDetails.product_img1}`}
+                    alt="not found"
+                    height={100}
+                  />
+                  <img
+                    className=" m-2"
+                    src={`http://127.0.0.1:8000/media/${productDetails.product_img2}`}
+                    alt="not found"
+                    height={100}
+                  />
+                  <img
+                    className=" m-2"
+                    src={`http://127.0.0.1:8000/media/${productDetails.product_img3}`}
+                    alt="not found"
+                    height={100}
+                  />
+                </div>
+              </div>
+              <div className="card-body col-5 ms-5">
+                <h1 className="card-title">{productDetails.title}</h1>
+                <p className="card-text">{productDetails.description} </p>
+                <p className="card-text">Rating:{rating} </p>
+                <p className="card-text">Reviews </p>
+
+                
+               
+                <p className="card-text">Price:{productDetails.price} </p>
+                <p className="card-text">Stock:{productDetails.available_quantity} </p>
+                
+                <div className=" d-flex ms-5"><label htmlFor="">Select the quantity</label><input
               id="quantity"
               type="number"
               min="1"
               value={quantity}
               onChange={handleQuantityChange}
               style={{ width: '60px', textAlign: 'center' }}
-              className="form-control"
-            />
-          </div>
+              className="form-control ms-5"
+            /></div>
+                
+                <button className="m-1">Add to Cart</button>
+                <button className="m-1">wishlist</button>
+                <button className="m-1">Buy Now</button>
 
-          {/* Action Buttons */}
-          <div>
-            <button className="btn btn-primary me-2" onClick={addToCart}>
-              Add to Cart
-            </button>
-            <button className="btn btn-outline-primary" onClick={buyNow}>
-              Buy Now
-            </button>
+
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-   
-  )
+  );
 }
 
-export default Singleprodct
+export default Singleprodct;

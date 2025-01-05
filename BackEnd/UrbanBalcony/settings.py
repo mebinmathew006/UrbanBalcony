@@ -51,7 +51,16 @@ INSTALLED_APPS = [
     'AdminPanel',
     'User',
     'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
+AUTH_USER_MODEL = 'User.CustomUser'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [

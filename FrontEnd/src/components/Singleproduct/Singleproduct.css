@@ -1,0 +1,22 @@
+.rating {
+    direction: rtl; /* Display stars in reverse order (right to left) */
+    font-size: 2rem; /* Adjust the size of the stars */
+    display: flex; /* Make stars inline-flex */
+    /* Add space between stars */
+  }
+
+  .rating input[type="radio"] {
+    display: none; /* Hide the radio inputs */
+  }
+
+  .rating label {
+    cursor: pointer; /* Change cursor to pointer on hover */
+  }
+
+  .rating input[type="radio"]:checked ~ label i {
+    color: gold; /* Highlight selected stars */
+  }
+
+  .rating label i {
+    color: gray; /* Default star color */
+  }

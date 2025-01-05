@@ -1,15 +1,24 @@
 import './App.css'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Index from './pages/Index/Index'
-import Login from './pages/Login/Login'
-import SignupPage from './pages/SignupPage/SignupPage'
-import ForgetPassword from './pages/SignupPage/ForgetPassword'
-import ResetPassword from './pages/SignupPage/ResetPassword'
+import Index from './pages/User/Index/Index'
+import Login from './pages/User/Login/Login'
+import SignupPage from './pages/User/SignupPage/SignupPage'
+import ForgetPassword from './pages/User/SignupPage/ForgetPassword'
+import ResetPassword from './pages/User/SignupPage/ResetPassword'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import HomePage from './pages/HomePage/HomePage'
-import ProductDetails from './pages/productDetails/ProductDetails'
+import HomePage from './pages/User/HomePage/HomePage'
+import ProductDetails from './pages/User/productDetails/ProductDetails'
+import AdminDashboard from './pages/Admin/AdminDashboard/AdminDashboard'
+import UserManage from './pages/Admin/UserManage/UserManage'
+import CategoryManage from './pages/Admin/CategoryManage/CategoryManage'
+import ProductManage from './pages/Admin/ProductManage/ProductManage'
+import ProductAdd from './pages/Admin/ProductManage/ProductAdd'
+import ProductEdit from './pages/Admin/ProductManage/ProductEdit'
+import CategoryAdd from './pages/Admin/CategoryManage/CategoryAdd'
+import CategoryUpdate from './pages/Admin/CategoryManage/CategoryUpdate'
+
 function App() {
 
   return (
@@ -24,6 +33,14 @@ function App() {
       <Route path='/HomePage' element={<HomePage/>}/>
       <Route path='/productDetails' element={<ProductDetails/>}/>
       <Route path='/ResetPassword' element={<ResetPassword/>}/>
+      <Route path='/AdminDashboard' element={<AdminDashboard/>}/>
+      <Route path='/UserManage' element={<UserManage/>}/>
+      <Route path='/CategoryManage' element={<CategoryManage/>}/>
+      <Route path='/CategoryAdd' element={<CategoryAdd/>}/>
+      <Route path='/CategoryUpdate' element={<CategoryUpdate/>}/>
+      <Route path='/ProductManage' element={<ProductManage/>}/>
+      <Route path='/ProductAdd' element={<ProductAdd/>}/>
+      <Route path='/ProductEdit' element={<ProductEdit/>}/>
       <Route></Route>
     </Routes>
     
