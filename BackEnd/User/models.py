@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
 from django.core.validators import MinValueValidator
-
+from django.conf import settings
 # Create your models here.
 
 from django.contrib.auth.models import BaseUserManager
@@ -11,7 +11,7 @@ class CustomUserManager(BaseUserManager):
     def create_user(self, email, first_name, last_name, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email) 
         user = self.model(email=email, first_name=first_name, last_name=last_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -71,12 +71,13 @@ class Product(models.Model):
         on_delete=models.CASCADE,
         related_name='products'
     )
+    
     available_quantity = models.IntegerField(validators=[MinValueValidator(0)])
     description = models.TextField()
     shelf_life = models.CharField(max_length=50)
-    product_img1 = models.ImageField(upload_to='user/product_pic/', null=True, blank=True)  
-    product_img2 = models.ImageField(upload_to='user/product_pic/', null=True, blank=True)  
-    product_img3 = models.ImageField(upload_to='user/product_pic/', null=True, blank=True)  
+    product_img1 = models.ImageField(upload_to='user/product_pic/', null=False, blank=False)  
+    product_img2 = models.ImageField(upload_to='user/product_pic/', null=False, blank=False)  
+    product_img3 = models.ImageField(upload_to='user/product_pic/', null=False, blank=False)  
     price = models.IntegerField(validators=[MinValueValidator(0)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)    
@@ -99,7 +100,9 @@ class ProductVariant(models.Model):
     stock = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    is_active = models.BooleanField(default=True)
+    
+    
     def __str__(self):
         return f"{self.product.title} - {self.weight}"
 
@@ -107,9 +110,24 @@ class Category(models.Model):
     name = models.CharField(max_length=255,unique=True)
     created_at=models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    
-    
-    
-
     def __str__(self):
         return self.name
+    
+class Review(models.Model):
+    product = models.ForeignKey(
+        Product,  
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    description = models.TextField()
+    rating = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product.title} - {self.user.email}"

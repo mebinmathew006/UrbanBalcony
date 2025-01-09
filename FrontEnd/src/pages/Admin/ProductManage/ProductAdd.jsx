@@ -1,9 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 
 function ProductAdd() {
+  const [categories,setCategories]=useState()
+  useEffect(()=>{
+    fetchCategory()
+  },[])
+  async function  fetchCategory(){
+  const response = await adminaxiosInstance.get('/categorymanage')
+  setCategories(response.data)
+  }
   const navigate = useNavigate();
   const [errorsFromBackend, setErrorsFromBackend] = useState({
     commonError: "",
@@ -17,20 +25,26 @@ function ProductAdd() {
   } = useForm();
 
   const validateFile = (file) => {
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-    if (file && !allowedTypes.includes(file.type)) {
-      return "Only JPG, JPEG, and PNG files are allowed";
+    if (file.length === 0) {
+      return "No file selected.";
+    }
+    const allowedTypes = ["image/jpeg", "image/png"];
+    const fileType = file[0]?.type; // Ensure we're accessing the first file
+    console.log("File Type:", fileType);
+  
+    if (!allowedTypes.includes(fileType)) {
+      return "Only JPG, JPEG, and PNG files are allowed.";
     }
     return true;
   };
+  
 
   const sigupHandle = async (data) => {
     const formData = new FormData();
     formData.append("title", data.title);
-    formData.append("category", data.category);
+    formData.append("category_id", data.category);
     formData.append("available_quantity", data.available_quantity);
     formData.append("description", data.description);
-    formData.append("ingredients", data.ingredients);
     formData.append("shelf_life", data.shelf_life);
     formData.append("price", data.price);
     formData.append("product_img1", data.product_img1[0]);
@@ -45,6 +59,8 @@ function ProductAdd() {
       });
       navigate("/ProductManage");
     } catch (error) {
+      console.log(error);
+      
       setErrorsFromBackend({
         commonError: error.response?.data?.error || "An error occurred",
       });
@@ -71,12 +87,19 @@ function ProductAdd() {
             )}
           </div>
           <div className="mb-3">
-            <input
+            <select
+           
               {...register("category", { required: "Category is required" })}
-              type="text"
+              
               className="form-control input-custom"
-              placeholder="Enter the category"
-            />
+            >
+              <option value=""> Select category</option>
+              {categories && categories.map((category)=>{
+                console.log(category)
+                return(<option key={category.id} value={category.id}>{category.name}</option>)
+                 })}
+
+            </select> 
             {validationErrors.category && (
               <p className="text-danger">{validationErrors.category.message}</p>
             )}
@@ -110,19 +133,7 @@ function ProductAdd() {
               </p>
             )}
           </div>
-          <div className="mb-3">
-            <input
-              {...register("ingredients", { required: "Ingredients are required" })}
-              type="text"
-              className="form-control input-custom"
-              placeholder="Enter the ingredients"
-            />
-            {validationErrors.ingredients && (
-              <p className="text-danger">
-                {validationErrors.ingredients.message}
-              </p>
-            )}
-          </div>
+          
           <div className="mb-3">
             <input
               {...register("shelf_life", { required: "Shelf life is required" })}

@@ -1,12 +1,20 @@
 from rest_framework import serializers
-from User.models import Category,Product
+from User.models import Category,Product,ProductVariant
 import re
+
+
+def validate_image(value):
+    if value and not value.name.endswith(('.jpg', '.jpeg', '.png')):
+        raise serializers.ValidationError("Only .jpg, .jpeg, and .png file types are allowed.")
+    if value.size > 5 * 1024 * 1024:  # 5 MB limit
+        raise serializers.ValidationError("Image file size must be less than 5 MB.")
+    return value
 
 # Category serializer
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name']
+        fields = ['id','name']
         extra_kwargs = {
             'name': {
                 'required': True,
@@ -38,8 +46,66 @@ class CategorySerializer(serializers.ModelSerializer):
     
 #Product serializer
 
-class ProdutSerializer(serializers.ModelSerializer):
+
+class ProductSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.IntegerField(write_only=True)
+    
+    # Make image fields optional
+    product_img1 = serializers.ImageField(required=False, allow_null=True)
+    product_img2 = serializers.ImageField(required=False, allow_null=True)
+    product_img3 = serializers.ImageField(required=False, allow_null=True)
+    
     class Meta:
-        model=Product
-        fields=['title','category','available_quantity','description','shelf_life','product_img1','product_img2','product_img3','price','created_at','updated_at','is_active']
+        model = Product
+        fields = [
+            'id', 'title', 'category', 'category_id', 'available_quantity', 
+            'description', 'shelf_life', 'product_img1', 'product_img2', 
+            'product_img3', 'price', 'is_active'
+        ]
+    
+    def validate_title(self, value):
+        return value.strip().capitalize()
+    
+    def validate_product_img1(self, value):
+        if not value:
+            return None
+        return validate_image(value)
+    
+    def validate_product_img2(self, value):
+        if not value:
+            return None
+        return validate_image(value)
+    
+    def validate_product_img3(self, value): 
+        if not value:
+            return None
+        return validate_image(value)
+
+  
+class ProductSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'title']
         
+class ProductVariantSerializer(serializers.ModelSerializer):
+    product = ProductSimpleSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = ProductVariant
+        fields = ['id', 'product', 'product_id', 'weight', 'variant_price', 'is_active', 'stock']
+    def validate_weight(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Weight cannot be empty")
+        return value
+
+    def validate_variant_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Variant price must be a positive integer")
+        return value
+
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Stock must be a positive integer")
+        return value

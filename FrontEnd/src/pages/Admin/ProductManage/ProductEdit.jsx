@@ -1,214 +1,202 @@
-import React, { useState } from 'react'
-import adminaxiosInstance from '../../../adminaxiosconfig';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import adminaxiosInstance from "../../../adminaxiosconfig";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 
-function ProductEdit(props) {
+function ProductEdit() {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors: validationErrors },
+  } = useForm();
 
-    const location = useLocation();
-    const productDetails = location.state;
-    console.log(productDetails);
-    
-    const navigate = useNavigate();
-    const [title, setTitle] = useState(productDetails.title);
-    const [category, setCategory] = useState(productDetails.category);
-    const [available_quantity, setAvailable_quantity] = useState(productDetails.available_quantity);
-    const [description, setDescription] = useState(productDetails.description);
-    const [ingredients, setIngredients] = useState(productDetails.ingredients);
-    const [shelf_life, setshelf_life] = useState(productDetails.shelf_life);
-    const [price, setPrice] = useState(productDetails.price);
-    const [product_img1, setProduct_img1] = useState(productDetails.product_img1);
-    const [product_img2, setProduct_img2] = useState(productDetails.product_img2);
-    const [product_img3, setProduct_img3] = useState(productDetails.product_img3);
-    const [fileerror, setFileError] = useState();
-  
-    
-    const handleFileChange1 = (e) => {
-      const file = e.target.files[0];
-      if (validateFile(file)) {
-        setProduct_img1(file);
-        
-      } else {
-        e.target.value = ''; // Clear the file input
-      }
-    };
-    const handleFileChange2 = (e) => {
-      const file = e.target.files[0];
-      if (validateFile(file)) {
-        setProduct_img2(file);
-        
-      } else {
-        e.target.value = ''; // Clear the file input
-      }
-    };
-    const handleFileChange3 = (e) => {
-      const file = e.target.files[0];
-      if (validateFile(file)) {
-        setProduct_img3(file);
-        
-      } else {
-        e.target.value = ''; // Clear the file input
-      }
-    };
-  
-    // File validation
-    const validateFile = (file) => {
-      if (file) {
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-        if (!allowedTypes.includes(file.type)) {
-          setFileError("Only JPG, JPEG, and PNG files are allowed");
-          return false;
-        }
-      }
-      setFileError('');
-      return true;
-    };
-  
-  
-    const sigupHandle = async(event) => {
-      event.preventDefault();
-      
-      
-        try{
-          const formData = new FormData();
-          formData.append('id', productDetails.id);
-          formData.append('title', title);
-          formData.append('category', category);
-          formData.append('available_quantity', available_quantity);
-          formData.append('description', description);
-          formData.append('ingredients', ingredients);
-          formData.append('shelf_life', shelf_life);
-          formData.append('price', price);
-          formData.append('product_img1', product_img1); // Add the file
-          formData.append('product_img2', product_img2); // Add the file
-          formData.append('product_img3', product_img3); // Add the file
-  
-          const response = await adminaxiosInstance.post('/admineditProduct', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        navigate('/ProductManage')
+  const [categories, setCategories] = useState([]);
+  const [fileError, setFileError] = useState("");
+  const [errorsFromBackend, setErrorsFromBackend] = useState({
+    commonError: "",
+  });
 
-  
-        }catch(error){
-          alert(error.response.data.error);
-          
-        }
-      
-    };
-    return (
-      <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom ">
-        <div
-          className="card p-4 shadow"
-          style={{ width: "400px", borderRadius: "12px" }}
-        >
-          <h2 className="text-center mb-4 fw-bold">Edit Product</h2>
-          <form onSubmit={sigupHandle}>
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control input-custom"
-                value={title}
-                required
-                onChange={(event)=>setTitle(event.target.value)}
-              />
-            </div>
-            {/* <div className="mb-3">
-              <input
-                type="text"
-                className="form-control input-custom"
-                value={productDetails.name}
-                required
-                onChange={(event)=>setCategory(event.target.value)}
-              />
-            </div> */}
-            <div className="mb-3">
-              <input
-                type="number"
-                className="form-control input-custom"
-                value={available_quantity}
-                required
-                onChange={(event)=>setAvailable_quantity(event.target.value)}
-              />
-            </div>
-           
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control input-custom"
-                value={description}
-                required
-                onChange={(event)=>setDescription(event.target.value)}
-              />
-            </div>
-           
-            
-            {/* <div className="mb-3">
-              <input
-                type="text"
-                className="form-control input-custom"
-                value={productDetails.ingredients}
-                required
-                onChange={(event)=>setIngredients(event.target.value)}
-              />
-            </div> */}
-            
-            <div className="mb-3">
-              <input
-                type="text"
-                className="form-control input-custom"
-                value={shelf_life}
-                required
-                onChange={(event)=>setshelf_life(event.target.value)}
-              />
-            </div>
-            <div className="mb-3">
-              <input
-                type="number"
-                className="form-control input-custom"
-                value={price}
-                required
-                onChange={(event)=>setPrice(event.target.value)}
-              />
-            </div>
-            
-            <div className="mb-3">
-              <input
-                type="file"
-                className="form-control input-custom"
-                placeholder="Profile Picture"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileChange1}
-  
-              />
-            </div>
-            <div className="mb-3">
-              <input
-                type="file"
-                className="form-control input-custom"
-                placeholder="Profile Picture"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileChange2}
-  
-              />
-            </div>
-            <div className="mb-3">
-              <input
-                type="file"
-                className="form-control input-custom"
-                placeholder="Profile Picture"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileChange3}
-  
-              />
-            </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Update
-            </button>
-          </form>
-        </div>
-      </div>
-    );
+  const location = useLocation();
+  const productDetails = location.state;
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCategory();
+    // Prepopulate form fields with product details
+    Object.keys(productDetails).forEach((key) => {
+      if (key !== "product_img1" && key !== "product_img2" && key !== "product_img3") {
+        setValue(key, productDetails[key]);
+      }
+    });
+  }, []);
+
+  async function fetchCategory() {
+    try {
+      const response = await adminaxiosInstance.get("/categorymanage");
+      setCategories(response.data);
+    } catch (error) {
+      setErrorsFromBackend({ commonError: "Failed to fetch categories" });
+    }
   }
 
-export default ProductEdit
+  const validateFile = (file) => {
+    if (file) {
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+      if (!allowedTypes.includes(file.type)) {
+        setFileError("Only JPG, JPEG, and PNG files are allowed");
+        return false;
+      }
+    }
+    setFileError("");
+    return true;
+  };
+
+  const handleFileChange = (setImageFn) => (e) => {
+    const file = e.target.files[0];
+    if (validateFile(file)) {
+      setImageFn(file);
+    } else {
+      e.target.value = ""; // Clear the file input
+    }
+  };
+
+  const updateProduct = async (data) => {
+    const formData = new FormData();
+    formData.append("id", productDetails.id);
+    data.title&&formData.append("title", data.title);
+    data.category&&formData.append("category_id", data.category);
+    data.available_quantity&&formData.append("available_quantity", data.available_quantity);
+    data.description&&formData.append("description", data.description);
+    data.ingredients&&formData.append("ingredients", data.ingredients);
+    data.shelf_life&&formData.append("shelf_life", data.shelf_life);
+    data.price&&formData.append("price", data.price);
+    data.product_img1[0]&&formData.append("product_img1", data.product_img1[0]);
+    data.product_img2[0]&&formData.append("product_img2", data.product_img2[0]);
+    data.product_img3[0]&&formData.append("product_img3", data.product_img3[0]);
+    console.log(data.category)
+    try {
+      await adminaxiosInstance.post("/admineditProduct", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      navigate("/ProductManage");
+    } catch (error) {
+      console.log(error);
+      
+        setErrorsFromBackend(error.response.data.error);
+      
+    }
+  };
+
+  return (
+    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom">
+      <div
+        className="card p-4 shadow"
+        style={{ width: "400px", borderRadius: "12px" }}
+      >
+        <h2 className="text-center mb-4 fw-bold">Edit Product</h2>
+        <form onSubmit={handleSubmit(updateProduct)}>
+          <div className="mb-3">
+            <input
+              {...register("title", { required: "Title is required" })}
+              type="text"
+              className="form-control input-custom"
+              placeholder="Enter product title"
+            />
+            {validationErrors.title && (
+              <p className="text-danger">{validationErrors.title.message}</p>
+            )}
+          </div>
+          <div className="mb-3">
+            <select
+              {...register("category", { required: "Category is required" })}
+              className="form-control input-custom"
+            >
+              <option value="">Select category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            {validationErrors.category && (
+              <p className="text-danger">{validationErrors.category.message}</p>
+            )}
+          </div>
+          <div className="mb-3">
+            <input
+              {...register("available_quantity", {
+                required: "Quantity is required",
+              })}
+              type="number"
+              className="form-control input-custom"
+              placeholder="Available quantity"
+            />
+            {validationErrors.available_quantity && (
+              <p className="text-danger">
+                {validationErrors.available_quantity.message}
+              </p>
+            )}
+          </div>
+          <div className="mb-3">
+            <textarea
+              {...register("description", { required: "Description is required" })}
+              className="form-control input-custom"
+              placeholder="Enter description"
+            ></textarea>
+            {validationErrors.description && (
+              <p className="text-danger">{validationErrors.description.message}</p>
+            )}
+          </div>
+          <div className="mb-3">
+            <input
+              {...register("shelf_life", { required: "Shelf life is required" })}
+              type="text"
+              className="form-control input-custom"
+              placeholder="Shelf life"
+            />
+            {validationErrors.shelf_life && (
+              <p className="text-danger">{validationErrors.shelf_life.message}</p>
+            )}
+          </div>
+          <div className="mb-3">
+            <input
+              {...register("price", { required: "Price is required" })}
+              type="number"
+              className="form-control input-custom"
+              placeholder="Price"
+            />
+            {validationErrors.price && (
+              <p className="text-danger">{validationErrors.price.message}</p>
+            )}
+          </div>
+          {[1, 2, 3].map((num) => (
+            <div className="mb-3" key={`product_img${num}`}>
+              <input
+                {...register(`product_img${num}`)}
+                type="file"
+                className="form-control input-custom"
+                accept=".jpg,.jpeg,.png"
+              />
+              {validationErrors[`product_img${num}`] && (
+                <p className="text-danger">
+                  {validationErrors[`product_img${num}`].message}
+                </p>
+              )}
+            </div>
+          ))}
+          {fileError && <p className="text-danger">{fileError}</p>}
+          {errorsFromBackend.commonError && (
+            <p className="text-danger">{errorsFromBackend.commonError}</p>
+          )}
+          <button type="submit" className="btn btn-primary w-100">
+            Update
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default ProductEdit;

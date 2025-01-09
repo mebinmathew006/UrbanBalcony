@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework.authtoken',
 ]
 AUTH_USER_MODEL = 'User.CustomUser'
 
@@ -67,14 +68,18 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'offline'},
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         'APP': {
+#             'client_id': '489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com',
+#             'secret': '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',
+#             'key': '',
+#         }
+#     }
+# }
 
-
+# settings.py
+GOOGLE_CLIENT_ID = "489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -167,3 +172,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+LOGIN_REDIRECT_URL = '/'
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# settings.py
+
+AUTH_USER_MODEL = 'User.CustomUser'  # Replace 'your_app' with your app name
+
+# For allauth settings
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # Explicitly disable the username field
+ACCOUNT_USERNAME_REQUIRED = False         # Username is not required
+ACCOUNT_AUTHENTICATION_METHOD = 'email'   # Use email for authentication
+ACCOUNT_EMAIL_REQUIRED = True             # Email is required
+ACCOUNT_EMAIL_VERIFICATION = 'optional'

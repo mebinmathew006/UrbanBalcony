@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Login.css";
 import axiosInstance from "../../../axiosconfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 
 function Login() {
+  const clientId = "489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com";
   const navigate = useNavigate();
   const [errorsFromBackend, setErrorsFromBackend] = useState({
     email: [],
@@ -18,6 +19,63 @@ function Login() {
     formState: { errors: validationErrors },
   } = useForm();
 
+  useEffect(() => {
+    // Load the Google Identity Services script
+    const loadGoogleScript = () => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+
+      script.onload = () => {
+        // Initialize Google Identity Services
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleCredentialResponse
+        });
+
+        // Render the button
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleSignInDiv"),
+          { theme: 'outline', size: 'large', width: '100%' }
+        );
+      };
+    };
+
+    loadGoogleScript();
+
+    // Cleanup
+    return () => {
+      // Remove the script tag when component unmounts
+      const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (script) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  const handleCredentialResponse = async (response) => {
+    try {
+      const backendResponse = await axiosInstance.post('/google_login', {
+        credential: response.credential // Send the credential token to your backend
+      });
+      console.log('Backend Response:', backendResponse.data);
+      // Handle successful login (e.g., save token, redirect)
+      if (backendResponse.data.user.is_admin) {
+        navigate("/AdminDashboard");
+      } else {
+        navigate("/HomePage");
+      }
+    } catch (error) {
+      console.error('Error authenticating with backend:', error);
+      setErrorsFromBackend({
+        ...errorsFromBackend,
+        commonError: "Google authentication failed. Please try again."
+      });
+    }
+  };
+
   const loginSubmitHandler = async (data) => {
     try {
       const response = await axiosInstance.post("/userLogin", data);
@@ -28,7 +86,7 @@ function Login() {
       }
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error) {
-        setErrorsFromBackend(error.response.data.error); // Capture server-side errors
+        setErrorsFromBackend(error.response.data.error);
       } else {
         setErrorsFromBackend({
           email: [],
@@ -65,7 +123,7 @@ function Login() {
             {validationErrors.email && (
               <p className="text-danger">{validationErrors.email.message}</p>
             )}
-            {errorsFromBackend.email.length > 0 && (
+            {errorsFromBackend.email && (
               <p className="text-danger">{errorsFromBackend.email[0]}</p>
             )}
           </div>
@@ -87,7 +145,7 @@ function Login() {
             {validationErrors.password && (
               <p className="text-danger">{validationErrors.password.message}</p>
             )}
-            {errorsFromBackend.password.length > 0 && (
+            {errorsFromBackend.password && (
               <p className="text-danger">{errorsFromBackend.password[0]}</p>
             )}
           </div>
@@ -116,7 +174,7 @@ function Login() {
         {/* Sign Up Link */}
         <div className="text-center mt-2">
           <p className="mb-0">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               to="/signup"
               className="text-decoration-none text-warning fw-bold"
@@ -128,10 +186,7 @@ function Login() {
 
         {/* Google Sign-In Button */}
         <div className="text-center mt-4">
-          <button className="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center google-btn">
-            <i className="fa-brands fa-google me-3"></i>
-            Sign in with Google
-          </button>
+          <div id="googleSignInDiv"></div>
         </div>
       </div>
     </div>

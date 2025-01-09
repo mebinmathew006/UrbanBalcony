@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Header from '../../../components/header/header';
 import Footer from '../../../components/footer/Footer';
 import axiosInstance from '../../../axiosconfig';
-import ProductView from '../../../components/productView/productView';
+import ProductView from '../../../components/productView/ProductView';
 function HomePage() {
     const [data,setData]=useState([])
 
@@ -21,7 +21,7 @@ function HomePage() {
      return (
        <div>
          <Header page='home'/>
-         <ProductView data={data} category='Nuts'></ProductView>
+         <ProductView data={data} category='Prodcuts'></ProductView>
          
         <Footer/>
   

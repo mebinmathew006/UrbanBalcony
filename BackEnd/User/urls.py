@@ -22,6 +22,8 @@ urlpatterns = [
     path('',UserHome.as_view(),name='userHome'),
     path('userLogin',UserLogin.as_view(),name='userLogin'),
     path('userSignup',UserSignup.as_view(),name='userSignup'),
+    path('google_login',GoogleAuth.as_view(),name='google_login'),
     path('forgetPassword',ForgetPassword.as_view(),name='ForgetPassword'),
     path('resetPassword',ResetPassword.as_view(),name='ResetPassword'),
+    path('reviewAndRating/<int:id>',ReviewAndRating.as_view(),name='ReviewAndRating'),
 ]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser,Review
 import re
 
 class LoginSerializer(serializers.Serializer):
@@ -34,7 +34,21 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r"^\d{10}$", value):
             raise serializers.ValidationError("Phone number must be 10 digits.")
         return value
-
+    
+class ReviewAndRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Review
+        fields=['rating','description','product','user']
+        
+    def validate_rating(self,value):
+        if value<1 or value>5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
+    
+    def validate_review(self,value):
+        if len(value)<10:
+            raise serializers.ValidationError("Review must be atleast 10 characters long")
+        return value
 
 
         

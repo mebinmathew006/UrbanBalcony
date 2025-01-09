@@ -6,7 +6,7 @@ function CategoryManage() {
   const navigate = useNavigate();
     const toggleCategoryStatus = async (id) => {
         try {
-          await adminaxiosInstance.post(`/categorystatus/${id}`); 
+          await adminaxiosInstance.patch(`/categorymanage/${id}`); 
           fetchCategory();
         } catch (error) {
           console.log(error);

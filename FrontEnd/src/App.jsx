@@ -18,6 +18,11 @@ import ProductAdd from './pages/Admin/ProductManage/ProductAdd'
 import ProductEdit from './pages/Admin/ProductManage/ProductEdit'
 import CategoryAdd from './pages/Admin/CategoryManage/CategoryAdd'
 import CategoryUpdate from './pages/Admin/CategoryManage/CategoryUpdate'
+import ProductVarientManage from './pages/Admin/ProductVarientManage/ProductVarientManage'
+import ProductVarientEdit from './pages/Admin/ProductVarientManage/ProductVarientEdit'
+import ProductVarientAdd from './pages/Admin/ProductVarientManage/ProductVarientAdd'
+import Review from './pages/User/Review/Review'
+import UserProfile from './pages/User/UserProfile/UserProfile'
 
 function App() {
 
@@ -41,6 +46,11 @@ function App() {
       <Route path='/ProductManage' element={<ProductManage/>}/>
       <Route path='/ProductAdd' element={<ProductAdd/>}/>
       <Route path='/ProductEdit' element={<ProductEdit/>}/>
+      <Route path='/ProductVarientManage' element={<ProductVarientManage/>}/>
+      <Route path='/ProductVarientEdit' element={<ProductVarientEdit/>}/>
+      <Route path='/ProductVarientAdd' element={<ProductVarientAdd/>}/>
+      <Route path='/userReviews/:id' element={<Review/>}/>
+      <Route path='/userProfile' element={<UserProfile/>}/>
       <Route></Route>
     </Routes>
     

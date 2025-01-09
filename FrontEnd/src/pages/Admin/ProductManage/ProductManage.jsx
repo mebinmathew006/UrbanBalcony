@@ -6,7 +6,7 @@ function ProductManage() {
   const navigate = useNavigate();
     const toggleProductStatus = async (id) => {
         try {
-          await adminaxiosInstance.post(`/productstatus/${id}`); 
+          await adminaxiosInstance.patch(`/productmanage/${id}`); 
           fetchProduct();
         } catch (error) {
           console.log(error);
@@ -17,6 +17,7 @@ function ProductManage() {
         try {
           const response = await adminaxiosInstance.get("/productmanage");
           setProduct(response.data);
+          console.log(response.data);
         } catch (error) {
           console.log(error);
         }
@@ -41,9 +42,11 @@ function ProductManage() {
                       <th scope="col">#</th>
                       <th scope="col">Image</th>
                       <th scope="col">Title</th>
+                      <th scope="col">Category</th>
                       <th scope="col">Quantity</th>
                       <th scope="col">Description</th>
                       <th scope="col">Shelf life</th>
+                      <th scope="col">Varients</th>
                       <th scope="col">Block/Unblock</th>
                       <th scope="col">Edit</th>
                     </tr>
@@ -53,13 +56,14 @@ function ProductManage() {
                       product.map((product, index) => (
                         <tr key={index}>
                           <th scope="row">{index + 1}</th>
-                          <td><img src={`http://127.0.0.1:8000/media/${product.product_img1}`} alt="Product Image" width={100} height={100}/></td>
-                          {console.log(`${product.product_img1}`)}
+                          <td><img src={`http://127.0.0.1:8000/${product.product_img1}`} alt="Product Image" width={100} height={100}/></td>
+                          {console.log(`http://127.0.0.1:8000/${product.product_img1}`)}
                           <td>{product.title}</td>
+                          <td>{product.category.name}</td>
                           <td>{product.available_quantity}</td>
                           <td>{product.description}</td>
                           <td>{product.shelf_life}</td>
-                          
+                          <td ><button className="btn btn-dark"  onClick={()=>navigate('/ProductVarientManage',{state:product.id})}>View</button></td>
                           <td>
                             <button
                               className={`btn ${

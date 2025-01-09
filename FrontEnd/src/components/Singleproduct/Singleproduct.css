@@ -1,22 +1,10 @@
-.rating {
-    direction: rtl; /* Display stars in reverse order (right to left) */
-    font-size: 2rem; /* Adjust the size of the stars */
-    display: flex; /* Make stars inline-flex */
-    /* Add space between stars */
+  .imageList{
+    cursor: pointer ;
+    max-width:182px;
+    max-height:100px;
   }
-
-  .rating input[type="radio"] {
-    display: none; /* Hide the radio inputs */
-  }
-
-  .rating label {
-    cursor: pointer; /* Change cursor to pointer on hover */
-  }
-
-  .rating input[type="radio"]:checked ~ label i {
-    color: gold; /* Highlight selected stars */
-  }
-
-  .rating label i {
-    color: gray; /* Default star color */
+  .card-img-top
+  {
+    max-width: 565px;
+    max-height: 400px;
   }
