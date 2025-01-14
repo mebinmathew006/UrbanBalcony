@@ -24,6 +24,11 @@ clamp@1.0.1:
   resolved "https://registry.yarnpkg.com/clamp/-/clamp-1.0.1.tgz#66a0e64011816e37196828fdc8c8c147312c8634"
   integrity sha512-kgMuFyE78OC6Dyu3Dy7vcx4uy97EIbVxJB/B0eJ3bUNAkwdNcxYzgKltnyADiYwsR7SEqkkUPsEUT//OVS6XMA==
 
+clsx@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/clsx/-/clsx-2.1.1.tgz#eed397c9fd8bd882bfb18deab7102049a2f32999"
+  integrity sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
+
 core-js@^1.0.0:
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-1.2.7.tgz#652294c14651db28fa93bd2d5ff2983a4f08c636"
@@ -239,6 +244,13 @@ react-required-if@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/react-required-if/-/react-required-if-1.0.1.tgz#f41d06bebb75346c206cd1de8dc0ef5b7c8f9abd"
   integrity sha512-n0HDT1G/1GoWvX7HcGzBOVwgfrbaymtEoYBkKOOhca3ThXQYFMjI3uKWcc5DSBHpPbSEJPPWEAV6Zu9BrSG+rg==
+
+react-toastify@^11.0.2:
+  version "11.0.2"
+  resolved "https://registry.yarnpkg.com/react-toastify/-/react-toastify-11.0.2.tgz#5c5ae745f3c7240015a8746217595cd26701fdc3"
+  integrity sha512-GjHuGaiXMvbls3ywqv8XdWONwrcO4DXCJIY1zVLkHU73gEElKvTTXNI5Vom3s/k/M8hnkrfsqgBSX3OwmlonbA==
+  dependencies:
+    clsx "^2.1.1"
 
 "safer-buffer@>= 2.1.2 < 3.0.0":
   version "2.1.2"

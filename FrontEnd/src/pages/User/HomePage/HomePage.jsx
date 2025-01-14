@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Header from '../../../components/header/header';
 import Footer from '../../../components/footer/Footer';
 import axiosInstance from '../../../axiosconfig';
-import ProductView from '../../../components/productView/ProductView';
+import ProductView from '../../../components/productView/productView';
 function HomePage() {
     const [data,setData]=useState([])
 

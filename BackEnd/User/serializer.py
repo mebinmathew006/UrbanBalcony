@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import CustomUser,Review
+from .models import CustomUser,Review,Address,Order,OrderItem,Payment,Product,Cart,CartItem
 import re
+from AdminPanel.serializer import ProductSimpleSerializer,ProductVariantSerializer
 
 class LoginSerializer(serializers.Serializer):
     email=serializers.EmailField(max_length=255,required=True)
@@ -8,9 +9,14 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    profile_picture=serializers.ImageField()
+    
     class Meta:
         model=CustomUser
         fields=['first_name','last_name','email','phone_number','profile_picture','password'] #__all__ if all fields are needed
+        extra_kwargs = {
+            'password': {'write_only': True}  # Ensure password isn't returned in the response
+        }
         
     def validate_first_name(self,value):
         if not re.match("^[A-Za-z\s]", value):  # Only allows letters and spaces
@@ -34,7 +40,28 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r"^\d{10}$", value):
             raise serializers.ValidationError("Phone number must be 10 digits.")
         return value
+    # SerializerMethodField: get_<field_name>
+    def get_profile_picture(self, obj):
+        if obj.profile_picture:
+            return obj.profile_picture.url  # Assumes the profile_picture field is an ImageField/FileField
+        return None
     
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password:
+            instance.set_password(password)  # Encrypt the password
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        if password:
+            instance.set_password(password)  # Encrypt the password
+        instance.save()
+        return instance
 class ReviewAndRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model=Review
@@ -49,7 +76,50 @@ class ReviewAndRatingSerializer(serializers.ModelSerializer):
         if len(value)<10:
             raise serializers.ValidationError("Review must be atleast 10 characters long")
         return value
+    
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSimpleSerializer(source='product_variant.product', read_only=True)
 
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'quantity', 'total_amount', 'status']        
+
+class AddressSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(write_only=True)
+    class Meta:
+        model=Address
+        fields=['id','address_type','city','state','pin_code','land_mark','alternate_number','user_id']
+        
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Payment
+        fields = ['id', 'pay_method', 'status', 'transaction_id']
+        
+class OrderSerializer(serializers.ModelSerializer):
+    address_details = AddressSerializer(source='address', read_only=True)
+    order_items = OrderItemSerializer(many=True, read_only=True)  
+    payment_details = PaymentSerializer(source='payment', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'payment', 'address_details', 'shipping_charge', 
+                  'net_amount', 'order_items', 'payment_details', 'order_date', 
+                  'delivery_date', 'status']
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product_variant = ProductVariantSerializer(read_only=True)
+    
+    class Meta:
+        model = CartItem
+        fields = ['id', 'quantity','product_variant']
+
+class CartSerializer(serializers.ModelSerializer):
+    cart_items = CartItemSerializer( many=True, read_only=True)  # Changed to handle multiple items
+    
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'cart_items']  # Added id field
 
         
-        
+
+

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 function Header(props) {
   const navigate = useNavigate();
   const profileIconHandler = (event) => {
-    navigate(props.page === "index" ? "/login" : "userDashboard");
+    navigate(props.page === "index" ? "/login" : "/userProfile");
   };
   return (
     <header className="bg-light py-2 container-fluid" >
@@ -17,7 +17,7 @@ function Header(props) {
           >
             UB
           </h1>
-          <span className="ms-2 fw-bold">URBAN BALCONY</span>
+          <span onClick={()=>(navigate(props.page==='index'? '/':'/HomePage'))} className="ms-2 fw-bold ">URBAN BALCONY</span>
         </div>
 
         {/* Search Bar */}
@@ -48,6 +48,7 @@ function Header(props) {
               ></i>
               <i
                 className="fas fa-shopping-cart me-3"
+                onClick={()=>navigate('/userProfile', { state: { tab: 'cart' } })}
                 style={{ fontSize: "1.2rem", cursor: "pointer" }}
               ></i>
               <i
@@ -65,6 +66,7 @@ function Header(props) {
       </div>
 
       {/* Navigation Links */}
+      {props.page!='userprofile' &&
       <nav className="mt-3">
         <div className="container d-flex justify-content-center">
           <ul className="nav">
@@ -106,6 +108,7 @@ function Header(props) {
           </ul>
         </div>
       </nav>
+      }
     </header>
   );
 }

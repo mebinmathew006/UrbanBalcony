@@ -3,14 +3,20 @@ import "./Login.css";
 import axiosInstance from "../../../axiosconfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
+import {setUserDetails} from '../../../store/UserDetailsSlice'
+
 
 function Login() {
-  const clientId = "489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com";
+  const dispatch = useDispatch();
+  
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  
   const navigate = useNavigate();
   const [errorsFromBackend, setErrorsFromBackend] = useState({
     email: [],
     password: [],
-    commonError: "",
+    commonError: "",  
   });
 
   const {
@@ -79,6 +85,14 @@ function Login() {
   const loginSubmitHandler = async (data) => {
     try {
       const response = await axiosInstance.post("/userLogin", data);
+
+      // setting the user details in redux store
+      const userDetails = response.data.user;
+      console.log('userDetails',userDetails);
+      dispatch(setUserDetails(userDetails));
+      localStorage.setItem('userDetails',JSON.stringify(userDetails));
+      // in app.jsx I set the user details in local storage to persist the user details even after page refresh
+
       if (response.data.user.is_admin) {
         navigate("/AdminDashboard");
       } else {

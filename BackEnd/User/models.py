@@ -31,7 +31,7 @@ class CustomUserManager(BaseUserManager):
 
 
 
-class CustomUser(AbstractBaseUser):
+class CustomUser(AbstractBaseUser): 
     first_name      = models.CharField(max_length=50)
     last_name       = models.CharField(max_length=50)
     email           = models.EmailField(max_length=100, unique=True)
@@ -103,8 +103,11 @@ class ProductVariant(models.Model):
     is_active = models.BooleanField(default=True)
     
     
-    def __str__(self):
-        return f"{self.product.title} - {self.weight}"
+    def save(self, *args, **kwargs):
+        # Calculate the total amount
+        if self.product_variant:
+            self.total_amount = self.quantity * self.product_variant.variant_price
+        super().save(*args, **kwargs)
 
 class Category(models.Model):
     name = models.CharField(max_length=255,unique=True)
@@ -131,3 +134,121 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.product.title} - {self.user.email}"
+    
+    
+
+
+
+class Order(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='orders')
+    payment = models.ForeignKey('Payment', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    order_date = models.DateField(default=timezone.now)
+    delivery_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=50, default='pending')
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.user}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
+    product_variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='order_items')
+    quantity = models.PositiveIntegerField(default=1)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=50, default='pending')
+    
+    def save(self, *args, **kwargs):
+        # Calculate the total amount
+        if self.product:
+            self.total_amount = self.quantity * self.product.price
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Item #{self.id} - Order #{self.order.id} - {self.product}"
+
+
+class Payment(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='payments')
+    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
+    wallet = models.ForeignKey('Wallet', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
+    status = models.CharField(max_length=50, default='pending')
+    date = models.DateField(default=timezone.now)
+    pay_method = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"Payment #{self.id} - {self.user}"
+
+
+class Transaction(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='transactions')
+    status = models.CharField(max_length=255, default='pending')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Transaction #{self.id} - {self.payment}"
+
+
+class Cart(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='carts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart #{self.id} - {self.user}"
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
+    product_variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='cart_items')
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"CartItem #{self.id} - Cart #{self.cart.id} - {self.product}"
+
+class Address(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='addresses')
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    pin_code = models.CharField(max_length=10)
+    address_type = models.CharField(max_length=50, default='home')
+    land_mark = models.CharField(max_length=255, blank=True, null=True)
+    alternate_number = models.CharField(max_length=15, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.address_type} Address - {self.city}, {self.state}"
+    
+class Wallet(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+            return f"Wallet #{self.id} - {self.user}"
+class Coupon(models.Model):
+    is_active = models.BooleanField(default=True)
+    code = models.CharField(max_length=50, unique=True)
+    coupon_percent = models.PositiveIntegerField()
+    description = models.TextField(blank=True, null=True)
+    limit = models.PositiveIntegerField(default=1)
+    expire_date = models.DateField()
+
+    def __str__(self):
+        return f"Coupon {self.code} - {self.coupon_percent}%"
+
+class WalletTransaction(models.Model):
+    wallet = models.ForeignKey('Wallet', on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    order = models.ForeignKey('Order', on_delete=models.SET_NULL, null=True, blank=True, related_name='wallet_transactions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Transaction #{self.id} - Wallet #{self.wallet.id}"

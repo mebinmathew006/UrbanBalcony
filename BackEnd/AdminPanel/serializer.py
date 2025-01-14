@@ -86,7 +86,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'title']
+        fields = ['id', 'title','product_img1']
         
 class ProductVariantSerializer(serializers.ModelSerializer):
     product = ProductSimpleSerializer(read_only=True)

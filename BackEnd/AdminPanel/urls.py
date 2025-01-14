@@ -16,6 +16,7 @@ urlpatterns = [
     path('adminaddProduct',AdminaddProduct.as_view(),name='adminaddProduct'),
     path('adminaddCategory',AdminaddCategory.as_view(),name='adminaddCategory'),
     path('adminUpdateCategory',AdminUpdateCategory.as_view(),name='adminUpdateCategory'),
+    path('admingetuserOrders',AdmingetuserOrders.as_view(),name='AdmingetuserOrders'),
     path('productVarientmanage',Varientmanage.as_view(),name='productVarientadd'),
     path('productVarientmanage/<int:id>',Varientmanage.as_view(),name='productVarientmanage'),  
    

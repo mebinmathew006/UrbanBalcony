@@ -1,13 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-
 const Sidebar = () => {
   return (
-    <aside
-      className="bg-light shadow-sm"
-     
-    >
+    <aside className="bg-light shadow-sm">
       <div className="py-4 border-bottom">
         <h2 className="m-0">Admin Panel</h2>
       </div>
@@ -18,20 +14,24 @@ const Sidebar = () => {
           </a>
         </li>
         <li className="nav-item">
-          <Link to='/UserManage' className="nav-link" >
-             Users
+          <Link to="/UserManage" className="nav-link">
+            Users
           </Link>
         </li>
         <li className="nav-item">
-          <Link to='/ProductManage' className="nav-link" >
-             Products
+          <Link to="/ProductManage" className="nav-link">
+            Products
           </Link>
         </li>
         <li className="nav-item">
-        <Link to='/CategoryManage' className="nav-link" >
-        Category
+          <Link to="/CategoryManage" className="nav-link">
+            Category
           </Link>
-             
+        </li>
+        <li className="nav-item">
+          <Link to="/orderManagement" className="nav-link">
+            Order
+          </Link>
         </li>
         <li className="nav-item">
           <a className="nav-link text-danger" href="#">

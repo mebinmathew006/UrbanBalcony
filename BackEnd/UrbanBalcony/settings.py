@@ -68,17 +68,15 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-# SOCIALACCOUNT_PROVIDERS = {
-#     'google': {
-#         'APP': {
-#             'client_id': '489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com',
-#             'secret': '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',
-#             'key': '',
-#         }
-#     }
-# }
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Add your frontend's origin
+]
+SESSION_COOKIE_SAMESITE = 'None'  # Required for cross-origin cookies
+SESSION_COOKIE_SECURE = False    # Use True in production with HTTPS
+CSRF_COOKIE_SAMESITE = 'None'    # Same as above
+CSRF_COOKIE_SECURE = False 
 
-# settings.py
 GOOGLE_CLIENT_ID = "489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

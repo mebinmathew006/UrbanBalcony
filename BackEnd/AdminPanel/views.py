@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from User.models import CustomUser,Category,Product,ProductVariant
+from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
@@ -9,8 +9,8 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from .serializer import CategorySerializer,ProductSerializer,ProductVariantSerializer
+from User.serializer import CartSerializer,OrderSerializer
 from rest_framework.exceptions import ErrorDetail
-from django.shortcuts import get_object_or_404
 # Create your views here.
 
 class UserManage(APIView):
@@ -188,3 +188,18 @@ class Varientmanage(APIView):
         print(serializer.error_messages)
         return Response({'error': serializer.error_messages}, 
                             status=status.HTTP_400_BAD_REQUEST)
+        
+class AdmingetuserOrders(APIView):
+    def get(self, request):
+        try:
+            # Change prefetch_related to match your model relationship
+            orders = Order.objects.prefetch_related(
+                'order_items__product_variant',  # Changed from productvariant to product
+                'order_items__product_variant__product',  # Changed from productvariant to product
+                'payment',
+                'address'
+            )
+            serializer = OrderSerializer(orders, many=True,partial=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)

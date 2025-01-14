@@ -21,9 +21,10 @@ const Review = () => {
     }
   };
   return (
-    <div>
+    <div >
       <Header page="home" />
       <Breadcrumbs />
+      <div className="h-screen">
       <h1>User Reviews</h1>
       {reviews.length > 0 ? (
         <ul>
@@ -40,6 +41,7 @@ const Review = () => {
       ) : (
         <p>No reviews available.</p>
       )}
+      </div>
       <Footer />
     </div>
   );

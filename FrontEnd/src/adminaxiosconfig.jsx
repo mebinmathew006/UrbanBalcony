@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const adminaxiosInstance = axios.create({
   baseURL: 'http://localhost:8000/adminPanel/',
+  withCredentials: true,
 });
 
 // axiosInstance.interceptors.request.use(

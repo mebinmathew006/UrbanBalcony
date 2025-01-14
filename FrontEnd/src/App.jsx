@@ -23,13 +23,37 @@ import ProductVarientEdit from './pages/Admin/ProductVarientManage/ProductVarien
 import ProductVarientAdd from './pages/Admin/ProductVarientManage/ProductVarientAdd'
 import Review from './pages/User/Review/Review'
 import UserProfile from './pages/User/UserProfile/UserProfile'
+import { useEffect } from 'react'
+import { setUserDetails } from './store/UserDetailsSlice'
+import { useDispatch } from 'react-redux'
+import CheckoutPage from './pages/User/CheckoutPage/CheckoutPage'
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import OrderManagement from './pages/Admin/OrderManagement/OrderManagement'
+import axiosInstance from './axiosconfig'
+
+const fetchUserDetails = async (dispatch) => {
+  try {
+      const response = await axiosInstance.get("/getUserDetailsForAuthentication", {
+          withCredentials: true, // Ensure cookies are included in the request
+      });
+      dispatch(setUserDetails(response.data));
+  } catch (error) {
+      console.error("Error fetching user details:", error);
+  }
+};
 
 function App() {
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    fetchUserDetails(dispatch);
+  }, []);
 
   return (
 
     <BrowserRouter>
-
+      <ToastContainer />
     <Routes>
       <Route path='/'  element={<Index/>}/>
       <Route path='/signup'  element={<SignupPage/>}/>
@@ -51,6 +75,9 @@ function App() {
       <Route path='/ProductVarientAdd' element={<ProductVarientAdd/>}/>
       <Route path='/userReviews/:id' element={<Review/>}/>
       <Route path='/userProfile' element={<UserProfile/>}/>
+      <Route path='/checkoutPage' element={<CheckoutPage/>}/>
+      <Route path='/orderManagement' element={<OrderManagement/>}/>
+
       <Route></Route>
     </Routes>
     

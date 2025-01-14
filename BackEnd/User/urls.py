@@ -15,15 +15,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path
 from .views import *
 
 urlpatterns = [
     path('',UserHome.as_view(),name='userHome'),
     path('userLogin',UserLogin.as_view(),name='userLogin'),
+    path('userDetails/<int:id>',UserLogin.as_view(),name='userDetails'),
+    path('userAddress/<int:id>',UserAddress.as_view(),name='userAddress'),
+    path('userOrders/<int:id>',UserOrder.as_view(),name='userOrders'),
+    path('userAddress',UserAddress.as_view(),name='userAddressUpdate'),
     path('userSignup',UserSignup.as_view(),name='userSignup'),
     path('google_login',GoogleAuth.as_view(),name='google_login'),
     path('forgetPassword',ForgetPassword.as_view(),name='ForgetPassword'),
     path('resetPassword',ResetPassword.as_view(),name='ResetPassword'),
     path('reviewAndRating/<int:id>',ReviewAndRating.as_view(),name='ReviewAndRating'),
+    path('userCart/<int:id>',UserCart.as_view(),name='userCart'),
+    path('userCart',UserCart.as_view(),name='userCart'),
+    path('userPlaceOrder',UserPlaceOrder.as_view(),name='userPlaceOrder'),
+    path('getUserDetailsForAuthentication',getUserDetailsAgainWhenRefreshing,name='getUserDetailsForAuthentication'),
 ]
