@@ -2,7 +2,7 @@
 import Footer from "../../../components/footer/Footer";
 import axiosInstance from '../../../axiosconfig';
 import Header from '../../../components/header/header';
-import ProductView from '../../../components/productView/productView';
+import ProductView from '../../../components/productView/ProductView';
  
  function Index() {
 

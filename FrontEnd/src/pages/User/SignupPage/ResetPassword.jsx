@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import axiosInstance from "../../../axiosconfig";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import publicaxiosconfig from "../../../publicaxiosconfig";
 
 function ResetPassword() {
+  const location = useLocation()
+  const email =location.state?.email
+  console.log(email);
+  
   const [otp, setOtp] = useState();
   const [password, setPassword] = useState("");
   const [confirmpassword, setConfirmpassword] = useState("");
@@ -12,11 +16,12 @@ function ResetPassword() {
     event.preventDefault()
     if (password === confirmpassword) {
       try {
-        const response = await axiosInstance.post("/resetPassword", {
+        const response = await publicaxiosconfig.post("/resetPassword", {
           otp,
           password,
+          email
         });
-        navigate('/login')
+        navigate('/')
       } catch (error) { 
         console.log(error);
       }

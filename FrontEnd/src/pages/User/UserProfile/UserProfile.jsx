@@ -1,18 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./UserProfile.css";
 import Header from "../../../components/header/header";
 import ProfileDetails from "./ProfileDetails";
 import UserAddress from "./UserAddress";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import UserOrderDetails from "./UserOrderDetails";
 import UserCart from "./UserCart";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { destroyDetails } from "../../../store/UserDetailsSlice"; 
+import axiosInstance from "../../../axiosconfig";
+import UserSingleOrderDetailsPage from "./UserSingleOrderDetailsPage";
+import UserWishlist from "./UserWishlist";
 
 const UserProfile = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'profile');
-  const user = useSelector((state) => state.userDetails);
+  console.log(activeTab);
   
+  const user = useSelector((state) => state.userDetails);
+  const dispatch = useDispatch()
+  const navigate =useNavigate()
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
 
   // Component mapping for tabs
   const tabComponents = {
@@ -20,6 +33,8 @@ const UserProfile = () => {
     address: <UserAddress />,
     orders: <UserOrderDetails />,
     cart: <UserCart />,
+    orderDetails: <UserSingleOrderDetailsPage />,
+    wishlist: <UserWishlist />,
   };
 
   return (
@@ -79,6 +94,7 @@ const UserProfile = () => {
                     Orders
                   </button>
                 </li>
+                {/* cart */}
                 <li
                   className={`nav-item ${
                     activeTab === "cart" ? "active" : ""
@@ -89,6 +105,38 @@ const UserProfile = () => {
                     onClick={() => setActiveTab("cart")}
                   >
                     Cart
+                  </button>
+                </li>
+                {/* wishlist */}
+                <li
+                  className={`nav-item ${
+                    activeTab === "wishlist" ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="nav-link"
+                    onClick={() => setActiveTab("wishlist")}
+                  >
+                    Wishlist
+                  </button>
+                </li>
+                <li
+                  className={`nav-item ${
+                    activeTab === " " ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="nav-link"
+                    onClick={() =>{
+                      dispatch(destroyDetails());
+                      try {
+                      const response = axiosInstance.post('/userLogout')
+                        navigate('/login')
+                      } catch (error) {
+                      }
+                    }}
+                  >
+                    Logout
                   </button>
                 </li>
               </ul>

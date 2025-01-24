@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import Index from './pages/User/Index/Index'
 import Login from './pages/User/Login/Login'
 import SignupPage from './pages/User/SignupPage/SignupPage'
@@ -31,31 +31,36 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import OrderManagement from './pages/Admin/OrderManagement/OrderManagement'
 import axiosInstance from './axiosconfig'
+import UserSingleOrderDetailsPage from './pages/User/UserProfile/UserSingleOrderDetailsPage'
+import ReturnedProducts from './pages/Admin/OrderManagement/ReturnedProducts'
 
-const fetchUserDetails = async (dispatch) => {
+const fetchUserDetails = async (dispatch,navigate) => {
   try {
       const response = await axiosInstance.get("/getUserDetailsForAuthentication", {
           withCredentials: true, // Ensure cookies are included in the request
       });
-      dispatch(setUserDetails(response.data));
+      console.log(response.data.user);
+      
+      dispatch(setUserDetails(response.data.user));
   } catch (error) {
-      console.error("Error fetching user details:", error);
+      dispatch(setUserDetails(null)); 
+      navigate('/login')
   }
 };
 
-function App() {
+
+// Separate component for the routes
+function AppRoutes() {
   const dispatch = useDispatch();
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
-    fetchUserDetails(dispatch);
-  }, []);
+    fetchUserDetails(dispatch, navigate);
+  }, [dispatch]);
 
   return (
-
-    <BrowserRouter>
-      <ToastContainer />
     <Routes>
-      <Route path='/'  element={<Index/>}/>
+       <Route path='/'  element={<Index/>}/>
       <Route path='/signup'  element={<SignupPage/>}/>
       <Route path='/forgetPassword'  element={<ForgetPassword/>}/>
       <Route path='/login' element={<Login/>}/>
@@ -77,12 +82,20 @@ function App() {
       <Route path='/userProfile' element={<UserProfile/>}/>
       <Route path='/checkoutPage' element={<CheckoutPage/>}/>
       <Route path='/orderManagement' element={<OrderManagement/>}/>
-
-      <Route></Route>
+      <Route path='/orderDetailsPage' element={<UserSingleOrderDetailsPage/>}/>
+      <Route path='/returned' element={<ReturnedProducts/>}/>
     </Routes>
-    
-    </BrowserRouter>
-  )
+  );
 }
 
-export default App
+// Main App component
+function App() {
+  return (
+    <BrowserRouter>
+      <ToastContainer />
+      <AppRoutes />
+    </BrowserRouter>
+  );
+}
+
+export default App;

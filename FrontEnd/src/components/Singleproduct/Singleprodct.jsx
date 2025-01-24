@@ -4,17 +4,18 @@ import "./Singleproduct.css";
 import axiosInstance from "../../axiosconfig";
 import ReactImageMagnify from "react-image-magnify";
 import adminaxiosInstance from "../../adminaxiosconfig";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+
 function Singleprodct() {
-  
-  const user_id=useSelector((state)=>state.userDetails.id)
+  const user_id = useSelector((state) => state.userDetails.id);
+
   const location = useLocation();
   const productDetails = location.state.spiceDetails;
-  const [varientSpecificDetails, setVarientSpecificDetails] = useState(''); 
+  const [varientSpecificDetails, setVarientSpecificDetails] = useState("");
 
-  function ShowVarientDetails(index){
-    setVarientSpecificDetails(productVarientDetails[index])
+  function ShowVarientDetails(index) {
+    setVarientSpecificDetails(productVarientDetails[index]);
   }
   const [product_img, setProduct_img] = useState(
     `http://127.0.0.1:8000/media/${productDetails.product_img1}`
@@ -22,12 +23,11 @@ function Singleprodct() {
 
   const [quantity, setQuantity] = useState(1);
   const [reviewAndRating, setReviewAndRating] = useState();
-  const [productVarientDetails, setProductVarientDetails] = useState('');
+  const [productVarientDetails, setProductVarientDetails] = useState("");
   const rating = reviewAndRating
     ? reviewAndRating.reduce((acc, obj) => acc + obj.rating) /
       reviewAndRating.length
     : 0;
-  console.log("Rating:", rating);
 
   useEffect(() => {
     fetchProductVarients();
@@ -39,14 +39,10 @@ function Singleprodct() {
     try {
       const response = await axiosInstance.get(
         `/reviewAndRating/${productDetails.id}`
-        
       );
       setReviewAndRating(response.data);
-      console.log('error');
-    } catch (error) {
-      
-    }
-  },[productDetails.id])
+    } catch (error) {}
+  }, [productDetails.id]);
 
   // fetch product varients from admin panel
   const fetchProductVarients = async () => {
@@ -56,37 +52,67 @@ function Singleprodct() {
       );
       setProductVarientDetails(response.data);
       console.log("Product Varient Details:", response.data);
-      
     } catch (error) {
       console.log(error);
     }
   };
 
-  const handleQuantityChange = (event) => {
-    setQuantity(Number(event.target.value));
+  const handleQuantityDecrese = () => {
+    if (quantity - 1 > 0) {
+      setQuantity(quantity - 1);
+    }
+  };
+  const handleQuantityIncrese = (stock) => {
+    if (!stock) return;
+    if (quantity + 1 <= stock) {
+      setQuantity(quantity + 1);
+    }
   };
 
-// addtocart
+  // addtocart
   const addToCart = async () => {
-    if (!varientSpecificDetails) { // Check the specific variant details instead of productVarientDetails
+    if (!varientSpecificDetails) {
+      // Check the specific variant details instead of productVarientDetails
       toast.error("Please select a variant!", {
         position: "bottom-center", // Ensure this position is valid
       });
       return; // Add return to stop further execution
     }
-    
+
     try {
       const formData = new FormData();
       formData.append("quantitiy", quantity);
       formData.append("id", varientSpecificDetails.id);
       formData.append("user_id", user_id);
-      await axiosInstance.post("/userCart", formData, );
+      await axiosInstance.post("/userCart", formData);
       toast.error("Added to Cart!", {
         position: "bottom-center", // Ensure this position is valid
       });
     } catch (error) {
       console.log(error);
-      
+    }
+  };
+
+// addToWishlist
+  const addToWishlist = async () => {
+    if (!varientSpecificDetails) {
+      // Check the specific variant details instead of productVarientDetails
+      toast.error("Please select a variant!", {
+        position: "bottom-center",
+      });
+      return; // Add return to stop further execution
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("id", varientSpecificDetails.id);
+      formData.append("user_id", user_id);
+      await axiosInstance.post("/userWishlist", formData);
+      toast.info("Added to Wishlist!", {
+        position: "bottom-center",
+      });
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -95,135 +121,195 @@ function Singleprodct() {
   };
 
   return (
-    <div className="container mx-auto px-4">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div>
-        <div className="w-full max-w-md mx-auto">
-          <ReactImageMagnify
-            {...{
-              smallImage: {
-                alt: "Product Image",
-                isFluidWidth: true,
-                src: product_img,
-              },
-              largeImage: {
-                src: product_img,
-                width: 1500,
-                height: 1800,
-              },
-              enlargedImageContainerStyle: { zIndex: 1000 },
-            }}
-          />
-        </div>
-        <div className="flex gap-2 mt-4">
-          <img
-            className="w-24 h-24 border rounded cursor-pointer"
-            src={`http://127.0.0.1:8000/media/${productDetails.product_img1}`}
-            alt="not found"
-            onClick={() =>
-              setProduct_img(
-                `http://127.0.0.1:8000/media/${productDetails.product_img1}`
-              )
-            }
-          />
-          <img
-            className="w-24 h-24 border rounded cursor-pointer"
-            src={`http://127.0.0.1:8000/media/${productDetails.product_img2}`}
-            alt="not found"
-            onClick={() =>
-              setProduct_img(
-                `http://127.0.0.1:8000/media/${productDetails.product_img2}`
-              )
-            }
-          />
-          <img
-            className="w-24 h-24 border rounded cursor-pointer"
-            src={`http://127.0.0.1:8000/media/${productDetails.product_img3}`}
-            alt="not found"
-            onClick={() =>
-              setProduct_img(
-                `http://127.0.0.1:8000/media/${productDetails.product_img3}`
-              )
-            }
-          />
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-8 bg-gray-50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Column - Image Section */}
+        <div className="space-y-6">
+          {/* Main Image */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="w-full max-w-md mx-auto">
+              <ReactImageMagnify
+                {...{
+                  smallImage: {
+                    alt: "Product Image",
+                    isFluidWidth: true,
+                    src: product_img,
+                  },
+                  largeImage: {
+                    src: product_img,
+                    width: 400,
+                    height: 500,
+                  },
+                  enlargedImageContainerStyle: {
+                    zIndex: 100,
+                    overflow: "hidden",
+                    background: "#fff",
+                  },
+                  enlargedImagePosition: "over",
+                }}
+              />
+            </div>
+          </div>
 
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">{productDetails.title}</h1>
-        <p className="text-gray-600">{productDetails.description}</p>
-        <p className="text-gray-600">Rating: {rating}</p>
-        <Link
-          to={`/userReviews/${productDetails.id}`}
-          className="text-blue-500 hover:underline"
-        >
-          Reviews
-        </Link>
+          {/* Thumbnail Images */}
+          <div className="flex justify-center gap-4">
+            <img
+              className="w-24 h-24 rounded-lg shadow hover:ring-2 ring-blue-500 transition-all cursor-pointer object-cover"
+              src={`http://127.0.0.1:8000/media/${productDetails.product_img1}`}
+              alt="Product thumbnail 1"
+              onClick={() =>
+                setProduct_img(
+                  `http://127.0.0.1:8000/media/${productDetails.product_img1}`
+                )
+              }
+            />
+            <img
+              className="w-24 h-24 rounded-lg shadow hover:ring-2 ring-blue-500 transition-all cursor-pointer object-cover"
+              src={`http://127.0.0.1:8000/media/${productDetails.product_img2}`}
+              alt="Product thumbnail 2"
+              onClick={() =>
+                setProduct_img(
+                  `http://127.0.0.1:8000/media/${productDetails.product_img2}`
+                )
+              }
+            />
+            <img
+              className="w-24 h-24 rounded-lg shadow hover:ring-2 ring-blue-500 transition-all cursor-pointer object-cover"
+              src={`http://127.0.0.1:8000/media/${productDetails.product_img3}`}
+              alt="Product thumbnail 3"
+              onClick={() =>
+                setProduct_img(
+                  `http://127.0.0.1:8000/media/${productDetails.product_img3}`
+                )
+              }
+            />
+          </div>
+        </div>
 
-        {varientSpecificDetails && (
-          <p className="text-lg font-semibold">
-            Price: {varientSpecificDetails.variant_price}
+        {/* Right Column - Product Details */}
+        <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
+          {/* Product Title */}
+          <h1 className="text-3xl font-bold text-gray-800">
+            {productDetails.title}
+          </h1>
+
+          {/* Description */}
+          <p className="text-gray-600 text-lg leading-relaxed">
+            {productDetails.description}
           </p>
-        )}
 
-        {productVarientDetails &&
-          productVarientDetails.map((varients, index) => (
-            <button
-              key={index}
-              onClick={() => ShowVarientDetails(index)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded m-1"
+          {/* Rating and Reviews */}
+          <div className="flex items-center gap-4">
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              Rating: {rating}
+            </span>
+            <Link
+              to={`/userReviews/${productDetails.id}`}
+              className="text-blue-600 hover:text-blue-800 font-medium"
             >
-              {varients.weight}
-            </button>
-          ))}
-
-        {productVarientDetails && (
-          <p className="text-gray-600">Stock: {varientSpecificDetails.stock}</p>
-        )}
-
-        <p className="text-gray-600">
-          Shelf Life: {productDetails.shelf_life}
-        </p>
-
-        <div className="flex items-center gap-4">
-          <div>
-            
+              View Reviews
+            </Link>
           </div>
-          <label htmlFor="quantity" className="text-gray-600 m-auto">
-            Select the quantity:
-          </label>
-          <div> <input
-            id="quantity"
-            type="number"
-            min="1"
-            max={varientSpecificDetails.stock}
-            value={quantity}
-            onChange={handleQuantityChange}
-            className="bg-gray-200 w-16 text-center border border-gray-300 rounded py-1"
-          /></div>
-         
+
+          {/* Price */}
+          {varientSpecificDetails && (
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-2xl font-bold text-gray-900">
+                Price: ₹{varientSpecificDetails.variant_price}
+              </p>
+            </div>
+          )}
+
+          {/* Variants */}
+          <div className="space-y-2">
+            <label className=" block text-sm font-medium text-gray-700">
+              Select Weight:
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {productVarientDetails &&
+                productVarientDetails.map((varients, index) => (
+                  <button
+                    key={index}
+                    onClick={() => ShowVarientDetails(index)}
+                    className="bg-white px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:bg-blue-100 transition-colors"
+                  >
+                    {varients.weight}
+                  </button>
+                ))}
+            </div>
+          </div>
+
+          {/* Stock Info */}
+          {productVarientDetails && (
+            <div className="bg-green-50 p-3 rounded-lg">
+              <p className="text-green-800 font-medium">
+                Stock Available: {varientSpecificDetails.stock}
+              </p>
+            </div>
+          )}
+
+          {/* Shelf Life */}
+          <div className="bg-yellow-50 p-3 rounded-lg">
+            <p className="text-yellow-800 font-medium">
+              Shelf Life: {productDetails.shelf_life}
+            </p>
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="flex items-center gap-4 mt-2">
+            <button
+              onClick={() => handleQuantityDecrese()}
+              disabled={!varientSpecificDetails}
+              className={`px-2 py-1 rounded ${
+                !varientSpecificDetails
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+            >
+              -
+            </button>
+            <p className="font-medium">{quantity}</p>
+            <button
+              onClick={() =>
+                handleQuantityIncrese(varientSpecificDetails?.stock)
+              }
+              disabled={!varientSpecificDetails}
+              className={`px-2 py-1 rounded ${
+                !varientSpecificDetails
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+            >
+              +
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          {varientSpecificDetails && varientSpecificDetails.stock >= 1 && (
+            <div className="flex gap-4 pt-4">
+              <button
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                onClick={addToCart}
+              >
+                Add to Cart
+              </button>
+              <button className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              onClick={()=>addToWishlist(varientSpecificDetails.id)}
+              >
+                Wishlist
+              </button>
+              <button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                Buy Now
+              </button>
+            </div>
+          )}
+          {varientSpecificDetails && varientSpecificDetails.stock <= 0 && (
+            <p className="text-red-500">Out of Stock</p>
+          )}
         </div>
-
-        {productVarientDetails && (
-          <div className="flex gap-4 m-5 ">
-            <button className="bg-green-300 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" onClick={addToCart}>
-              Add to Cart
-            </button>
-            <button className="bg-blue-800 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-              Wishlist
-            </button>
-            <button className="bg-red-800 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
-              Buy Now
-            </button>
-          </div>
-        )}
       </div>
     </div>
-  </div>
-    
   );
-  
-  
 }
 
 export default Singleprodct;

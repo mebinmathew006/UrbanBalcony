@@ -4,12 +4,13 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import Header from "../../../components/header/header";
 import Footer from "../../../components/footer/Footer";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const CheckoutPage = () => {
+  const navigate= useNavigate()
   const location = useLocation();
-  console.log(location);
-  
+  const keyId = import.meta.env.RAZORPAY_KEY_ID;
   const {cart,totalAmount}=location.state || {}
 
   const [userAddress, setUserAddress] = useState([]);
@@ -31,17 +32,76 @@ const CheckoutPage = () => {
     }
   };
 
+// handles all the payment methods
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
   
     try {
       // Prepare order data
+      if (paymentMethod == 'card') {
+        try {
+          // Send a request to the server to create a Razorpay order
+          const razorpayOrderResponse = await axiosInstance.post('/createRazorpayOrder', {
+            user_id,
+            totalAmount, // Send total amount to the backend
+          });
+      
+          const { razorpay_order_id, amount, currency } = razorpayOrderResponse.data;
+      
+          // Initialize Razorpay checkout
+          const options = {
+            key: keyId, //  your Razorpay key ID
+            amount: amount * 100, // Razorpay expects amount in paisa
+            currency,
+            name: "Urban Balcony",
+            description: "Order Payment",
+            order_id: razorpay_order_id, // Pass the Razorpay order ID
+            handler: async (response) => {
+              // Handle payment success
+              const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
+      
+              // Send payment confirmation to the backend
+              await axiosInstance.post('/userPlaceOrder', {
+                razorpay_payment_id,
+                razorpay_order_id,
+                razorpay_signature,
+                user_id,
+                addressId: selectedAddress,
+                paymentMethod: paymentMethod, // e.g., 'cod', 'card', 'upi'
+                totalAmount: totalAmount,
+
+              });
+      
+              toast.success("Payment Successful! Order Placed.", {
+                position: "bottom-center",
+              });
+              navigate('/userProfile', { state: { tab: 'orders' } });
+            },
+            prefill: {
+              name: "Guest", //cutomer name
+              email: "customercare@urbanbalcony.com",
+              contact: "7356332693",
+            },
+            theme: {
+              color: "#3399cc",
+            },
+          };
+      
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } catch (error) {
+          console.error("Failed to create Razorpay order:", error);
+          alert("An error occurred. Please try again.");
+        }
+      }
+      else{
+      // -----------------------------------------------------------------------------------
       const orderData = {
         user_id,
         addressId: selectedAddress,
         paymentMethod: paymentMethod, // e.g., 'cod', 'card', 'upi'
-        cart: cart,              // Pass cart details
         totalAmount: totalAmount,    // Include total amount
       };
   
@@ -49,18 +109,21 @@ const CheckoutPage = () => {
       const response = await axiosInstance.post('/userPlaceOrder',orderData);
       if (response.status === 201) {
         // Navigate to a success page or show confirmation
-        console.log("Order placed successfully:", response.data);
-        navigate('/order-success', { state: { order: response.data } });
+         toast.error("Order Placed Successfully!", {
+                position: "bottom-center", // Ensure this position is valid
+              });
+        navigate('/userProfile', { state: { tab: 'orders' } });
       } else {
         console.error("Unexpected response:", response);
-        alert("Failed to place the order. Please try again.");
+        toast.error("Failed to place the order. Please try again.");
       }
+    }
     } catch (error) {
       console.error("Order placement failed:", error);
-      alert("An error occurred while placing the order. Please try again.");
+      toast.error("An error occurred while placing the order. Please try again.");
     } finally {
       setLoading(false);
-    }
+     }
   };
   
 
@@ -74,11 +137,16 @@ const CheckoutPage = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Delivery Address Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <Truck className="mr-2" size={20} />
                 Choose Delivery Address
               </h2>
-
+              <label class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600" onClick={()=>navigate('/userProfile', { state: { tab: 'address' } })}>
+  New Address ?
+</label>
+              </div>
+              
               <div className="space-y-4">
                 {userAddress.map((address) => (
                   <label
@@ -126,7 +194,7 @@ const CheckoutPage = () => {
 
               <div className="space-y-4">
                 {/* Credit/Debit Card */}
-                {/* <label
+                <label
                 className={`block p-4 border rounded-lg cursor-pointer transition-colors
                   ${paymentMethod === 'card'
                     ? 'border-blue-500 bg-blue-50'
@@ -143,13 +211,13 @@ const CheckoutPage = () => {
                     className="mr-4"
                   />
                   <div>
-                    <p className="font-medium">Credit/Debit Card</p>
+                    <p className="font-medium">Pay Now</p>
                     <p className="text-gray-600 text-sm mt-1">
-                      Pay securely with your card
+                      Pay securely
                     </p>
                   </div>
                 </div>
-              </label> */}
+              </label>
 
                 {/* Cash on Delivery */}
                 <label

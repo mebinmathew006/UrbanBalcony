@@ -5,7 +5,7 @@ import adminaxiosInstance from "../../../adminaxiosconfig";
 function UserManage() {
   const toggleUserStatus = async (id) => {
     try {
-      await adminaxiosInstance.post(`/usermanage/${id}`); 
+      await adminaxiosInstance.patch(`/usermanage/${id}`); 
       fetchUsers();
     } catch (error) {
       console.log(error);

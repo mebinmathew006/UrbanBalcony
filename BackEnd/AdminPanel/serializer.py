@@ -55,7 +55,7 @@ class ProductSerializer(serializers.ModelSerializer):
     product_img1 = serializers.ImageField(required=False, allow_null=True)
     product_img2 = serializers.ImageField(required=False, allow_null=True)
     product_img3 = serializers.ImageField(required=False, allow_null=True)
-    
+    available_quantity=serializers.IntegerField(required=False)
     class Meta:
         model = Product
         fields = [

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order
+from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order,OrderItem,Wallet,WalletTransaction
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
@@ -11,12 +11,15 @@ from django.shortcuts import get_object_or_404
 from .serializer import CategorySerializer,ProductSerializer,ProductVariantSerializer
 from User.serializer import CartSerializer,OrderSerializer
 from rest_framework.exceptions import ErrorDetail
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.db import transaction
+from django.db.models import F
 # Create your views here.
 
 class UserManage(APIView):
     def get (self,request):
         customuser = CustomUser.objects.all()
-        
         return Response(customuser.values(),200)
     
     def patch(self,request,id):
@@ -143,63 +146,105 @@ class AdminUpdateCategory(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 class Varientmanage(APIView):
-        
-    def get (self,request,id):
+
+    def get(self, request, id):
         product = ProductVariant.objects.select_related('product').filter(product_id=id)
         if product.exists():
-            serializer=ProductVariantSerializer(product,many=True)
-            return Response(serializer.data,status.HTTP_200_OK)
+            serializer = ProductVariantSerializer(product, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-    
-    def post (self,request):
-        serializer=ProductVariantSerializer(data=request.data)
-        if serializer.is_valid():
-            product=serializer.save()
-            data = {
-            'id': product.id,
-            'status': "success"
-                }
-            return Response(data, status=status.HTTP_201_CREATED)
-        return Response({'error': serializer.error_messages}, 
-                            status=status.HTTP_400_BAD_REQUEST)
 
-    def patch(self,request,id):
-        productVariant = ProductVariant.objects.get(id=id)
-        productVariant.is_active = not productVariant.is_active
-        productVariant.save()
-        data = {
-            'id': productVariant.id,
-            'is_active': productVariant.is_active
-        }
-        return Response(data,200)
-    
-    def put (self,request):
-        variant=get_object_or_404(ProductVariant,id=request.data.get('id'))
-        
-        serializer=ProductVariantSerializer(variant,data=request.data)
-        print(serializer.initial_data)
+    def post(self, request, **kwargs):
+        serializer = ProductVariantSerializer(data=request.data)
         if serializer.is_valid():
-            product=serializer.save()
+            product = serializer.save()
             data = {
-            'id': product.id,
-            'status': "success"
-                }
+                'id': product.id,
+                'status': "success"
+            }
             return Response(data, status=status.HTTP_201_CREATED)
-        print(serializer.error_messages)
-        return Response({'error': serializer.error_messages}, 
-                            status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, id):
+        product_variant = ProductVariant.objects.get(id=id)
+        product_variant.is_active = not product_variant.is_active
+        product_variant.save()
+        data = {
+            'id': product_variant.id,
+            'is_active': product_variant.is_active
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def put(self, request, **kwargs):
+        variant = get_object_or_404(ProductVariant, id=request.data.get('id'))
+        serializer = ProductVariantSerializer(variant, data=request.data)
+        if serializer.is_valid():
+            product = serializer.save()
+            data = {
+                'id': product.id,
+                'status': "success"
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class AdmingetuserOrders(APIView):
     def get(self, request):
         try:
-            # Change prefetch_related to match your model relationship
-            orders = Order.objects.prefetch_related(
-                'order_items__product_variant',  # Changed from productvariant to product
-                'order_items__product_variant__product',  # Changed from productvariant to product
+            if request.query_params.get('action')=='return':
+                orders = Order.objects.prefetch_related(
+                'order_items__product_variant',  
+                'order_items__product_variant__product',  
                 'payment',
                 'address'
-            )
+            ).filter(order_items__status='Requested for Return')
+            # Change prefetch_related to match your model relationship
+            else:
+                
+                orders = Order.objects.prefetch_related(
+                    'order_items__product_variant',  
+                    'order_items__product_variant__product',  
+                    'payment',
+                    'address'
+                ).exclude(order_items__status='Requested for Return')
             serializer = OrderSerializer(orders, many=True,partial=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+    def patch(self, request, id):
+        try:
+            action = request.data.get('action')
+            user_id = request.data.get('userId')
+            amount = request.data.get('amount')
+            order_id = request.data.get('orderId')
+            
+            orderitem = OrderItem.objects.get(id=id)
+        except OrderItem.DoesNotExist:
+            return Response({'error': 'OrderItem not found'}, status=status.HTTP_404_NOT_FOUND)
+        if action not in ['Delivered', 'Returned']:
+            return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'Returned' and (not user_id or not amount or not order_id):
+            return Response({'error': 'Missing required fields for Returned action'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                if action == 'Delivered':
+                    orderitem.status = 'Delivered Return not Approved'
+                elif action == 'Returned':
+                    orderitem.status = 'Returned'
+                    wallet, created = Wallet.objects.get_or_create(user_id=user_id)
+                    if not created:
+                        # Update the existing wallet's balance
+                        wallet.balance = F('balance') + amount
+                        wallet.save()
+                    WalletTransaction.objects.create(wallet=wallet, amount=amount, order_id=order_id)
+
+                orderitem.save()
+
+            return Response({'status': 'success', 'updated_status': orderitem.status}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser,Review,Address,Order,OrderItem,Payment,Product,Cart,CartItem
+from .models import CustomUser,Review,Address,Order,OrderItem,Payment,Transaction,Cart,CartItem,Wishlist,WishlistProduct
 import re
 from AdminPanel.serializer import ProductSimpleSerializer,ProductVariantSerializer
 
@@ -77,32 +77,40 @@ class ReviewAndRatingSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Review must be atleast 10 characters long")
         return value
     
-class OrderItemSerializer(serializers.ModelSerializer):
-    product = ProductSimpleSerializer(source='product_variant.product', read_only=True)
-
-    class Meta:
-        model = OrderItem
-        fields = ['id', 'product', 'quantity', 'total_amount', 'status']        
-
 class AddressSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(write_only=True)
     class Meta:
         model=Address
         fields=['id','address_type','city','state','pin_code','land_mark','alternate_number','user_id']
         
+class OrderItemSerializer(serializers.ModelSerializer):
+    variant=ProductVariantSerializer(source='product_variant',read_only=True)
+    address_details = AddressSerializer(source='order.address', read_only=True)
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details']  
+        
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not self.context.get('include_address_details', False):
+            data.pop('address_details', None)  # Remove address if not needed
+        return data
+
+
+        
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Payment
-        fields = ['id', 'pay_method', 'status', 'transaction_id']
+        fields = ['id' ,'pay_method', 'status']
         
 class OrderSerializer(serializers.ModelSerializer):
     address_details = AddressSerializer(source='address', read_only=True)
-    order_items = OrderItemSerializer(many=True, read_only=True)  
+    order_items = OrderItemSerializer(many=True, read_only=True, context={'include_address_details': False})  
     payment_details = PaymentSerializer(source='payment', read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'payment', 'address_details', 'shipping_charge', 
+        fields = ['id', 'user', 'payment', 'address_details','address', 'shipping_charge', 
                   'net_amount', 'order_items', 'payment_details', 'order_date', 
                   'delivery_date', 'status']
 
@@ -111,7 +119,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CartItem
-        fields = ['id', 'quantity','product_variant']
+        fields = ['id', 'quantity','product_variant','cart']
 
 class CartSerializer(serializers.ModelSerializer):
     cart_items = CartItemSerializer( many=True, read_only=True)  # Changed to handle multiple items
@@ -121,5 +129,25 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'cart_items']  # Added id field
 
         
-
+class PaymentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Payment
+        fields=['user','coupon','wallet','status','pay_method']
+        
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Transaction
+        fields=['payment','status','amount']
+        
+        
+class WishlistProductSerializer(serializers.ModelSerializer):
+    product_variant = ProductVariantSerializer(read_only=True)
+    class Meta:
+        model=WishlistProduct
+        fields = ['id','product_variant','wishlist']
+class WishlistSerilaizer(serializers.ModelSerializer):
+    wishlist_products = WishlistProductSerializer(many=True, read_only=True)
+    class Meta:
+        model=Wishlist
+        fields = ['id', 'user', 'wishlist_products']
 

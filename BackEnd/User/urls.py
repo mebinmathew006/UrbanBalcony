@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from .views import *
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     path('',UserHome.as_view(),name='userHome'),
@@ -24,6 +28,7 @@ urlpatterns = [
     path('userDetails/<int:id>',UserLogin.as_view(),name='userDetails'),
     path('userAddress/<int:id>',UserAddress.as_view(),name='userAddress'),
     path('userOrders/<int:id>',UserOrder.as_view(),name='userOrders'),
+    path('singleOrderDetails/<int:id>',SingleOrderDetails.as_view(),name='singleOrderDetails'),
     path('userAddress',UserAddress.as_view(),name='userAddressUpdate'),
     path('userSignup',UserSignup.as_view(),name='userSignup'),
     path('google_login',GoogleAuth.as_view(),name='google_login'),
@@ -32,6 +37,12 @@ urlpatterns = [
     path('reviewAndRating/<int:id>',ReviewAndRating.as_view(),name='ReviewAndRating'),
     path('userCart/<int:id>',UserCart.as_view(),name='userCart'),
     path('userCart',UserCart.as_view(),name='userCart'),
+    path('userWishlist',UserWishlist.as_view(),name='userWishlist'),
+    path('userWishlist/<int:id>',UserWishlist.as_view(),name='userWishlist'),
     path('userPlaceOrder',UserPlaceOrder.as_view(),name='userPlaceOrder'),
+    path('userLogout',UserLogout.as_view(),name='userLogout'),
     path('getUserDetailsForAuthentication',getUserDetailsAgainWhenRefreshing,name='getUserDetailsForAuthentication'),
+    path('refresh_token', TokenRefreshFromCookieView.as_view(), name='refresh_token'),
+    path('createRazorpayOrder', CreateRazorpayOrder.as_view(), name='createRazorpayOrder'),
+    
 ]

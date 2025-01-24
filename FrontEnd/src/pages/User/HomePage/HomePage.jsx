@@ -2,8 +2,12 @@ import React, { useEffect, useState } from 'react'
 import Header from '../../../components/header/header';
 import Footer from '../../../components/footer/Footer';
 import axiosInstance from '../../../axiosconfig';
-import ProductView from '../../../components/productView/productView';
+import { useSelector } from 'react-redux';
+import ProductView from '../../../components/productView/ProductView';
 function HomePage() {
+  const usser=useSelector((state)=>state.userDetails)
+  console.log(usser);
+  
     const [data,setData]=useState([])
 
     useEffect(()=>{

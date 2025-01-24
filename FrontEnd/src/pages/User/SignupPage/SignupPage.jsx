@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../../axiosconfig";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from 'react-toastify';
+import publicaxiosconfig from "../../../publicaxiosconfig";
 
 function SignupPage() {
   
@@ -54,7 +54,7 @@ function SignupPage() {
       formData.append("password", data.password);
       formData.append("profile_picture", data.profilepicture[0]); // Attach file
 
-      await axiosInstance.post("/userSignup", formData, {
+      await publicaxiosconfig.post("/userSignup", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

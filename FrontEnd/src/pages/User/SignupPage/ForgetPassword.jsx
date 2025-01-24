@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import axiosInstance from '../../../axiosconfig'
 import { useNavigate } from 'react-router-dom'
+import publicaxiosconfig from '../../../publicaxiosconfig'
 
 function ForgetPassword() {
   const [email,setEmail]=useState('')
@@ -8,8 +8,15 @@ function ForgetPassword() {
 
   const ForgetPasswordHandler=async (event)=>{
     event.preventDefault()
-      const response= await axiosInstance.post('/forgetPassword')
-      navigate('/ResetPassword')    
+    try {
+      console.log(email);
+      const response= await publicaxiosconfig.post('/forgetPassword',{email})
+      navigate('/ResetPassword',{state:{email}}) 
+    } catch (error) {
+      console.log(error);
+      
+    }
+         
   }
 
   return (
@@ -25,6 +32,8 @@ function ForgetPassword() {
               type="email"
               className="form-control input-custom"
               placeholder="Enter your email"
+              value={email}
+              onChange={(event)=>setEmail(event.target.value)}
             />
           </div>
           <button type="submit" className="btn btn-primary w-100">

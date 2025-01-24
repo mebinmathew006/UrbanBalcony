@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from datetime import datetime, timedelta
+import jwt
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,11 +59,7 @@ INSTALLED_APPS = [
 ]
 AUTH_USER_MODEL = 'User.CustomUser'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
+
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
@@ -69,15 +67,13 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Add your frontend's origin
-]
+
 SESSION_COOKIE_SAMESITE = 'None'  # Required for cross-origin cookies
 SESSION_COOKIE_SECURE = False    # Use True in production with HTTPS
 CSRF_COOKIE_SAMESITE = 'None'    # Same as above
 CSRF_COOKIE_SECURE = False 
 
-GOOGLE_CLIENT_ID = "489008736122-if0fclbj37c8m0p04ksq1p71crng8g2k.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -97,7 +93,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
-        'APP_DIRS': True,
+        'APP_DIRS': True,   
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -184,3 +180,25 @@ ACCOUNT_USERNAME_REQUIRED = False         # Username is not required
 ACCOUNT_AUTHENTICATION_METHOD = 'email'   # Use email for authentication
 ACCOUNT_EMAIL_REQUIRED = True             # Email is required
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Or your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('MYEMAIL')
+EMAIL_HOST_PASSWORD = config('APP_PASSWORD_FOR_GMAIL')  # Use App Password for Gmail
+
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import "./Login.css";
-import axiosInstance from "../../../axiosconfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import {setUserDetails} from '../../../store/UserDetailsSlice'
+import publicaxiosconfig from "../../../publicaxiosconfig";
 
 
 function Login() {
@@ -63,10 +63,13 @@ function Login() {
 
   const handleCredentialResponse = async (response) => {
     try {
-      const backendResponse = await axiosInstance.post('/google_login', {
+      const backendResponse = await publicaxiosconfig.post('/google_login', {
         credential: response.credential // Send the credential token to your backend
       });
       console.log('Backend Response:', backendResponse.data);
+      const userDetailsGoogle=backendResponse.data.user
+      dispatch(setUserDetails(userDetailsGoogle));
+
       // Handle successful login (e.g., save token, redirect)
       if (backendResponse.data.user.is_admin) {
         navigate("/AdminDashboard");
@@ -84,14 +87,12 @@ function Login() {
 
   const loginSubmitHandler = async (data) => {
     try {
-      const response = await axiosInstance.post("/userLogin", data);
+      const response = await publicaxiosconfig.post("/userLogin", data);
 
       // setting the user details in redux store
       const userDetails = response.data.user;
-      console.log('userDetails',userDetails);
       dispatch(setUserDetails(userDetails));
-      localStorage.setItem('userDetails',JSON.stringify(userDetails));
-      // in app.jsx I set the user details in local storage to persist the user details even after page refresh
+      // localStorage.setItem('userDetails',JSON.stringify(userDetails));
 
       if (response.data.user.is_admin) {
         navigate("/AdminDashboard");

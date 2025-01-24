@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.utils import timezone
+from datetime import  timedelta
 from django.core.validators import MinValueValidator
 from django.conf import settings
 # Create your models here.
@@ -101,13 +102,6 @@ class ProductVariant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    
-    
-    def save(self, *args, **kwargs):
-        # Calculate the total amount
-        if self.product_variant:
-            self.total_amount = self.quantity * self.product_variant.variant_price
-        super().save(*args, **kwargs)
 
 class Category(models.Model):
     name = models.CharField(max_length=255,unique=True)
@@ -134,15 +128,11 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.product.title} - {self.user.email}"
-    
-    
-
-
 
 class Order(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='orders')
-    payment = models.ForeignKey('Payment', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
-    address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='users')
+    payment = models.ForeignKey('Payment', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
+    address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='address')
     order_date = models.DateField(default=timezone.now)
     delivery_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=50, default='pending')
@@ -164,12 +154,12 @@ class OrderItem(models.Model):
     
     def save(self, *args, **kwargs):
         # Calculate the total amount
-        if self.product:
-            self.total_amount = self.quantity * self.product.price
+        if self.product_variant:
+            self.total_amount = self.quantity * self.product_variant.variant_price
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Item #{self.id} - Order #{self.order.id} - {self.product}"
+        return f"Item #{self.id} - Order #{self.order.id} - {self.product_variant}"
 
 
 class Payment(models.Model):
@@ -186,12 +176,16 @@ class Payment(models.Model):
 
 class Transaction(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='transactions')
-    status = models.CharField(max_length=255, default='pending')
+    status = models.CharField(max_length=255, default='pending')  # e.g., 'pending', 'paid', 'failed'
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateTimeField(default=timezone.now)
 
-    def __str__(self):
-        return f"Transaction #{self.id} - {self.payment}"
+class Razorpay(models.Model):
+    # Razorpay-specific fields
+    razorpay_order_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    razorpay_payment_id = models.CharField(max_length=255, blank=True, null=True)
+    razorpay_signature = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=255, default='pending')
 
 
 class Cart(models.Model):
@@ -209,7 +203,7 @@ class CartItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
-        return f"CartItem #{self.id} - Cart #{self.cart.id} - {self.product}"
+        return f"CartItem #{self.id} - Cart #{self.cart.id} - {self.product_variant}"
 
 class Address(models.Model):
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='addresses')
@@ -252,3 +246,30 @@ class WalletTransaction(models.Model):
 
     def __str__(self):
         return f"Transaction #{self.id} - Wallet #{self.wallet.id}"
+    
+    
+class OTP(models.Model):
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    
+    def save(self, *args, **kwargs):
+        # Set OTP expiration to 10 minutes from creation
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=10)
+        super().save(*args, **kwargs)
+    
+    def is_expired(self):
+        return timezone.now() > self.expires_at 
+    
+class Wishlist(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='wishlists')
+
+class WishlistProduct(models.Model):
+    id = models.AutoField(primary_key=True)
+    wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='wishlist_products')
+    product_variant = models.ForeignKey('ProductVariant', on_delete=models.CASCADE, related_name='wishlist_entries')
+
+    

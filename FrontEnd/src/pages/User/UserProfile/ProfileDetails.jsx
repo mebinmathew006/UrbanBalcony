@@ -4,6 +4,8 @@ import axiosInstance from "../../../axiosconfig";
 import UserEditDetails from "./UserEditDetails";
 import { Component } from "lucide-react";
 function ProfileDetails() {
+  const user_id = useSelector((state) => state.userDetails.id);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // save the updated user data from the modal
@@ -35,7 +37,6 @@ function ProfileDetails() {
     }
   };
 
-  const user_id = useSelector((state) => state.userDetails.id);
   const [user, setUser] = useState({});
 
   
