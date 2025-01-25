@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import Cropper from "react-cropper";
+import "cropperjs/dist/cropper.css";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 
 function ProductAdd() {
-  const [categories,setCategories]=useState()
-  useEffect(()=>{
-    fetchCategory()
-  },[])
-  async function  fetchCategory(){
-  const response = await adminaxiosInstance.get('/categorymanage')
-  setCategories(response.data)
+  const [categories, setCategories] = useState([]);
+  const [croppedImages, setCroppedImages] = useState({});
+  const cropperRefs = useRef({});
+
+  useEffect(() => {
+    fetchCategory();
+  }, []);
+
+  async function fetchCategory() {
+    const response = await adminaxiosInstance.get("/categorymanage");
+    setCategories(response.data);
   }
+
   const navigate = useNavigate();
   const [errorsFromBackend, setErrorsFromBackend] = useState({
     commonError: "",
@@ -24,20 +31,35 @@ function ProductAdd() {
     formState: { errors: validationErrors },
   } = useForm();
 
-  const validateFile = (file) => {
-    if (file.length === 0) {
-      return "No file selected.";
+  const handleImageChange = (event, fieldName) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCroppedImages((prev) => ({
+          ...prev,
+          [fieldName]: reader.result, // Store the preview for Cropper
+        }));
+      };
+      reader.readAsDataURL(file);
     }
-    const allowedTypes = ["image/jpeg", "image/png"];
-    const fileType = file[0]?.type; // Ensure we're accessing the first file
-    console.log("File Type:", fileType);
-  
-    if (!allowedTypes.includes(fileType)) {
-      return "Only JPG, JPEG, and PNG files are allowed.";
-    }
-    return true;
   };
-  
+
+  const getCroppedImage = async (fieldName) => {
+    const cropper = cropperRefs.current[fieldName]?.cropper;
+    if (cropper && cropper.getCroppedCanvas()) {
+      return new Promise((resolve) => {
+        cropper.getCroppedCanvas().toBlob(
+          (blob) => {
+            resolve(blob); // Return the Blob
+          },
+          "image/jpeg", // Set image type
+          0.9 // Set image quality
+        );
+      });
+    }
+    return null;
+  };
 
   const sigupHandle = async (data) => {
     const formData = new FormData();
@@ -47,9 +69,14 @@ function ProductAdd() {
     formData.append("description", data.description);
     formData.append("shelf_life", data.shelf_life);
     formData.append("price", data.price);
-    formData.append("product_img1", data.product_img1[0]);
-    formData.append("product_img2", data.product_img2[0]);
-    formData.append("product_img3", data.product_img3[0]);
+
+    // Append cropped images as Blob
+    for (const fieldName of ["product_img1", "product_img2", "product_img3"]) {
+      const croppedImageBlob = await getCroppedImage(fieldName);
+      if (croppedImageBlob) {
+        formData.append(fieldName, croppedImageBlob, `${fieldName}.jpg`);
+      }
+    }
 
     try {
       await adminaxiosInstance.post("/adminaddProduct", formData, {
@@ -60,7 +87,6 @@ function ProductAdd() {
       navigate("/ProductManage");
     } catch (error) {
       console.log(error);
-      
       setErrorsFromBackend({
         commonError: error.response?.data?.error || "An error occurred",
       });
@@ -88,18 +114,20 @@ function ProductAdd() {
           </div>
           <div className="mb-3">
             <select
-           
               {...register("category", { required: "Category is required" })}
-              
               className="form-control input-custom"
             >
               <option value=""> Select category</option>
-              {categories && categories.map((category)=>{
-                console.log(category)
-                return(<option key={category.id} value={category.id}>{category.name}</option>)
-                 })}
-
-            </select> 
+              {categories &&
+                categories.map((category) => {
+                  console.log(category);
+                  return (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  );
+                })}
+            </select>
             {validationErrors.category && (
               <p className="text-danger">{validationErrors.category.message}</p>
             )}
@@ -122,7 +150,9 @@ function ProductAdd() {
           </div>
           <div className="mb-3">
             <input
-              {...register("description", { required: "Description is required" })}
+              {...register("description", {
+                required: "Description is required",
+              })}
               type="text"
               className="form-control input-custom"
               placeholder="Enter the description"
@@ -133,10 +163,12 @@ function ProductAdd() {
               </p>
             )}
           </div>
-          
+
           <div className="mb-3">
             <input
-              {...register("shelf_life", { required: "Shelf life is required" })}
+              {...register("shelf_life", {
+                required: "Shelf life is required",
+              })}
               type="text"
               className="form-control input-custom"
               placeholder="Enter the shelf life"
@@ -162,54 +194,27 @@ function ProductAdd() {
             )}
           </div>
           <label htmlFor="">Add Images</label>
-          <div className="mb-3">
-            <input
-              {...register("product_img1", {
-                required: "Product image 1 is required",
-                validate: validateFile,
-              })}
-              type="file"
-              className="form-control input-custom"
-              accept=".jpg,.jpeg,.png"
-            />
-            {validationErrors.product_img1 && (
-              <p className="text-danger">
-                {validationErrors.product_img1.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-3">
-            <input
-              {...register("product_img2", {
-                required: "Product image 2 is required",
-                validate: validateFile,
-              })}
-              type="file"
-              className="form-control input-custom"
-              accept=".jpg,.jpeg,.png"
-            />
-            {validationErrors.product_img2 && (
-              <p className="text-danger">
-                {validationErrors.product_img2.message}
-              </p>
-            )}
-          </div>
-          <div className="mb-3">
-            <input
-              {...register("product_img3", {
-                required: "Product image 3 is required",
-                validate: validateFile,
-              })}
-              type="file"
-              className="form-control input-custom"
-              accept=".jpg,.jpeg,.png"
-            />
-            {validationErrors.product_img3 && (
-              <p className="text-danger">
-                {validationErrors.product_img3.message}
-              </p>
-            )}
-          </div>
+          {["product_img1", "product_img2", "product_img3"].map(
+            (fieldName, index) => (
+              <div key={index} className="mb-3">
+                <input
+                  type="file"
+                  className="form-control input-custom"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={(e) => handleImageChange(e, fieldName)}
+                />
+                {croppedImages[fieldName] && (
+                  <Cropper
+                    src={croppedImages[fieldName]}
+                    style={{ height: 200, width: "100%" }}
+                    aspectRatio={1} // Set aspect ratio
+                    guides={true}
+                    ref={(ref) => (cropperRefs.current[fieldName] = ref)}
+                  />
+                )}
+              </div>
+            )
+          )}
           {errorsFromBackend.commonError && (
             <p className="text-danger">{errorsFromBackend.commonError}</p>
           )}

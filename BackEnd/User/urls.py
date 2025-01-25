@@ -44,5 +44,8 @@ urlpatterns = [
     path('getUserDetailsForAuthentication',getUserDetailsAgainWhenRefreshing,name='getUserDetailsForAuthentication'),
     path('refresh_token', TokenRefreshFromCookieView.as_view(), name='refresh_token'),
     path('createRazorpayOrder', CreateRazorpayOrder.as_view(), name='createRazorpayOrder'),
+    path('validate_coupon', ValidateCoupon.as_view(), name='validate_coupon'),
+    path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
+    path('userWallet/<int:id>', UserWallet.as_view(), name='userWallet'),
     
 ]

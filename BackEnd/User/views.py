@@ -1,12 +1,13 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,ProductVariant,CartItem,Payment,OTP,Transaction,Razorpay,Wishlist,WishlistProduct
+from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,ProductVariant,CartItem,Payment,OTP,Transaction,Razorpay,Wishlist,WishlistProduct,Coupon,Wallet
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError,InvalidToken
 from rest_framework import status
 from django.core.files.storage import default_storage
 from .serializer import LoginSerializer,CustomUserSerializer,ReviewAndRatingSerializer,AddressSerializer,OrderSerializer,CartSerializer,PaymentsSerializer,TransactionSerializer,OrderItemSerializer,WishlistSerilaizer
+from AdminPanel.serializer import ProductVariantSerializer
 from rest_framework.exceptions import ErrorDetail
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -14,7 +15,8 @@ from django.conf import settings
 from django.db import transaction
 import random
 import string
-from django.db.models import Avg,F
+from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from rest_framework.decorators import api_view
@@ -89,7 +91,7 @@ def getUserDetailsAgainWhenRefreshing(request):
 class UserHome(APIView):
     permission_classes=[IsAuthenticated]
     def get(self, request):
-        products = Product.objects.select_related('category')
+        products = Product.objects.select_related('category').filter(is_active=True,category__is_active=True)
         return Response(products.values(), status.HTTP_200_OK)
 
 
@@ -108,7 +110,6 @@ class UserLogin(APIView):
                             {'error': {'commonError': [ErrorDetail(string='Your account has been blocked.')]}},
                             status=status.HTTP_403_FORBIDDEN
                         )
-                    
                     # Generate tokens
                     refresh = RefreshToken.for_user(user)
                     access_token = str(refresh.access_token)
@@ -442,9 +443,8 @@ class UserOrder(APIView):
                 'order_items__product_variant__product',  
                 'payment',
                 'address'
-            )
+            ).order_by('created_at')  
             serializer = OrderSerializer(orders, many=True)
-            print(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -541,7 +541,8 @@ class UserPlaceOrder(APIView):
         address_id = request.data.get('addressId')
         payment_method = request.data.get('paymentMethod')
         total_amount = request.data.get('totalAmount')
-
+        coupon_id = request.data.get('coupon_id')
+        print(f"user_id: {user_id}, address_id: {address_id}, payment_method: {payment_method}, total_amount: {total_amount}, coupon_id: {coupon_id}")
         if not user_id or not address_id or not payment_method or not total_amount:
             return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -565,8 +566,11 @@ class UserPlaceOrder(APIView):
                         return Response({"error": "Invalid Razorpay order ID"}, status=status.HTTP_400_BAD_REQUEST)
 
                 # Create payment
-                payment_data = {'user': user_id, 'pay_method': payment_method}
-                payment_serializer = PaymentsSerializer(data=payment_data)
+                if coupon_id==0:
+                    payment_data = {'user': user_id, 'status': payment_status, 'pay_method': payment_method}
+                else:
+                    payment_data = {'user': user_id, 'status': payment_status, 'pay_method': payment_method,'coupon':coupon_id}
+                payment_serializer = PaymentsSerializer(data=payment_data,partial=True)
                 payment_serializer.is_valid(raise_exception=True)
                 payment = payment_serializer.save()
 
@@ -604,17 +608,27 @@ class UserPlaceOrder(APIView):
                 order_items = []
                 for variant in product_variants:
                     ordered_quantity = quantity_mapping[variant.id]
+
+                    # Check stock availability
                     if variant.stock < ordered_quantity:
                         raise ValueError(f"Not enough stock for variant {variant.id}")
+
+                    # Calculate price after offer
+                    offer = variant.product.offers.filter(is_active=True).first()  # Check if an active offer exists
+                    if offer:
+                        price_after_offer = variant.variant_price * (1 - offer.discount_percentage / 100)
+                    else:
+                        price_after_offer = variant.variant_price
 
                     # Reduce stock using F expressions
                     ProductVariant.objects.filter(id=variant.id).update(stock=F('stock') - ordered_quantity)
 
+                    # Append the order item details
                     order_items.append({
                         'order': order.id,
                         'product_variant': variant.id,
                         'quantity': ordered_quantity,
-                        'total_amount': ordered_quantity * variant.variant_price,
+                        'total_amount': ordered_quantity * price_after_offer,  # Use discounted or original price
                     })
 
                 # Create order items in bulk
@@ -675,7 +689,7 @@ class CreateRazorpayOrder(APIView):
             user_id = request.data.get("user_id")
             total_amount = request.data.get("totalAmount")
             currency = request.data.get("currency", "INR")  # Default to INR if not provided
-
+            print(user_id,total_amount)
             if not user_id or not total_amount:
                 return Response({"error": "user_id and totalAmount are required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -776,3 +790,62 @@ class UserWishlist(APIView):
         except Exception as e:
             # Handle unexpected errors
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class VarientForUser(APIView):
+    def get(self, request, id):
+        product_variants = ProductVariant.objects.select_related('product').prefetch_related('product__offers').filter(product_id=id).annotate(
+    price_after_offer=ExpressionWrapper(
+        F('variant_price') - (F('variant_price') * Coalesce(F('product__offers__discount_percentage'), Value(0)) / 100),
+        output_field=FloatField()
+    )
+)
+        
+        if product_variants.exists():
+            serializer = ProductVariantSerializer(product_variants, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+class ValidateCoupon(APIView):
+    def post(self, request):
+        try:
+            coupon_code = request.data.get('code')
+            user_id = request.data.get('user_id')
+            
+            # Fetch the coupon object
+            coupon = get_object_or_404(Coupon, code=coupon_code)
+            
+            # Check if a payment exists for the user and coupon
+            try:
+                payment = Payment.objects.get(user=user_id, coupon=coupon)
+                # If a payment exists, the coupon is already used
+                return Response({'error': 'Coupon is already used'}, status=status.HTTP_400_BAD_REQUEST)
+            except Payment.DoesNotExist:
+                # If no payment exists, return coupon details
+                return Response({
+                    'code': coupon_code,
+                    'value': coupon.coupon_percent,
+                    'type': "percentage",
+                    'id': coupon.id
+                }, status=status.HTTP_200_OK)
+
+        except Coupon.DoesNotExist:
+            return Response({'error': 'Coupon not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        
+class UserWallet(APIView):
+    def get(self,request, id):
+        try:
+            # Fetch wallet for the given user_id
+            wallet,created = Wallet.objects.get_or_create(user__id=id)
+            data = {
+                'balance': str(wallet.balance),
+                'created_at': wallet.created_at,
+                'updated_at': wallet.updated_at,
+            }
+            return Response(data, status=200)
+
+        except Wallet.DoesNotExist:
+            return Response({'error': 'Wallet not found'}, status=404)
+            
+        
+        

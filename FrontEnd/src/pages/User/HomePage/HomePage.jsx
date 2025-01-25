@@ -4,6 +4,7 @@ import Footer from '../../../components/footer/Footer';
 import axiosInstance from '../../../axiosconfig';
 import { useSelector } from 'react-redux';
 import ProductView from '../../../components/productView/ProductView';
+import SortComponent from '../../../components/SortComponent ';
 function HomePage() {
   const usser=useSelector((state)=>state.userDetails)
   console.log(usser);
@@ -25,6 +26,7 @@ function HomePage() {
      return (
        <div>
          <Header page='home'/>
+         <SortComponent/>
          <ProductView data={data} category='Prodcuts'></ProductView>
          
         <Footer/>

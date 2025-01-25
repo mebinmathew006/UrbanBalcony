@@ -8,11 +8,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const CheckoutPage = () => {
-  const navigate= useNavigate()
+  const navigate = useNavigate();
+  let finalTotal=0
   const location = useLocation();
   const keyId = import.meta.env.RAZORPAY_KEY_ID;
-  const {cart,totalAmount}=location.state || {}
-
+  const { cart, totalAmount } = location.state || {};
   const [userAddress, setUserAddress] = useState([]);
   const user_id = useSelector((state) => state.userDetails.id);
   const [selectedAddress, setSelectedAddress] = useState("");
@@ -22,7 +22,41 @@ const CheckoutPage = () => {
   useEffect(() => {
     fetchUserAddress();
   }, []);
+  
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
+  const applyCoupon = async () => {
+    try {
+      const response = await axiosInstance.post("/validate_coupon", {
+        'code': couponCode,
+        'user_id':user_id
+      });
+
+      setAppliedCoupon(response.data);
+      
+    } catch (error) {
+      toast.error("Error applying coupon");
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
+
+  const calculateFinalTotal = () => {
+    finalTotal = totalAmount + 100; // Include shipping
+    if (appliedCoupon) {
+      if (appliedCoupon.type === "percentage") {
+        finalTotal -= (totalAmount * appliedCoupon.value) / 100;
+      } else {
+        finalTotal -= appliedCoupon.value;
+      }
+    }
+
+    return Math.max(finalTotal, 0).toFixed(2); // Prevent negative totals
+  };
   const fetchUserAddress = async () => {
     try {
       const response = await axiosInstance.get(`userAddress/${user_id}`);
@@ -32,24 +66,30 @@ const CheckoutPage = () => {
     }
   };
 
-// handles all the payment methods
+  // handles all the payment methods
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     try {
       // Prepare order data
-      if (paymentMethod == 'card') {
+      if (paymentMethod == "card") {
         try {
+         
+          
           // Send a request to the server to create a Razorpay order
-          const razorpayOrderResponse = await axiosInstance.post('/createRazorpayOrder', {
-            user_id,
-            totalAmount, // Send total amount to the backend
-          });
-      
-          const { razorpay_order_id, amount, currency } = razorpayOrderResponse.data;
-      
+          const razorpayOrderResponse = await axiosInstance.post(
+            "/createRazorpayOrder",
+            {
+              user_id,
+              'totalAmount':finalTotal, // Send total amount to the backend
+            }
+          );
+
+          const { razorpay_order_id, amount, currency } =
+            razorpayOrderResponse.data;
+
           // Initialize Razorpay checkout
           const options = {
             key: keyId, //  your Razorpay key ID
@@ -60,10 +100,14 @@ const CheckoutPage = () => {
             order_id: razorpay_order_id, // Pass the Razorpay order ID
             handler: async (response) => {
               // Handle payment success
-              const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
-      
+              const {
+                razorpay_payment_id,
+                razorpay_order_id,
+                razorpay_signature,
+              } = response;
+
               // Send payment confirmation to the backend
-              await axiosInstance.post('/userPlaceOrder', {
+              await axiosInstance.post("/userPlaceOrder", {
                 razorpay_payment_id,
                 razorpay_order_id,
                 razorpay_signature,
@@ -71,13 +115,13 @@ const CheckoutPage = () => {
                 addressId: selectedAddress,
                 paymentMethod: paymentMethod, // e.g., 'cod', 'card', 'upi'
                 totalAmount: totalAmount,
-
+                coupon_id: appliedCoupon &&appliedCoupon.id || 0,
               });
-      
+              
               toast.success("Payment Successful! Order Placed.", {
                 position: "bottom-center",
               });
-              navigate('/userProfile', { state: { tab: 'orders' } });
+              navigate("/userProfile", { state: { tab: "orders" } });
             },
             prefill: {
               name: "Guest", //cutomer name
@@ -88,44 +132,44 @@ const CheckoutPage = () => {
               color: "#3399cc",
             },
           };
-      
+
           const rzp = new Razorpay(options);
           rzp.open();
         } catch (error) {
           console.error("Failed to create Razorpay order:", error);
           alert("An error occurred. Please try again.");
         }
-      }
-      else{
-      // -----------------------------------------------------------------------------------
-      const orderData = {
-        user_id,
-        addressId: selectedAddress,
-        paymentMethod: paymentMethod, // e.g., 'cod', 'card', 'upi'
-        totalAmount: totalAmount,    // Include total amount
-      };
-  
-      // Call the order placement function
-      const response = await axiosInstance.post('/userPlaceOrder',orderData);
-      if (response.status === 201) {
-        // Navigate to a success page or show confirmation
-         toast.error("Order Placed Successfully!", {
-                position: "bottom-center", // Ensure this position is valid
-              });
-        navigate('/userProfile', { state: { tab: 'orders' } });
       } else {
-        console.error("Unexpected response:", response);
-        toast.error("Failed to place the order. Please try again.");
+        // -----------------------------------------------------------------------------------
+        const orderData = {
+          user_id,
+          addressId: selectedAddress,
+          paymentMethod: paymentMethod, // e.g., 'cod', 'card', 'upi'
+          totalAmount: totalAmount, // Include total amount
+        };
+
+        // Call the order placement function
+        const response = await axiosInstance.post("/userPlaceOrder", orderData);
+        if (response.status === 201) {
+          // Navigate to a success page or show confirmation
+          toast.error("Order Placed Successfully!", {
+            position: "bottom-center", // Ensure this position is valid
+          });
+          navigate("/userProfile", { state: { tab: "orders" } });
+        } else {
+          console.error("Unexpected response:", response);
+          toast.error("Failed to place the order. Please try again.");
+        }
       }
-    }
     } catch (error) {
       console.error("Order placement failed:", error);
-      toast.error("An error occurred while placing the order. Please try again.");
+      toast.error(
+        "An error occurred while placing the order. Please try again."
+      );
     } finally {
       setLoading(false);
-     }
+    }
   };
-  
 
   return (
     <div>
@@ -138,15 +182,20 @@ const CheckoutPage = () => {
             {/* Delivery Address Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <Truck className="mr-2" size={20} />
-                Choose Delivery Address
-              </h2>
-              <label class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600" onClick={()=>navigate('/userProfile', { state: { tab: 'address' } })}>
-  New Address ?
-</label>
+                <h2 className="text-lg font-semibold mb-4 flex items-center">
+                  <Truck className="mr-2" size={20} />
+                  Choose Delivery Address
+                </h2>
+                <label
+                  class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600"
+                  onClick={() =>
+                    navigate("/userProfile", { state: { tab: "address" } })
+                  }
+                >
+                  New Address ?
+                </label>
               </div>
-              
+
               <div className="space-y-4">
                 {userAddress.map((address) => (
                   <label
@@ -184,6 +233,50 @@ const CheckoutPage = () => {
                 ))}
               </div>
             </div>
+            {/* Coupon Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <div className="mr-2" size={20} />
+                Apply Coupon
+              </h2>
+              <div className="flex">
+                <input
+                  type="text"
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  className="flex-grow mr-2 p-2 border rounded-lg bg-white"
+                />
+                {appliedCoupon ? (
+                  <label
+                    onClick={removeCoupon}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                  >
+                    Remove
+                  </label>
+                ) : (
+                  <label
+                    onClick={applyCoupon}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    disabled={!couponCode}
+                  >
+                    Apply
+                  </label>
+                )}
+              </div>
+              {appliedCoupon && (
+                <div className="mt-2 p-2 bg-green-50 border-l-4 border-green-500">
+                  <p className="text-green-700">
+                    Coupon "{appliedCoupon.code}" applied
+                    <span className="ml-2 font-bold">
+                      {appliedCoupon.type === "percentage"
+                        ? `${appliedCoupon.value}% off`
+                        : `₹${appliedCoupon.value} off`}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Payment Method Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -195,29 +288,28 @@ const CheckoutPage = () => {
               <div className="space-y-4">
                 {/* Credit/Debit Card */}
                 <label
-                className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${paymentMethod === 'card'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                  className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                  ${
+                    paymentMethod === "card"
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-blue-300"
                   }`}
-              >
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="card"
-                    checked={paymentMethod === 'card'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="mr-4"
-                  />
-                  <div>
-                    <p className="font-medium">Pay Now</p>
-                    <p className="text-gray-600 text-sm mt-1">
-                      Pay securely
-                    </p>
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="card"
+                      checked={paymentMethod === "card"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-4"
+                    />
+                    <div>
+                      <p className="font-medium">Pay Now</p>
+                      <p className="text-gray-600 text-sm mt-1">Pay securely</p>
+                    </div>
                   </div>
-                </div>
-              </label>
+                </label>
 
                 {/* Cash on Delivery */}
                 <label
@@ -245,37 +337,11 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                 </label>
-
-                {/* UPI Payment */}
-                {/* <label
-                className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${paymentMethod === 'upi'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
-                  }`}
-              >
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="upi"
-                    checked={paymentMethod === 'upi'}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="mr-4"
-                  />
-                  <div>
-                    <p className="font-medium">UPI Payment</p>
-                    <p className="text-gray-600 text-sm mt-1">
-                      Pay using UPI apps like Google Pay, PhonePe
-                    </p>
-                  </div>
-                </div>
-              </label> */}
               </div>
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
+            {/* <div className="bg-white p-6 rounded-lg shadow-sm">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <Wallet className="mr-2" size={20} />
                 Order Summary
@@ -292,12 +358,49 @@ const CheckoutPage = () => {
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between">
                     <span className="font-semibold">Total</span>
-                    <span className="font-semibold">₹{totalAmount+100}</span>
+                    <span className="font-semibold">₹{totalAmount + 100}</span>
+                  </div>
+                </div>
+              </div>
+            </div> */}
+            {/* Update Order Summary to reflect coupon discount */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
+                <Wallet className="mr-2" size={20} />
+                Order Summary
+              </h2>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium">₹{totalAmount}</span>
+                </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>
+                      {appliedCoupon.type === "percentage"
+                        ? `-₹${(
+                            (totalAmount * appliedCoupon.value) /
+                            100
+                          ).toFixed(2)}`
+                        : `-₹${appliedCoupon.value}`}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Shipping</span>
+                  <span className="font-medium">₹100</span>
+                </div>
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Total</span>
+                    <span className="font-semibold">
+                      ₹{calculateFinalTotal()}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-
             {/* Place Order Button */}
             <button
               type="submit"

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import {setUserDetails} from '../../../store/UserDetailsSlice'
 import publicaxiosconfig from "../../../publicaxiosconfig";
+import { toast } from "react-toastify";
 
 
 function Login() {
@@ -69,10 +70,12 @@ function Login() {
       console.log('Backend Response:', backendResponse.data);
       const userDetailsGoogle=backendResponse.data.user
       dispatch(setUserDetails(userDetailsGoogle));
-
+      toast.success("Login Successful.", {
+        position: "bottom-center",
+      });
       // Handle successful login (e.g., save token, redirect)
       if (backendResponse.data.user.is_admin) {
-        navigate("/AdminDashboard");
+        navigate("/salesReport");
       } else {
         navigate("/HomePage");
       }
@@ -93,9 +96,12 @@ function Login() {
       const userDetails = response.data.user;
       dispatch(setUserDetails(userDetails));
       // localStorage.setItem('userDetails',JSON.stringify(userDetails));
-
+      toast.success("Login Successful.", {
+        position: "bottom-center",
+      });
       if (response.data.user.is_admin) {
-        navigate("/AdminDashboard");
+                      
+        navigate("/salesReport");
       } else {
         navigate("/HomePage");
       }

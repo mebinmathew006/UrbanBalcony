@@ -33,6 +33,14 @@ import OrderManagement from './pages/Admin/OrderManagement/OrderManagement'
 import axiosInstance from './axiosconfig'
 import UserSingleOrderDetailsPage from './pages/User/UserProfile/UserSingleOrderDetailsPage'
 import ReturnedProducts from './pages/Admin/OrderManagement/ReturnedProducts'
+import CouponManage from './pages/Admin/CouponManage/CouponManage'
+import CouponAdd from './pages/Admin/CouponManage/CouponAdd'
+import CouponEdit from './pages/Admin/CouponManage/CouponEdit'
+import OfferManage from './pages/Admin/OfferManage/OfferManage'
+import AddOffer from './pages/Admin/OfferManage/AddOffer'
+import EditOffer from './pages/Admin/OfferManage/EditOffer'
+import SalesReport from './pages/Admin/SalesReport/SalesReport'
+import UserWallet from './pages/User/UserProfile/UserWallet'
 
 const fetchUserDetails = async (dispatch,navigate) => {
   try {
@@ -75,6 +83,12 @@ function AppRoutes() {
       <Route path='/ProductManage' element={<ProductManage/>}/>
       <Route path='/ProductAdd' element={<ProductAdd/>}/>
       <Route path='/ProductEdit' element={<ProductEdit/>}/>
+      <Route path='/couponManage' element={<CouponManage/>}/>
+      <Route path='/couponAdd' element={<CouponAdd/>}/>
+      <Route path='/couponEdit' element={<CouponEdit/>}/>
+      <Route path='/offerManage' element={<OfferManage/>}/>
+      <Route path='/addOffer' element={<AddOffer/>}/>
+      <Route path='/editOffer' element={<EditOffer/>}/>
       <Route path='/ProductVarientManage' element={<ProductVarientManage/>}/>
       <Route path='/ProductVarientEdit' element={<ProductVarientEdit/>}/>
       <Route path='/ProductVarientAdd' element={<ProductVarientAdd/>}/>
@@ -84,6 +98,8 @@ function AppRoutes() {
       <Route path='/orderManagement' element={<OrderManagement/>}/>
       <Route path='/orderDetailsPage' element={<UserSingleOrderDetailsPage/>}/>
       <Route path='/returned' element={<ReturnedProducts/>}/>
+      <Route path='/salesReport' element={<SalesReport/>}/>
+      <Route path='/userWallet' element={<UserWallet/>}/>
     </Routes>
   );
 }

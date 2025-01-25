@@ -16,6 +16,11 @@ urlpatterns = [
     path('adminUpdateCategory',AdminUpdateCategory.as_view(),name='adminUpdateCategory'),
     path('admingetuserOrders',AdmingetuserOrders.as_view(),name='AdmingetuserOrders'),
     path('admingetuserOrders/<int:id>',AdmingetuserOrders.as_view(),name='AdmingetuserOrders'),
+    path('couponManage',CouponManage.as_view(),name='couponManage'),
+    path('couponManage/<int:id>',CouponManage.as_view(),name='couponManage'),
+    path('offerManage',OfferManage.as_view(),name='offerManage'),
+    path('offerManage/<int:id>',OfferManage.as_view(),name='offerManage'),
+    path('salesReportView',SalesReportView.as_view(),name='SalesReportView'),
     path('productVarientmanage',Varientmanage.as_view(),name='productVarientadd'),
     path('productVarientmanage/<int:id>',Varientmanage.as_view(),name='productVarientmanage'),  
 ]

@@ -116,19 +116,35 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_variant = ProductVariantSerializer(read_only=True)
+    price_after_offer = serializers.SerializerMethodField()
     
     class Meta:
         model = CartItem
-        fields = ['id', 'quantity','product_variant','cart']
+        fields = ['id', 'quantity','product_variant','cart','price_after_offer']
+        
+    def get_price_after_offer(self, obj):
+        variant_price = obj.product_variant.variant_price
+        
+        # Check if an active offer exists for the product
+        try:
+            offer = obj.product_variant.product.offers.first()
+            if offer and offer.is_active:
+                discount = offer.discount_percentage
+                return round(variant_price - (variant_price * discount / 100), 2)
+        except:
+            pass
+        
+        return variant_price
+        
 
 class CartSerializer(serializers.ModelSerializer):
+    
     cart_items = CartItemSerializer( many=True, read_only=True)  # Changed to handle multiple items
     
     class Meta:
         model = Cart
         fields = ['id', 'user', 'cart_items']  # Added id field
-
-        
+   
 class PaymentsSerializer(serializers.ModelSerializer):
     class Meta:
         model=Payment

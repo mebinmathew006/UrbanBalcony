@@ -147,7 +147,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
-    product_variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='order_items')
+    product_variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name='productvariants')
     quantity = models.PositiveIntegerField(default=1)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=50, default='pending')
@@ -163,9 +163,9 @@ class OrderItem(models.Model):
 
 
 class Payment(models.Model):
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='payments')
-    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
-    wallet = models.ForeignKey('Wallet', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='customusers')
+    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, null=True, blank=True, related_name='coupons')
+    wallet = models.ForeignKey('Wallet', on_delete=models.SET_NULL, null=True, blank=True, related_name='wallets')
     status = models.CharField(max_length=50, default='pending')
     date = models.DateField(default=timezone.now)
     pay_method = models.CharField(max_length=50)
@@ -181,7 +181,6 @@ class Transaction(models.Model):
     date = models.DateTimeField(default=timezone.now)
 
 class Razorpay(models.Model):
-    # Razorpay-specific fields
     razorpay_order_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
     razorpay_payment_id = models.CharField(max_length=255, blank=True, null=True)
     razorpay_signature = models.TextField(blank=True, null=True)
@@ -231,9 +230,9 @@ class Coupon(models.Model):
     is_active = models.BooleanField(default=True)
     code = models.CharField(max_length=50, unique=True)
     coupon_percent = models.PositiveIntegerField()
-    description = models.TextField(blank=True, null=True)
-    limit = models.PositiveIntegerField(default=1)
-    expire_date = models.DateField()
+    expire_date = models.DateField() 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Coupon {self.code} - {self.coupon_percent}%"
@@ -272,4 +271,10 @@ class WishlistProduct(models.Model):
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='wishlist_products')
     product_variant = models.ForeignKey('ProductVariant', on_delete=models.CASCADE, related_name='wishlist_entries')
 
-    
+class Offer(models.Model):
+    id = models.AutoField(primary_key=True)  # Automatically increments ID
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="offers")
+    discount_percentage = models.PositiveIntegerField()  # Restricts to non-negative values 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active=models.BooleanField(default=True)

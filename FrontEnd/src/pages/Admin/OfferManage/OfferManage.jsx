@@ -1,33 +1,34 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-function ProductVarientManage() {
-  const location =useLocation()
-  const product_id=location.state
-  
+function OfferManage() {
   const navigate = useNavigate();
-  const toggleProductStatus = async (id) => {
+  const [offers, setOffers] = useState([]);
+
+  // Fetch offers from the backend
+  const fetchOffers = async () => {
     try {
-      await adminaxiosInstance.patch(`/productVarientmanage/${id}`);
-      fetchProduct();
+      const response = await adminaxiosInstance.get("/offerManage");
+      setOffers(response.data);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching offers:", error);
     }
   };
-  const [productVarients, setProductVarients] = useState();
-  const fetchProduct = async () => {
+
+  // Toggle offer status (active/inactive)
+  const toggleOfferStatus = async (id) => {
     try {
-      const response = await adminaxiosInstance.get(`/productVarientmanage/${product_id}`);
-      setProductVarients(response.data);
-      console.log(productVarients);
-      
-    } catch (error) {}
+      await adminaxiosInstance.patch(`/offerManage/${id}`);
+      fetchOffers();
+    } catch (error) {
+      console.error("Error toggling offer status:", error);
+    }
   };
 
   useEffect(() => {
-    fetchProduct();
+    fetchOffers();
   }, []);
 
   return (
@@ -37,48 +38,50 @@ function ProductVarientManage() {
         <main className="bg-light">
           <div className="container-fluid">
             <div className="d-flex justify-content-center gap-5 pb-5">
-              <h3>Varient Details</h3>
+              <h3>Offer Details</h3>
               <button
                 className="btn btn-info"
-                onClick={() => navigate("/ProductVarientAdd", { state: product_id })}
+                onClick={() => navigate("/addOffer")}
               >
                 ADD
               </button>
             </div>
-            <table class="table">
-              <thead class="thead-dark">
+            <table className="table">
+              <thead className="thead-dark">
                 <tr>
                   <th scope="col">#</th>
-                  <th scope="col">Weight</th>
-                  <th scope="col">Price</th>
-                  <th scope="col">Stock</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Discount Percentage</th>
+                  <th scope="col">Status</th>
+                  
                   <th scope="col">Block/Unblock</th>
                   <th scope="col">Edit</th>
                 </tr>
               </thead>
               <tbody>
-                {productVarients &&
-                  productVarients.map((productVarient, index) => (
+                {offers &&
+                  offers.map((offer, index) => (
                     <tr key={index}>
                       <th scope="row">{index + 1}</th>
-                      <td>{productVarient.weight}</td>
-                      <td>{productVarient.variant_price}</td>
-                      <td>{productVarient.stock}</td>
+                      <td>{offer.product_name}</td>
+                      <td>{offer.discount_percentage}%</td>
+                      <td>{offer.is_active ? "Active" : "Inactive"}</td>
+                     
                       <td>
                         <button
                           className={`btn ${
-                            productVarient.is_active ? "btn-primary" : "btn-danger"
+                            offer.is_active ? "btn-primary" : "btn-danger"
                           }`}
-                          onClick={() => toggleProductStatus(productVarient.id)}
+                          onClick={() => toggleOfferStatus(offer.id)}
                         >
-                          {productVarient.is_active ? "Block" : "Unblock"}
+                          {offer.is_active ? "Block" : "Unblock"}
                         </button>
                       </td>
                       <td>
                         <button
                           className="btn btn-success"
                           onClick={() =>
-                            navigate("/ProductVarientEdit", { state: productVarient })
+                            navigate("/editOffer", { state: offer })
                           }
                         >
                           Edit
@@ -95,4 +98,4 @@ function ProductVarientManage() {
   );
 }
 
-export default ProductVarientManage;
+export default OfferManage;

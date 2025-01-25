@@ -11,6 +11,7 @@ import { destroyDetails } from "../../../store/UserDetailsSlice";
 import axiosInstance from "../../../axiosconfig";
 import UserSingleOrderDetailsPage from "./UserSingleOrderDetailsPage";
 import UserWishlist from "./UserWishlist";
+import UserWallet from "./UserWallet";
 
 const UserProfile = () => {
   const location = useLocation();
@@ -35,6 +36,7 @@ const UserProfile = () => {
     cart: <UserCart />,
     orderDetails: <UserSingleOrderDetailsPage />,
     wishlist: <UserWishlist />,
+    userWallet: <UserWallet />,
   };
 
   return (
@@ -118,6 +120,19 @@ const UserProfile = () => {
                     onClick={() => setActiveTab("wishlist")}
                   >
                     Wishlist
+                  </button>
+                </li>
+                {/* userWallet */}
+                <li
+                  className={`nav-item ${
+                    activeTab === "userWallet" ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="nav-link"
+                    onClick={() => setActiveTab("userWallet")}
+                  >
+                    Wallet
                   </button>
                 </li>
                 <li

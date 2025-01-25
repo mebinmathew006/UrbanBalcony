@@ -58,7 +58,7 @@ function UserCart() {
     ? userCart.reduce((acc, cart) => {
         const cartTotal = cart.cart_items.reduce(
           (itemAcc, item) =>
-            itemAcc + item.quantity * item.product_variant.variant_price,
+            itemAcc + item.quantity * item.price_after_offer,
           0
         );
         return acc + cartTotal;
@@ -112,7 +112,7 @@ function UserCart() {
                 </div>
 
                 <p className="text-gray-600 mt-2">
-                  Total Amount: ₹{item.quantity * item.product_variant.variant_price}
+                  Total Amount: ₹{item.quantity * item.price_after_offer}
                 </p>
               </div>
 

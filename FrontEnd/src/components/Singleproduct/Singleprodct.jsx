@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import "./Singleproduct.css";
 import axiosInstance from "../../axiosconfig";
 import ReactImageMagnify from "react-image-magnify";
-import adminaxiosInstance from "../../adminaxiosconfig";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 
@@ -47,8 +46,8 @@ function Singleprodct() {
   // fetch product varients from admin panel
   const fetchProductVarients = async () => {
     try {
-      const response = await adminaxiosInstance.get(
-        `/productVarientmanage/${productDetails.id}`
+      const response = await axiosInstance.get(
+        `/varientForUser/${productDetails.id}`
       );
       setProductVarientDetails(response.data);
       console.log("Product Varient Details:", response.data);
@@ -93,7 +92,7 @@ function Singleprodct() {
     }
   };
 
-// addToWishlist
+  // addToWishlist
   const addToWishlist = async () => {
     if (!varientSpecificDetails) {
       // Check the specific variant details instead of productVarientDetails
@@ -215,7 +214,20 @@ function Singleprodct() {
           {varientSpecificDetails && (
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-2xl font-bold text-gray-900">
-                Price: ₹{varientSpecificDetails.variant_price}
+                Price: ₹
+                {varientSpecificDetails.variant_price ? (
+                  varientSpecificDetails.price_after_offer ===
+                  varientSpecificDetails.variant_price ? (
+                    varientSpecificDetails.variant_price
+                  ) : (
+                    <>
+                      <del className="text-red-600 text-lg">{varientSpecificDetails.variant_price}</del>{" "}
+                      {varientSpecificDetails.price_after_offer}
+                    </>
+                  )
+                ) : (
+                  "N/A"
+                )}
               </p>
             </div>
           )}
@@ -293,8 +305,9 @@ function Singleprodct() {
               >
                 Add to Cart
               </button>
-              <button className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              onClick={()=>addToWishlist(varientSpecificDetails.id)}
+              <button
+                className="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                onClick={() => addToWishlist(varientSpecificDetails.id)}
               >
                 Wishlist
               </button>

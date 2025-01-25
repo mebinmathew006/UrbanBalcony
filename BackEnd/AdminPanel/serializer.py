@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from User.models import Category,Product,ProductVariant
+from User.models import Category,Product,ProductVariant,Coupon,Offer
 import re
 
 
@@ -89,12 +89,13 @@ class ProductSimpleSerializer(serializers.ModelSerializer):
         fields = ['id', 'title','product_img1']
         
 class ProductVariantSerializer(serializers.ModelSerializer):
+    price_after_offer = serializers.FloatField(read_only=True)
     product = ProductSimpleSerializer(read_only=True)
     product_id = serializers.IntegerField(write_only=True)
     
     class Meta:
         model = ProductVariant
-        fields = ['id', 'product', 'product_id', 'weight', 'variant_price', 'is_active', 'stock']
+        fields = ['id', 'product', 'product_id', 'weight', 'variant_price', 'is_active', 'stock','price_after_offer']
     def validate_weight(self, value):
         if not value.strip():
             raise serializers.ValidationError("Weight cannot be empty")
@@ -109,3 +110,43 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         if value < 0:
             raise serializers.ValidationError("Stock must be a positive integer")
         return value
+    
+    # def get_price_after_offer(self, obj):
+    #     # Use the discount percentage if it exists; otherwise, return the original price
+    #     discount = getattr(obj, 'product__offer__discount_percentage', 0) or 0
+    #     return obj.variant_price - (obj.variant_price * discount / 100)
+    
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = [
+            'id',  # Primary key
+            'code',  # Unique coupon code
+            'coupon_percent',  # Discount percentage
+            'expire_date',  # Expiry date of the coupon
+            'is_active',  # Status to check if the coupon is active
+        ]
+        
+class OfferSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = Offer
+        fields = [
+            "id",
+            "product",
+            "discount_percentage",
+            "created_at",
+            'product_name',
+            'is_active'
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate_discount_percentage(self, value):
+        """Ensure the discount percentage is between 1 and 100."""
+        if value < 1 or value > 100:
+            raise serializers.ValidationError("Discount percentage must be between 1 and 100.")
+        return value
+    
+    def get_product_name(self, obj):
+        """Retrieve the name of the related product."""
+        return obj.product.title

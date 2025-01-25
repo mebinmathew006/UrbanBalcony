@@ -28,11 +28,14 @@ function ProductManage() {
       }, []);
     
       return (
-        <div className="d-flex vh-100 bg-light">
-          <Sidebar />
+        <div className="d-flex vh-100 bg-light h-full">
+          <div className="h-full">
+          <Sidebar  />
+
+          </div>
           <div className="d-flex flex-column flex-grow-1">
             <main className="bg-light">
-              <div className="container-fluid">
+              <div className="container">
                 <div className="d-flex justify-content-center gap-5 pb-5">  
                 <h3>Product Details</h3>
                 <button className="btn btn-info" onClick={()=>navigate('/ProductAdd')}>ADD</button></div>
