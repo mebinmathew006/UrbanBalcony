@@ -83,12 +83,18 @@ class AddressSerializer(serializers.ModelSerializer):
         model=Address
         fields=['id','address_type','city','state','pin_code','land_mark','alternate_number','user_id']
         
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Payment
+        fields = ['id' ,'pay_method', 'status']
+        
 class OrderItemSerializer(serializers.ModelSerializer):
     variant=ProductVariantSerializer(source='product_variant',read_only=True)
     address_details = AddressSerializer(source='order.address', read_only=True)
+    payment_details = PaymentSerializer(source='order.payment', read_only=True) 
     class Meta:
         model = OrderItem
-        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details']  
+        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details','payment_details']  
         
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -98,10 +104,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
         
-class PaymentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=Payment
-        fields = ['id' ,'pay_method', 'status']
+
         
 class OrderSerializer(serializers.ModelSerializer):
     address_details = AddressSerializer(source='address', read_only=True)

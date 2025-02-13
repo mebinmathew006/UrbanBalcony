@@ -30,7 +30,6 @@ import CheckoutPage from './pages/User/CheckoutPage/CheckoutPage'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import OrderManagement from './pages/Admin/OrderManagement/OrderManagement'
-import axiosInstance from './axiosconfig'
 import UserSingleOrderDetailsPage from './pages/User/UserProfile/UserSingleOrderDetailsPage'
 import ReturnedProducts from './pages/Admin/OrderManagement/ReturnedProducts'
 import CouponManage from './pages/Admin/CouponManage/CouponManage'
@@ -41,14 +40,29 @@ import AddOffer from './pages/Admin/OfferManage/AddOffer'
 import EditOffer from './pages/Admin/OfferManage/EditOffer'
 import SalesReport from './pages/Admin/SalesReport/SalesReport'
 import UserWallet from './pages/User/UserProfile/UserWallet'
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import history from './history'
+import publicaxiosconfig from './publicaxiosconfig'
+import ProtectedRoute from './ProtectedRoute'
+import PublicRoute from './PublicRoute'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import UserChat from './pages/User/UserProfile/UserChat'
+import AdminChat from './pages/Admin/AdminChat/AdminChat'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 const fetchUserDetails = async (dispatch,navigate) => {
   try {
-      const response = await axiosInstance.get("/getUserDetailsForAuthentication", {
+      const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
           withCredentials: true, // Ensure cookies are included in the request
       });
-      console.log(response.data.user);
-      
       dispatch(setUserDetails(response.data.user));
   } catch (error) {
       dispatch(setUserDetails(null)); 
@@ -67,12 +81,13 @@ function AppRoutes() {
   }, [dispatch]);
 
   return (
+    <QueryClientProvider client={queryClient}>
     <Routes>
-       <Route path='/'  element={<Index/>}/>
+      <Route path='/'  element={<PublicRoute><Index/></PublicRoute>}/>
       <Route path='/signup'  element={<SignupPage/>}/>
       <Route path='/forgetPassword'  element={<ForgetPassword/>}/>
-      <Route path='/login' element={<Login/>}/>
-      <Route path='/HomePage' element={<HomePage/>}/>
+      <Route path='/login' element={<PublicRoute><Login/></PublicRoute>}/>
+      <Route path='/HomePage' element={ <ProtectedRoute><HomePage/></ProtectedRoute>}/>
       <Route path='/productDetails' element={<ProductDetails/>}/>
       <Route path='/ResetPassword' element={<ResetPassword/>}/>
       <Route path='/AdminDashboard' element={<AdminDashboard/>}/>
@@ -80,7 +95,7 @@ function AppRoutes() {
       <Route path='/CategoryManage' element={<CategoryManage/>}/>
       <Route path='/CategoryAdd' element={<CategoryAdd/>}/>
       <Route path='/CategoryUpdate' element={<CategoryUpdate/>}/>
-      <Route path='/ProductManage' element={<ProductManage/>}/>
+      <Route path='/ProductManage' element={<ProtectedRoute><ProductManage/></ProtectedRoute>}/>
       <Route path='/ProductAdd' element={<ProductAdd/>}/>
       <Route path='/ProductEdit' element={<ProductEdit/>}/>
       <Route path='/couponManage' element={<CouponManage/>}/>
@@ -93,24 +108,27 @@ function AppRoutes() {
       <Route path='/ProductVarientEdit' element={<ProductVarientEdit/>}/>
       <Route path='/ProductVarientAdd' element={<ProductVarientAdd/>}/>
       <Route path='/userReviews/:id' element={<Review/>}/>
-      <Route path='/userProfile' element={<UserProfile/>}/>
+      <Route path='/userProfile' element={<ProtectedRoute><UserProfile/></ProtectedRoute>}/>
       <Route path='/checkoutPage' element={<CheckoutPage/>}/>
       <Route path='/orderManagement' element={<OrderManagement/>}/>
       <Route path='/orderDetailsPage' element={<UserSingleOrderDetailsPage/>}/>
       <Route path='/returned' element={<ReturnedProducts/>}/>
-      <Route path='/salesReport' element={<SalesReport/>}/>
+      <Route path='/salesReport' element={<ProtectedRoute><SalesReport/></ProtectedRoute>}/>
       <Route path='/userWallet' element={<UserWallet/>}/>
+      <Route path='/userChat' element={<UserChat/>}/>
+      <Route path='/adminChat' element={<AdminChat/>}/>
     </Routes>
+    </QueryClientProvider>
   );
 }
 
 // Main App component
 function App() {
   return (
-    <BrowserRouter>
+    <HistoryRouter history={history}>
       <ToastContainer />
       <AppRoutes />
-    </BrowserRouter>
+      </HistoryRouter>
   );
 }
 

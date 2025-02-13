@@ -48,17 +48,17 @@ function CategoryUpdate() {
         <form onSubmit={handleSubmit(categoryUpdateHandler)}>
           <div className="mb-3">
             <input
-             {...register("name", {
-              required: "Category name is required",
-              pattern: {
-                value: /^[A-Za-z\s]*$/,
-                message: "Category name can only contain letters and spaces",
-              },
-              maxLength: {
-                value: 100,
-                message: "Category name cannot exceed 100 characters",
-              },
-            })}
+              {...register("name", {
+                required: "Category name is required",
+                pattern: {
+                  value: /^[A-Za-z\s]*$/,
+                  message: "Category name can only contain letters and spaces",
+                },
+                maxLength: {
+                  value: 100,
+                  message: "Category name cannot exceed 100 characters",
+                },
+              })}
               type="text"
               className="form-control input-custom"
               placeholder="Enter category title"

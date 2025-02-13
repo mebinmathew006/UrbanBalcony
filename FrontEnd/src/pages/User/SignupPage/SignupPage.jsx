@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from 'react-toastify';
 import publicaxiosconfig from "../../../publicaxiosconfig";
+import Footer from "../../../components/footer/Footer";
+import Header from "../../../components/header/header";
 
 function SignupPage() {
   
-  useEffect(()=>{toast.success('Signup successful! Please check your email.')},[])
+  // useEffect(()=>{},[])
 
   const navigate = useNavigate();
   const [errorsFromBackend, setErrorsFromBackend] = useState({
@@ -69,6 +71,8 @@ function SignupPage() {
   };
 
   return (
+    <div className="flex-1">
+       <Header/>
     <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom">
       <div
         className="card p-4 shadow"
@@ -193,6 +197,8 @@ function SignupPage() {
           </button>
         </form>
       </div>
+    </div>
+    <Footer/>
     </div>
   );
 }

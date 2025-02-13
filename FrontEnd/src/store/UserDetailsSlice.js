@@ -1,4 +1,5 @@
-  import { createSlice } from "@reduxjs/toolkit";
+    import { createSlice } from "@reduxjs/toolkit";
+import { useNavigate } from "react-router-dom";
 
   const UserDetailsSlice = createSlice({
     name: "userDetails",
@@ -28,8 +29,13 @@
         state.profile_picture = "";
         state.access_token = "";
       },
+
+      updateAccessToken: (state, action) => {
+        console.log(state);
+        
+        state.access_token = action.payload; // Only update access_token
+      },
     },
   });
-  export const { setUserDetails, destroyDetails } = UserDetailsSlice.actions;
-
+  export const { setUserDetails, destroyDetails,updateAccessToken } = UserDetailsSlice.actions;
   export default UserDetailsSlice.reducer;

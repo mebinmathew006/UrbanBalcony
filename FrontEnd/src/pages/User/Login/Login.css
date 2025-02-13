@@ -1,25 +1,19 @@
-/* Global body background */
-body {
-  background-color: #f9f4ed; /* Light beige as in the image */
-  
-  align-items: center;
-}
 
+/*
 .bg-light-custom {
-  background-color: #f9f4ed;
   display: flex;
-  min-height: 100vh;
+  min-height: 70vh;
 }
 
 /* Card shadow and design */
-.card {
+/*.card {
   border-radius: 12px;
 }
 
 /* Custom input fields */
-.input-custom {
+/*.input-custom {
   background-color: #f6f6f6; /* Light grey */
-  border: 1px solid #e0e0e0;
+ /* border: 1px solid #e0e0e0;
   height: 45px;
   border-radius: 8px;
   padding: 10px;
@@ -33,9 +27,9 @@ body {
 }
 
 /* Custom primary button */
-.btn-primary-custom {
+/*.btn-primary-custom {
   background-color: #0a2e57; /* Dark navy blue */
-  color: white;
+/*  color: white;
   border: none;
   border-radius: 8px;
   font-size: 16px;
@@ -67,10 +61,11 @@ body {
 }
 
 /* Sign-up link */
-.text-primary {
+/*.text-primary {
   color: #0a2e57; /* Same as primary button */
-}
+/*}
 
 .text-primary:hover {
   text-decoration: underline;
 }
+*/

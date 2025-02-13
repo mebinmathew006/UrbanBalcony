@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,ProductVariant,CartItem,Payment,OTP,Transaction,Razorpay,Wishlist,WishlistProduct,Coupon,Wallet
+from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,ProductVariant,CartItem,Payment,OTP,Transaction,Razorpay,Wishlist,WishlistProduct,Coupon,Wallet,Category
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError,InvalidToken
 from rest_framework import status
@@ -15,11 +15,11 @@ from django.conf import settings
 from django.db import transaction
 import random
 import string
-from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value
+from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,permission_classes
 from jwt import decode, ExpiredSignatureError, InvalidTokenError,DecodeError
 from jwt import encode as jwt_encode
 from datetime import datetime, timedelta
@@ -30,11 +30,13 @@ import string
 from django.core.mail import send_mail
 from django.core.exceptions import ObjectDoesNotExist
 import razorpay
-import os
-
+from rest_framework.pagination import PageNumberPagination
+import logging
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getUserDetailsAgainWhenRefreshing(request):
     # We only need refresh_token from cookies since access_token is in response body
     refresh_token = request.COOKIES.get('refresh_token')
@@ -76,9 +78,9 @@ def getUserDetailsAgainWhenRefreshing(request):
             key='refresh_token',
             value=refresh_token,  # Keep existing refresh token
             httponly=True,
-            secure=True,
+            secure=False,
             samesite=None,
-            max_age=60 * 60 * 24 * 7  # 7 days
+            max_age=60 * 60 * 24   # 1 days
         )
         
         return response
@@ -88,16 +90,109 @@ def getUserDetailsAgainWhenRefreshing(request):
 
 
 
+
+class ProductPagination(PageNumberPagination):
+    page_size = 12  # Number of items per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class UserHome(APIView):
-    permission_classes=[IsAuthenticated]
+    permission_classes = [AllowAny]
+    pagination_class = ProductPagination
+
     def get(self, request):
-        products = Product.objects.select_related('category').filter(is_active=True,category__is_active=True)
-        return Response(products.values(), status.HTTP_200_OK)
+        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(
+            is_active=True,
+            category__is_active=True
+        ).order_by('id') 
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        
+        return paginator.get_paginated_response(paginated_products)
+    
+class CategoryBasedProductData(APIView):
+    permission_classes=[AllowAny]
+    pagination_class = ProductPagination
+    def get(self, request,id):
+        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True,category__id=id)
+         # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        
+        return paginator.get_paginated_response(paginated_products)
+    
+class RelatedProductData(APIView):
+    def get(self, request,id):
+        products = Product.objects.filter(is_active=True, category__is_active=True,category_id=Product.objects.filter(id=id)
+                                          .values("category_id")[:1]).select_related("category").annotate(starting_price=Min("variants__variant_price")
+                                                                                                          ,total_stock=Sum("variants__stock")).exclude(id=id)[:8]
+
+        return Response(products.values(),status.HTTP_200_OK)
+    
+class SearchBasedProductData(APIView):
+    permission_classes=[AllowAny]
+    pagination_class = ProductPagination
+    def get(self, request,search):
+        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True,title__istartswith=search)
+         # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        
+        return paginator.get_paginated_response(paginated_products)
+    
+class FilterBasedProductData(APIView):
+    permission_classes=[AllowAny]
+    pagination_class = ProductPagination
+    def get(self, request,types):
+        if types == 'rating':
+            products=Product.objects.select_related('category').filter(is_active=True,category__is_active=True).annotate(average_rating=Avg('reviews__rating'),starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).order_by('average_rating')
+        elif types == 'price-desc':
+            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('-price')
+        elif types == 'price':
+            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('price')
+        elif types == 'date':
+            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('-created_at')
+        elif types == 'popularity':
+            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).annotate(total_order=Coalesce(Sum('variants__productvariants__quantity'), 0) ).order_by('-total_order')
+        else:
+            products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True)
+         # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        
+        return paginator.get_paginated_response(paginated_products)
+
+    
+class IndexPage(APIView):
+    permission_classes = [AllowAny]
+    pagination_class = ProductPagination
+
+    def get(self, request):
+        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(
+            is_active=True,
+            category__is_active=True
+        ).order_by('id') 
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        
+        return paginator.get_paginated_response(paginated_products)
+    
+class GetCategories(APIView):
+    # permission_classes=[AllowAny]
+    def get(self, request):
+        categories = Category.objects.order_by('id')[:5]
+        return Response(categories.values(), status.HTTP_200_OK)
 
 
 class UserLogin(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
+        print(request.data)
+        
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
@@ -126,16 +221,16 @@ class UserLogin(APIView):
                             'profile_picture': user.profile_picture.url if user.profile_picture else None
                         }
                     }, status=status.HTTP_200_OK)
-
                     # Set only the refresh token in HTTP-only cookie
                     response.set_cookie(
                         key='refresh_token',
                         value=refresh_token,
-                        httponly=True, # Prevent access via JavaScript
-                        secure=True,  # Use HTTPS only in production
+                        httponly=False, # Prevent access via JavaScript
+                        secure=False,  # Use HTTPS only in production
                         samesite=None,  # Restrict cross-site cookie usage
-                        max_age=60 * 60 * 24 * 7  # 7 days for refresh token
+                        max_age=60 * 60 * 24  # 7 days for refresh token
                     )
+                    print('sssssssssssssssssssssssssssssssssssssssss',response.headers)
                     return response
                 else:
                     return Response(
@@ -240,10 +335,22 @@ class ResetPassword(APIView):
         password = request.data.get('password')
         email = request.data.get('email')
         
-        print(otp,password,email)
 
-        if not otp or not password or not email:
-            return Response({'error': 'OTP, email, and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+        errors = {}
+        
+        if not email:
+            errors['email'] = 'Email is required'
+        if not password:
+            errors['password'] = 'Password is required'
+        if not otp:
+            errors['otp'] = 'OTP is required'
+            
+        if errors:
+            return Response({
+                'status': 'error',
+                'message': 'Validation failed',
+                'errors': errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             otp_obj = OTP.objects.get(email=email, otp=otp)
@@ -263,6 +370,7 @@ class ResetPassword(APIView):
 
 
 class GoogleAuth(APIView):
+    permission_classes = [AllowAny]
     def generate_random_password(self, length=12):
         """Generate a secure random password for Google-authenticated users"""
         characters = string.ascii_letters + string.digits + string.punctuation
@@ -331,7 +439,6 @@ class GoogleAuth(APIView):
                             'profile_picture': user.profile_picture.url if user.profile_picture else None
                         }
                     }, status=status.HTTP_200_OK)
-            print(response)
                     # Set only the refresh token in HTTP-only cookie
             response.set_cookie(
                     key='refresh_token',
@@ -358,6 +465,7 @@ class GoogleAuth(APIView):
             )
 
 class ReviewAndRating(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, id):
         # Fetch the product
         product = Review.objects.filter(product_id=id)
@@ -414,6 +522,25 @@ class UserAddress(APIView):
         except Address.DoesNotExist:
             # Handle the case where the object does not exist
             raise Http404("Address not found")
+        except Exception as e:
+            # Handle unexpected errors
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ChangePaymentstatus(APIView):
+        
+    def patch(self, request):
+        try:
+            payment_id =request.data.get('payment_id')
+            orderitem = Payment.objects.get(id=payment_id)
+            orderitem.status='paid'
+            orderitem.save()
+            data = {
+                'status': 'Paid Successfully',
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Payment.DoesNotExist:
+            # Handle the case where the object does not exist
+            raise Http404("Payment not found")
         except Exception as e:
             # Handle unexpected errors
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -536,113 +663,200 @@ class UserCart(APIView):
             
 
 class UserPlaceOrder(APIView):
-    def post(self, request):
-        user_id = request.data.get('user_id')
-        address_id = request.data.get('addressId')
-        payment_method = request.data.get('paymentMethod')
-        total_amount = request.data.get('totalAmount')
-        coupon_id = request.data.get('coupon_id')
-        print(f"user_id: {user_id}, address_id: {address_id}, payment_method: {payment_method}, total_amount: {total_amount}, coupon_id: {coupon_id}")
-        if not user_id or not address_id or not payment_method or not total_amount:
-            return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+    def validate_input(self, data):
+        required_fields = ['user_id', 'addressId', 'paymentMethod', 'totalAmount']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+        return True
 
+    def process_wallet_payment(self, total, user_id):
         try:
+            wallet = Wallet.objects.get(user_id=user_id)  # Fetch the Wallet instance
+            if total > wallet.balance:
+                raise ValueError("Insufficient balance")
+            wallet.balance -= total
+            wallet.save()  # Save the updated balance
+        except Wallet.DoesNotExist:
+            raise ValueError("Wallet not found")  # Handle case where user has no wallet
+
+
+    def _process_card_payment(self, payment_data):
+        try:
+            razor = Razorpay.objects.get(
+                razorpay_order_id=payment_data.get('razorpay_order_id')
+            )
+            razor.razorpay_payment_id = payment_data.get('razorpay_payment_id')
+            razor.razorpay_signature = payment_data.get('razorpay_signature')
+            razor.save()
+            return "paid"
+        except Razorpay.DoesNotExist:
+            raise ValueError("Invalid Razorpay order ID")
+
+    def create_payment(self, user_id, payment_status, payment_method, coupon_id=None):
+        payment_data = {
+            'user': user_id,
+            'status': payment_status,
+            'pay_method': payment_method
+        }
+        if coupon_id and coupon_id != 0:
+            payment_data['coupon'] = coupon_id
+            
+        payment_serializer = PaymentsSerializer(data=payment_data, partial=True)
+        payment_serializer.is_valid(raise_exception=True)
+        return payment_serializer.save()
+
+    def create_transaction(self, payment_id, payment_status, total_amount):
+        transaction_data = {
+            'payment': payment_id,
+            'status': payment_status,
+            'amount': total_amount
+        }
+        transaction_serializer = TransactionSerializer(data=transaction_data)
+        transaction_serializer.is_valid(raise_exception=True)
+        return transaction_serializer.save()
+
+    def create_order(self, user_id, payment_id, address_id, total_amount):
+        order_data = {
+            'user': user_id,
+            'payment': payment_id,
+            'address': address_id,
+            'shipping_charge': 100,  # Consider making this configurable
+            'net_amount': total_amount,
+            'delivery_date': (datetime.now() + timedelta(days=10)).date(),
+        }
+        order_serializer = OrderSerializer(data=order_data)
+        order_serializer.is_valid(raise_exception=True)
+        return order_serializer.save()
+
+    def process_cart_order(self, user_id, order_id):
+        cart_items = CartItem.objects.filter(
+            cart__user_id=user_id
+        ).select_related('product_variant')
+        
+        if not cart_items.exists():
+            raise ValueError("Cart is empty")
+
+        order_items = []
+        for item in cart_items:
+            variant = item.product_variant
+            if variant.stock < item.quantity:
+                raise ValueError(f"Insufficient stock for product variant {variant.id}")
+
+            price = self.calculate_price_with_offer(variant)
+            
+            # Update stock
+            ProductVariant.objects.filter(id=variant.id).update(
+                stock=F('stock') - item.quantity
+            )
+
+            order_items.append({
+                'order': order_id,
+                'product_variant': variant.id,
+                'quantity': item.quantity,
+                'total_amount': item.quantity * price,
+            })
+
+        # Create order items
+        order_item_serializer = OrderItemSerializer(data=order_items, many=True)
+        order_item_serializer.is_valid(raise_exception=True)
+        order_item_serializer.save()
+
+        # Clear cart
+        cart_items.delete()
+
+    def process_direct_order(self, order_id, product_id, quantity):
+        variant = ProductVariant.objects.get(id=product_id)
+        if variant.stock < quantity:
+            raise ValueError(f"Insufficient stock for product variant {variant.id}")
+
+        price = self.calculate_price_with_offer(variant)
+        
+        # Update stock
+        ProductVariant.objects.filter(id=variant.id).update(
+            stock=F('stock') - quantity
+        )
+
+        order_item = {
+            'order': order_id,
+            'product_variant': variant.id,
+            'quantity': quantity,
+            'total_amount': quantity * price,
+        }
+
+        order_item_serializer = OrderItemSerializer(data=order_item)
+        order_item_serializer.is_valid(raise_exception=True)
+        order_item_serializer.save()
+
+    @staticmethod
+    def calculate_price_with_offer(variant):
+        offer = variant.product.offers.filter(is_active=True).first()
+        if offer:
+            return variant.variant_price * (1 - offer.discount_percentage / 100)
+        return variant.variant_price
+
+    def post(self, request):
+        try:
+            self.validate_input(request.data)
+            
             with transaction.atomic():
-                payment_status = "pending"
-
-                # Handle card payments
-                if payment_method == 'card':
-                    razorpay_payment_id = request.data.get('razorpay_payment_id')
-                    razorpay_order_id = request.data.get('razorpay_order_id')
-                    razorpay_signature = request.data.get('razorpay_signature')
-
-                    try:
-                        razor = Razorpay.objects.get(razorpay_order_id=razorpay_order_id)
-                        razor.razorpay_payment_id = razorpay_payment_id
-                        razor.razorpay_signature = razorpay_signature
-                        razor.save()
-                        payment_status = "paid"
-                    except Razorpay.DoesNotExist:
-                        return Response({"error": "Invalid Razorpay order ID"}, status=status.HTTP_400_BAD_REQUEST)
-
-                # Create payment
-                if coupon_id==0:
-                    payment_data = {'user': user_id, 'status': payment_status, 'pay_method': payment_method}
-                else:
-                    payment_data = {'user': user_id, 'status': payment_status, 'pay_method': payment_method,'coupon':coupon_id}
-                payment_serializer = PaymentsSerializer(data=payment_data,partial=True)
-                payment_serializer.is_valid(raise_exception=True)
-                payment = payment_serializer.save()
+                # Process payment
+                payment_status =request.data.get('status')
+                paymentMethod =request.data.get('paymentMethod')       
+                
+                if paymentMethod=='wallet':
+                    self.process_wallet_payment(request.data.get('totalAmount'),request.data.get('user_id'))
+                
+                # Create payment record
+                payment = self.create_payment(
+                    request.data.get('user_id'),
+                    payment_status,
+                    request.data.get('paymentMethod'),
+                    request.data.get('coupon_id')
+                )
 
                 # Create transaction
-                transaction_data = {'payment': payment.id, 'status': payment_status, 'amount': total_amount}
-                transaction_serializer = TransactionSerializer(data=transaction_data)
-                transaction_serializer.is_valid(raise_exception=True)
-                transaction_serializer.save()
+                self.create_transaction(
+                    payment.id,
+                    payment_status,
+                    request.data.get('totalAmount')
+                )
 
                 # Create order
-                order_data = {
-                    'user': user_id,
-                    'payment': payment.id,
-                    'address': address_id,
-                    'shipping_charge': 100,
-                    'net_amount': total_amount,
-                    'delivery_date': (datetime.now() + timedelta(days=10)).date(),
-                }
-                order_serializer = OrderSerializer(data=order_data)
-                order_serializer.is_valid(raise_exception=True)
-                order = order_serializer.save()
+                order = self.create_order(
+                    request.data.get('user_id'),
+                    payment.id,
+                    request.data.get('addressId'),
+                    request.data.get('totalAmount')
+                )
 
-                # Handle cart items
-                cart_items = CartItem.objects.filter(cart__user_id=user_id).select_related('product_variant')
-                if not cart_items.exists():
-                    raise ValueError("Cart is empty")
+                # Process order items based on type
+                if request.data.get('type') == 'cart':
+                    self.process_cart_order(request.data.get('user_id'), order.id)
+                else:
+                    self.process_direct_order(
+                        order.id,
+                        request.data.get('productId'),
+                        request.data.get('quantity')
+                    )
 
-                # Prepare data for bulk update and validation
-                variant_ids = [item.product_variant.id for item in cart_items]
-                quantity_mapping = {item.product_variant.id: item.quantity for item in cart_items}
+                return Response(
+                    {"message": "Order placed successfully", "order_id": order.id},
+                    status=status.HTTP_201_CREATED
+                )
 
-                # Fetch all product variants in a single query
-                product_variants = ProductVariant.objects.filter(id__in=variant_ids)
-
-                order_items = []
-                for variant in product_variants:
-                    ordered_quantity = quantity_mapping[variant.id]
-
-                    # Check stock availability
-                    if variant.stock < ordered_quantity:
-                        raise ValueError(f"Not enough stock for variant {variant.id}")
-
-                    # Calculate price after offer
-                    offer = variant.product.offers.filter(is_active=True).first()  # Check if an active offer exists
-                    if offer:
-                        price_after_offer = variant.variant_price * (1 - offer.discount_percentage / 100)
-                    else:
-                        price_after_offer = variant.variant_price
-
-                    # Reduce stock using F expressions
-                    ProductVariant.objects.filter(id=variant.id).update(stock=F('stock') - ordered_quantity)
-
-                    # Append the order item details
-                    order_items.append({
-                        'order': order.id,
-                        'product_variant': variant.id,
-                        'quantity': ordered_quantity,
-                        'total_amount': ordered_quantity * price_after_offer,  # Use discounted or original price
-                    })
-
-                # Create order items in bulk
-                order_item_serializer = OrderItemSerializer(data=order_items, many=True)
-                order_item_serializer.is_valid(raise_exception=True)
-                order_item_serializer.save()
-
-                # Clear the cart
-                cart_items.delete()
-
-                return Response({"message": "Order placed successfully", "order_id": order.id}, status=status.HTTP_201_CREATED)
-
+        except ValueError as e:
+            logger.error(f"Validation error in order creation: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except (Razorpay.DoesNotExist, ProductVariant.DoesNotExist) as e:
+            logger.error(f"Database record not found: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Unexpected error in order creation: {str(e)}")
+            return Response(
+                {"error": "An unexpected error occurred"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         
 class UserLogout(APIView):
@@ -652,10 +866,11 @@ class UserLogout(APIView):
         return response
     
 class TokenRefreshFromCookieView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         # Extract the refresh token from cookies
         refresh_token = request.COOKIES.get('refresh_token')
-
+        
         if not refresh_token:
             return Response(
                 {"detail": "Refresh token not provided."},
@@ -667,11 +882,27 @@ class TokenRefreshFromCookieView(APIView):
             refresh = RefreshToken(refresh_token)
             access_token = str(refresh.access_token)
 
-            return Response(
-                {"access": access_token},
-                status=status.HTTP_200_OK,
-            )
+            # Decode refresh token
+            refresh_payload = decode(refresh_token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = refresh_payload['user_id']
+           
+            try:
+                user = CustomUser.objects.get(id=user_id)
+            except CustomUser.DoesNotExist:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
+            # Create response with access token and user details in body
+            response = Response({
+                'user': {
+                    'access_token': access_token,
+                    'id': user_id,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'is_admin': user.is_superuser,
+                    'profile_picture': user.profile_picture.url if user.profile_picture else None
+                }
+            }, status=status.HTTP_200_OK)
+            return response
         except TokenError as e:
             return Response(
                 {"detail": "Invalid or expired refresh token."},
@@ -729,6 +960,7 @@ class SingleOrderDetails(APIView):
             order_item_details=OrderItem.objects.select_related(
                 'product_variant',
                 'order',
+                'order__payment',
                 'product_variant__product',
                 'order__address'
             ).get(id=id)
@@ -836,7 +1068,7 @@ class UserWallet(APIView):
     def get(self,request, id):
         try:
             # Fetch wallet for the given user_id
-            wallet,created = Wallet.objects.get_or_create(user__id=id)
+            wallet,created = Wallet.objects.get_or_create(user_id=id)
             data = {
                 'balance': str(wallet.balance),
                 'created_at': wallet.created_at,

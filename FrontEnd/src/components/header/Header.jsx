@@ -1,13 +1,32 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import publicaxiosconfig from "../../publicaxiosconfig";
+import { useSelector } from "react-redux";
 function Header(props) {
+  const [categories, setCategories] = useState([]);
+  const user_id = useSelector((state)=>state.userDetails.id)
+  const [search, setSearch] = useState(props.searchValue);
   const navigate = useNavigate();
+  async function fetchCategories() {
+    try {
+      const response = await publicaxiosconfig.get("/getCategories");
+
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
   const profileIconHandler = (event) => {
-    navigate(props.page === "index" ? "/login" : "/userProfile");
+    navigate(user_id ? "/userProfile" : "/login");
   };
   return (
-    <header className="bg-light py-2 container-fluid" >
+    <header className="bg-[#FCF4D2] py-2 container-fluid sticky ">
+      {/* bg-[#6D8D3C] */}
+
       <div className=" d-flex align-items-center justify-content-between">
         {/* Logo */}
         <div className="logo d-flex align-items-center">
@@ -15,23 +34,32 @@ function Header(props) {
             className="m-0 text-primary"
             style={{ fontWeight: "bold", fontSize: "2rem" }}
           >
-            UB
+            
           </h1>
-          <span onClick={()=>(navigate(props.page==='index'? '/':'/HomePage'))} className="ms-2 fw-bold ">URBAN BALCONY</span>
+          <img className="rounded-sm" src="../public\logo.svg" alt="notFound" width={150} height={200} onClick={() => navigate(user_id ? "/HomePage" : "/" )}/>
+          {/* <span
+            onClick={() => navigate(user_id ? "/HomePage" : "/" )}
+            className="ms-2 fw-bold "
+          >
+          </span> */}
         </div>
-
-        {/* Search Bar */}
+        
         <div className="search-bar w-50">
           <div className="input-group">
             <input
               type="text"
               className="form-control"
-              placeholder="Search"
-              style={{ borderRadius: "20px 0 0 20px", borderColor: "#ddd" }}
+              placeholder="Search Here"
+              value={search}
+              onChange={(event)=>setSearch(event.target.value)}
+              style={{ borderRadius: "20px 0px 0px 20px", borderColor: "#ddd" }}
             />
             <button
-              className="btn btn-primary"
+              className=" bg-[#467927] text-white"
               style={{ borderRadius: "0 20px 20px 0" }}
+              onClick={(event) => {
+                props.handleSearch(search);
+              }}
             >
               Search
             </button>
@@ -43,22 +71,26 @@ function Header(props) {
           {props.page === "home" && (
             <>
               <i
-                className="fas fa-bell me-3"
+                className="fas fa-bell me-3 text-[#073801]"
                 style={{ fontSize: "1.2rem", cursor: "pointer" }}
               ></i>
-              <i
-                className="fas fa-shopping-cart me-3"
-                onClick={()=>navigate('/userProfile', { state: { tab: 'cart' } })}
+              {/* cart */}
+            {user_id && <i
+                className="fas fa-shopping-cart me-3 text-[#073801]"
+                onClick={() =>
+                  navigate("/userProfile", { state: { tab: "cart" } })
+                }
                 style={{ fontSize: "1.2rem", cursor: "pointer" }}
-              ></i>
-              <i
-                className="fas fa-heart me-3"
+              ></i>}  
+              {/* wishlist */}
+              {user_id &&<i
+                className="fas fa-heart me-3 text-[#073801]"
                 style={{ fontSize: "1.2rem", cursor: "pointer" }}
-              ></i>
+              ></i>}
             </>
           )}
           <i
-            className="fas fa-user"
+            className="fas fa-user text-[#073801]"
             style={{ fontSize: "1.2rem", cursor: "pointer" }}
             onClick={profileIconHandler}
           ></i>
@@ -66,49 +98,41 @@ function Header(props) {
       </div>
 
       {/* Navigation Links */}
-      {props.page!='userprofile' &&
-      <nav className="mt-3">
-        <div className="container d-flex justify-content-center">
-          <ul className="nav">
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Home
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Spice Powder
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Tea & Coffee
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Dry Fruits
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Essential Oils
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Masala Blends
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link text-dark" href="#">
-                Offers
-              </a>
-            </li>
-          </ul>
-        </div>
-      </nav>
-      }
+      {props.page != "userprofile" && (
+        <nav className="mt-3">
+          <div className="container d-flex justify-content-center">
+            <ul className="nav">
+              <li className="nav-item">
+                <Link to={user_id ? "/Homepage" : "/"} className="nav-link text-[#467927]" >
+                  Home
+                </Link>
+              </li>
+              {categories.map((category, index) => {
+                return (
+                  <li className="nav-item" key={index}>
+                    <Link
+                    
+                      to={user_id ? "/Homepage" : "/"}
+                      state={{ category_id: category.id }}
+                      className="nav-link text-[#467927]"
+                    >
+                      {" "}
+                      {category.name}{" "}
+                    </Link>
+                  </li>
+                );
+              })}
+
+              <li className="nav-item">
+                <a className="nav-link text-[#467927]" href="#">
+                  Offers
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      )}
+      <hr />
     </header>
   );
 }

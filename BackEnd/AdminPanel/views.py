@@ -14,13 +14,15 @@ from rest_framework.exceptions import ErrorDetail,ValidationError
 from django.http import HttpResponse
 from django.db.models.signals import post_save, post_delete
 from django.db.models import Prefetch
-from django.db.models import F,Sum,Count,ExpressionWrapper, DecimalField
+from django.db.models import F,Sum,Count,ExpressionWrapper, DecimalField,FloatField,Q
 from django.db import transaction
 
 from django.dispatch import receiver
 from datetime import datetime
 from openpyxl import Workbook
+from rest_framework.permissions import AllowAny,IsAuthenticated
 # Create your views here.
+
 
 class UserManage(APIView):
     def get (self,request):
@@ -370,7 +372,7 @@ class OfferManage(APIView):
         )
         
 class SalesReportView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -407,7 +409,35 @@ class SalesReportView(APIView):
                 )
                 .order_by('date')
             )
-
+            # sales report
+           
+            sales_details=OrderItem.objects.filter(Q(status='Delivered') | Q(status='Delivered Return not Approved'),order__in=orders).values() 
+           # Get top-selling categories
+           
+            top_categories = (
+                    OrderItem.objects.filter(order__in=orders)
+                    .annotate(
+                        total_revenue=ExpressionWrapper(
+                            F('quantity') * F('total_amount'),
+                            output_field=DecimalField(max_digits=10, decimal_places=2)
+                        )
+                    )
+                    .values(category=F('product_variant__product__category__name'))  # Group by category name
+                    .annotate(
+                        total_quantity=Sum('quantity'),
+                        total_price=ExpressionWrapper(
+                            Sum(F('product_variant__variant_price') * F('quantity')),
+                            output_field=FloatField()
+                        ),
+                        total_revenue=Sum('total_revenue'),
+                        total_discount=ExpressionWrapper(
+                            Sum(F('product_variant__variant_price') * F('quantity')) - Sum('total_amount'),
+                            output_field=FloatField()
+                        )
+                    )
+                    .order_by('-total_quantity')[:10]  # Get top 10 selling categories
+                )
+            print('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',top_categories)
            # Get top-selling products
             top_products = (
                 OrderItem.objects.filter(order__in=orders)
@@ -420,8 +450,12 @@ class SalesReportView(APIView):
                 .values(name=F('product_variant__product__title'))
                 .annotate(
                     quantity=Sum('quantity'),
+                    price=ExpressionWrapper(F('product_variant__variant_price') * F('quantity'),output_field=FloatField()),
                     revenue=Sum('total_revenue'),
-                    discount=Sum(F('product_variant__variant_price')-F('total_amount'))
+                     discount=ExpressionWrapper(
+        (F('product_variant__variant_price') * F('quantity')) - F('total_amount'),
+        output_field=FloatField()
+    )
                 )
                 .order_by('-quantity')[:10]
             )
@@ -433,86 +467,16 @@ class SalesReportView(APIView):
                 'averageOrderValue': average_order_value,
                 'dailySales': list(daily_sales),
                 'topSellingProducts': list(top_products),
+                'sales_details':sales_details,
+                'top_categories':list(top_categories)
             }
-
             return Response(data, status=status.HTTP_200_OK)
         except ValidationError as ve:
             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# class ExportSalesReportView(APIView):
-#     # permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-#         try:
-#             # Get date range from request query parameters
-#             start_date = request.query_params.get('startDate')
-#             end_date = request.query_params.get('endDate')
-
-#             if not start_date or not end_date:
-#                 raise ValidationError("Both startDate and endDate are required.")
-
-#             start_date = datetime.fromisoformat(start_date)
-#             end_date = datetime.fromisoformat(end_date)
-
-#             # Fetch orders within the date range
-#             orders = (
-#         Order.objects.filter(order_date__range=(start_date, end_date))
-#         .prefetch_related(
-#             Prefetch(
-#                 'order_items',
-#                 queryset=OrderItem.objects.select_related('product_variant')
-#             )
-#         )
-#     )
-
-#             # Create an Excel workbook
-#             workbook = Workbook()
-#             sheet = workbook.active
-#             sheet.title = 'Sales Report'
-
-#             # Add headers
-#             headers = [
-#                 'Order ID', 'Order Date', 'Customer', 'Total Price', 
-#                 'Discount Applied', 'Net Revenue'
-#             ]
-#             sheet.append(headers)
-
-#             # Add order data
-#             for order in orders:
-#                 sheet.append([
-#                     order.id,
-#                     order.order_date.strftime('%Y-%m-%d'),
-#                     order.user.first_name,
-#                     order.total_amount,
-#                     order.variant_price -order.total_amount,
-#                     order.total_amount - (order.variant_price -order.total_amount)
-#                 ])
-
-#             # Add totals row
-#             sheet.append([])
-#             sheet.append([
-#                 'Total',
-#                 '',
-#                 '',
-#                 orders.aggregate(Sum('total_price'))['total_price__sum'] or 0,
-#                 orders.aggregate(Sum('discount'))['discount__sum'] or 0,
-#                 orders.aggregate(Sum('total_price'))['total_price__sum'] -
-#                 (orders.aggregate(Sum('discount'))['discount__sum'] or 0),
-#             ])
-
-#             # Create a response for downloading the file
-#             response = HttpResponse(
-#                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-#             )
-#             response['Content-Disposition'] = 'attachment; filename=sales_report.xlsx'
-#             workbook.save(response)
-
-#             return response
-#         except ValidationError as ve:
-#             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
-#         except Exception as e:
-#             print(e)
-#             return Response({'error': 'An error occurred while exporting the report.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+class ChatUserDetails(APIView):
+    def get (self,request):
+        customuser = CustomUser.objects.select_related  ('user_chatroom').exclude(id=12)
+        return Response(customuser.values(),200)

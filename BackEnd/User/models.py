@@ -278,3 +278,11 @@ class Offer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active=models.BooleanField(default=True)
+    
+    
+class Banner(models.Model):
+    title = models.CharField(max_length=255, help_text="Title for the banner")
+    image = models.ImageField(upload_to="banners/", help_text="Upload a banner image")
+    is_active = models.BooleanField(default=True, help_text="Should this banner be displayed?")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

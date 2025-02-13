@@ -46,7 +46,7 @@ const UserOrderDetails = () => {
       <h1 className="text-2xl font-bold mb-6">My Orders</h1>
       <div className="grid gap-4">
         {allProducts.map((product, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md">
+          <div key={index} className="bg-[#E8D7B4] rounded-lg shadow-md">
             <div className="p-4">
               <div className="flex flex-col md:flex-row items-center gap-4">
                 <div className="w-36 h-36 flex-shrink-0">
@@ -83,7 +83,7 @@ const UserOrderDetails = () => {
                 </div>
                 <div>
                   <button
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                    className="px-4 py-2 bg-[#467927] hover:bg-green-900 text-white rounded transition-colors"
                     onClick={() =>
                       navigate("/userProfile", {
                         state: {
@@ -97,16 +97,7 @@ const UserOrderDetails = () => {
                   </button>
                 </div>
 
-                {/* <div className="flex-shrink-0">
-                  {product.status !== "Delivered" && product.status !== "Cancelled" && (
-                    <button
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
-                      onClick={() => handleCancel(product.id)}
-                    >
-                      Cancel Order
-                    </button>
-                  )}
-                </div> */}
+                
               </div>
             </div>
           </div>

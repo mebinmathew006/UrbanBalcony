@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Singleproduct.css";
 import axiosInstance from "../../axiosconfig";
 import ReactImageMagnify from "react-image-magnify";
@@ -8,13 +8,14 @@ import { useSelector } from "react-redux";
 
 function Singleprodct() {
   const user_id = useSelector((state) => state.userDetails.id);
-
+  const navigate = useNavigate();
   const location = useLocation();
   const productDetails = location.state.spiceDetails;
   const [varientSpecificDetails, setVarientSpecificDetails] = useState("");
 
   function ShowVarientDetails(index) {
     setVarientSpecificDetails(productVarientDetails[index]);
+    setQuantity(1);
   }
   const [product_img, setProduct_img] = useState(
     `http://127.0.0.1:8000/media/${productDetails.product_img1}`
@@ -50,7 +51,7 @@ function Singleprodct() {
         `/varientForUser/${productDetails.id}`
       );
       setProductVarientDetails(response.data);
-      console.log("Product Varient Details:", response.data);
+      setVarientSpecificDetails(response.data[0]);
     } catch (error) {
       console.log(error);
     }
@@ -70,10 +71,17 @@ function Singleprodct() {
 
   // addtocart
   const addToCart = async () => {
+    if (!user_id) {
+      // navigate('/login')
+      toast.error("Please login First!", {
+        position: "bottom-center",
+      });
+      return;
+    }
     if (!varientSpecificDetails) {
       // Check the specific variant details instead of productVarientDetails
       toast.error("Please select a variant!", {
-        position: "bottom-center", // Ensure this position is valid
+        position: "bottom-center",
       });
       return; // Add return to stop further execution
     }
@@ -84,8 +92,8 @@ function Singleprodct() {
       formData.append("id", varientSpecificDetails.id);
       formData.append("user_id", user_id);
       await axiosInstance.post("/userCart", formData);
-      toast.error("Added to Cart!", {
-        position: "bottom-center", // Ensure this position is valid
+      toast.success("Added to Cart!", {
+        position: "bottom-center",
       });
     } catch (error) {
       console.log(error);
@@ -94,6 +102,12 @@ function Singleprodct() {
 
   // addToWishlist
   const addToWishlist = async () => {
+    if (!user_id) {
+      // navigate('/login')
+      toast.error("Please login First!", {
+        position: "bottom-center",
+      });
+    }
     if (!varientSpecificDetails) {
       // Check the specific variant details instead of productVarientDetails
       toast.error("Please select a variant!", {
@@ -107,25 +121,44 @@ function Singleprodct() {
       formData.append("id", varientSpecificDetails.id);
       formData.append("user_id", user_id);
       await axiosInstance.post("/userWishlist", formData);
-      toast.info("Added to Wishlist!", {
+      toast.success("Added to Wishlist!", {
         position: "bottom-center",
       });
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
   };
 
   const buyNow = () => {
-    console.log("Buy Now clicked");
+    if (!user_id) {
+      // navigate('/login')
+      toast.error("Please login First!", {
+        position: "bottom-center",
+      });
+      return;
+    }
+    if (quantity > varientSpecificDetails.stock) {
+      toast.error("Please select Less Quantitiy!", {
+        position: "bottom-center",
+      });
+      return;
+    }
+    const totalAmount = quantity * varientSpecificDetails.price_after_offer;
+    navigate("/checkoutPage", {
+      state: {
+        totalAmount,
+        type: "buynow",
+        productId: varientSpecificDetails.id,
+        quantity,
+      },
+    });
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-50">
+    <div className="container mx-auto px-4 py-8 bg-[#FCF4D2]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Image Section */}
         <div className="space-y-6">
           {/* Main Image */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-[#E8D7B4] rounded-xl shadow-lg p-6">
             <div className="w-full max-w-md mx-auto">
               <ReactImageMagnify
                 {...{
@@ -186,7 +219,7 @@ function Singleprodct() {
         </div>
 
         {/* Right Column - Product Details */}
-        <div className="bg-white rounded-xl shadow-lg p-8 space-y-6">
+        <div className="bg-[#E8D7B4] rounded-xl shadow-lg p-8 space-y-6">
           {/* Product Title */}
           <h1 className="text-3xl font-bold text-gray-800">
             {productDetails.title}
@@ -197,6 +230,12 @@ function Singleprodct() {
             {productDetails.description}
           </p>
 
+          {/* Shelf Life */}
+          <div >
+            <p className="text-gray-600 leading-relaxed ">
+              {productDetails.shelf_life} Shelf Life
+            </p>
+          </div>
           {/* Rating and Reviews */}
           <div className="flex items-center gap-4">
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -204,37 +243,16 @@ function Singleprodct() {
             </span>
             <Link
               to={`/userReviews/${productDetails.id}`}
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="text-blue-600 hover:text-blue-800 font-medium no-underline"
             >
               View Reviews
             </Link>
           </div>
-
-          {/* Price */}
-          {varientSpecificDetails && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-2xl font-bold text-gray-900">
-                Price: ₹
-                {varientSpecificDetails.variant_price ? (
-                  varientSpecificDetails.price_after_offer ===
-                  varientSpecificDetails.variant_price ? (
-                    varientSpecificDetails.variant_price
-                  ) : (
-                    <>
-                      <del className="text-red-600 text-lg">{varientSpecificDetails.variant_price}</del>{" "}
-                      {varientSpecificDetails.price_after_offer}
-                    </>
-                  )
-                ) : (
-                  "N/A"
-                )}
-              </p>
-            </div>
-          )}
-
+          
+          <hr />
           {/* Variants */}
           <div className="space-y-2">
-            <label className=" block text-sm font-medium text-gray-700">
+            <label className=" block text-sm font-medium text-left ps-2">
               Select Weight:
             </label>
             <div className="flex flex-wrap gap-2">
@@ -250,29 +268,49 @@ function Singleprodct() {
                 ))}
             </div>
           </div>
-
+          {/* Price */}
+          {varientSpecificDetails && (
+            <div className=" rounded-lg">
+              <p className="font-medium">
+                Weight :{varientSpecificDetails.weight}
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                Price: ₹
+                {varientSpecificDetails.variant_price ? (
+                  varientSpecificDetails.price_after_offer ===
+                  varientSpecificDetails.variant_price ? (
+                    varientSpecificDetails.variant_price
+                  ) : (
+                    <>
+                      <del className="text-red-600 text-lg">
+                        {varientSpecificDetails.variant_price}
+                      </del>{" "}
+                      {varientSpecificDetails.price_after_offer}
+                    </>
+                  )
+                ) : (
+                  "N/A"
+                )}
+              </p>
+            </div>
+          )}
           {/* Stock Info */}
           {productVarientDetails && (
-            <div className="bg-green-50 p-3 rounded-lg">
+            <div className="rounded-lg">
               <p className="text-green-800 font-medium">
                 Stock Available: {varientSpecificDetails.stock}
               </p>
             </div>
           )}
 
-          {/* Shelf Life */}
-          <div className="bg-yellow-50 p-3 rounded-lg">
-            <p className="text-yellow-800 font-medium">
-              Shelf Life: {productDetails.shelf_life}
-            </p>
-          </div>
-
           {/* Quantity Selector */}
-          <div className="flex items-center gap-4 mt-2">
+          <p className="text-start ps-2 font-medium">Quantity</p>
+
+          <div className="flex items-center justify-start gap-3 mt-2">
             <button
               onClick={() => handleQuantityDecrese()}
               disabled={!varientSpecificDetails}
-              className={`px-2 py-1 rounded ${
+              className={`w-8 h-8 flex items-center justify-center rounded ${
                 !varientSpecificDetails
                   ? "bg-gray-100 cursor-not-allowed"
                   : "bg-gray-200 hover:bg-gray-300"
@@ -280,13 +318,13 @@ function Singleprodct() {
             >
               -
             </button>
-            <p className="font-medium">{quantity}</p>
+            <p className="font-medium w-8 text-center">{quantity}</p>
             <button
               onClick={() =>
                 handleQuantityIncrese(varientSpecificDetails?.stock)
               }
               disabled={!varientSpecificDetails}
-              className={`px-2 py-1 rounded ${
+              className={`w-8 h-8 flex items-center justify-center rounded ${
                 !varientSpecificDetails
                   ? "bg-gray-100 cursor-not-allowed"
                   : "bg-gray-200 hover:bg-gray-300"
@@ -295,6 +333,8 @@ function Singleprodct() {
               +
             </button>
           </div>
+          <hr />
+
 
           {/* Action Buttons */}
           {varientSpecificDetails && varientSpecificDetails.stock >= 1 && (
@@ -311,7 +351,10 @@ function Singleprodct() {
               >
                 Wishlist
               </button>
-              <button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+              <button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                onClick={() => buyNow(varientSpecificDetails.id)}
+              >
                 Buy Now
               </button>
             </div>

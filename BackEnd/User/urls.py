@@ -17,13 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from .views import *
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('',UserHome.as_view(),name='userHome'),
+    path('categoryBasedProductData/<int:id>',CategoryBasedProductData.as_view(),name='categoryBasedProductData'),
+    path('relatedProductData/<int:id>',RelatedProductData.as_view(),name='relatedProductData'),
+    path('filterBasedProductData/<str:types>',FilterBasedProductData.as_view(),name='filterBasedProductData'),
+    path('searchBasedProductData/<str:search>',SearchBasedProductData.as_view(),name='searchBasedProductData'),
     path('userLogin',UserLogin.as_view(),name='userLogin'),
     path('userDetails/<int:id>',UserLogin.as_view(),name='userDetails'),
     path('userAddress/<int:id>',UserAddress.as_view(),name='userAddress'),
@@ -45,7 +47,14 @@ urlpatterns = [
     path('refresh_token', TokenRefreshFromCookieView.as_view(), name='refresh_token'),
     path('createRazorpayOrder', CreateRazorpayOrder.as_view(), name='createRazorpayOrder'),
     path('validate_coupon', ValidateCoupon.as_view(), name='validate_coupon'),
+    path('indexPage', IndexPage.as_view(), name='IndexPage'),
+    path('getCategories', GetCategories.as_view(), name='getCategories'),
+    path('changePaymentstatus', ChangePaymentstatus.as_view(), name='changePaymentstatus'),
+    path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
     path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
     path('userWallet/<int:id>', UserWallet.as_view(), name='userWallet'),
     
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

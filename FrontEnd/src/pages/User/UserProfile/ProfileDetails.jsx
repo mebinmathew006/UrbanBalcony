@@ -51,7 +51,7 @@ function ProfileDetails() {
   }, []);
 
   return (
-    <div className="p-6 bg-gray-50 rounded-md shadow-md">
+    <div className="p-6  rounded-md shadow-md">
       <UserEditDetails
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -59,10 +59,10 @@ function ProfileDetails() {
         onSave={handleSave}
       />
 
-      <h3 className="text-xl font-semibold mb-4 text-gray-800">
+      <h3 className="text-xl font-semibold mb-4 text-[#523e18]">
         Profile Information
       </h3>
-      <div className="bg-white p-4 rounded-md shadow-sm">
+      <div className="p-4 rounded-lg bg-[#E8D7B4] ">
         <div className="flex justify-center items-center mb-4">
           <div className="flex flex-col items-center">
             <img
@@ -75,8 +75,8 @@ function ProfileDetails() {
 
         <div className="mb-4">
           <div className="flex justify-between items-center">
-            <h6 className="text-sm font-medium text-gray-600">Full Name</h6>
-            <p className="text-gray-800">
+            <h6 className="text-sm font-medium text-[#523e18]">Full Name</h6>
+            <p className="text-[#523e18]">
               {user.first_name} {user.last_name}
             </p>
           </div>
@@ -84,15 +84,15 @@ function ProfileDetails() {
         <hr className="border-gray-200 my-4" />
         <div className="mb-4">
           <div className="flex justify-between items-center">
-            <h6 className="text-sm font-medium text-gray-600">Email</h6>
-            <p className="text-gray-800">{user.email}</p>
+            <h6 className="text-sm font-medium text-[#523e18]">Email</h6>
+            <p className="text-[#523e18]">{user.email}</p>
           </div>
         </div>
         <hr className="border-gray-200 my-4" />
         <div className="mb-4">
           <div className="flex justify-between items-center">
-            <h6 className="text-sm font-medium text-gray-600">Phone</h6>
-            <p className="text-gray-800">{user.phone_number}</p>
+            <h6 className="text-sm font-medium text-[#523e18]">Phone</h6>
+            <p className="text-[#523e18]">{user.phone_number}</p>
           </div>
         </div>
         <hr className="border-gray-200 my-4" />
@@ -101,7 +101,7 @@ function ProfileDetails() {
         <div className="text-center">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-800 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none"
+            className="bg-[#467927] text-white px-4 py-2 rounded-md hover:bg-green-900 focus:outline-none"
           >
             Edit Profile
           </button>

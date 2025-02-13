@@ -48,7 +48,7 @@ function UserWishlist() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#FCF4D2] py-8">
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">My Wishlist</h1>
 
@@ -56,12 +56,13 @@ function UserWishlist() {
           wishlist[0].wishlist_products.map((item, index) => (
             <div
               key={index}
-              className="card mb-4 p-4 bg-white rounded-lg shadow"
+              className="card mb-4 p-4  rounded-lg shadow  "
+              style={{backgroundColor:'#E8D7B4'}}
             >
               <div className="flex items-center justify-between gap-8">
                 {/* Product Image */}
                 <img
-                  src={`http://localhost:8000${item.product_variant.product.product_img1}`}
+                  src={`http://localhost:8000/${item.product_variant.product.product_img1}`}
                   alt="Product"
                   className="w-24 h-24 rounded-md object-cover"
                 />

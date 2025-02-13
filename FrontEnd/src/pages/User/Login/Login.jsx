@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {setUserDetails} from '../../../store/UserDetailsSlice'
 import publicaxiosconfig from "../../../publicaxiosconfig";
 import { toast } from "react-toastify";
+import Header from "../../../components/header/header";
+import Footer from "../../../components/footer/Footer";
 
 
 function Login() {
+  const isAuthenticated = useSelector((state) => state.userDetails);
+  
   const dispatch = useDispatch();
   
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -94,6 +98,8 @@ function Login() {
 
       // setting the user details in redux store
       const userDetails = response.data.user;
+      console.log(userDetails);
+      
       dispatch(setUserDetails(userDetails));
       // localStorage.setItem('userDetails',JSON.stringify(userDetails));
       toast.success("Login Successful.", {
@@ -119,14 +125,19 @@ function Login() {
   };
 
   return (
-    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom">
+    <div className="flex-1">
+       <Header/>
+  
+    <div className="container-fluid d-flex justify-content-center align-items-center bg-[#FCF4D2] h-[70vh]">
+   
       <div
         className="card p-4 shadow"
-        style={{ width: "400px", borderRadius: "12px" }}
+        style={{ width: "400px", borderRadius: "12px" ,backgroundColor: '#E8D7B4'
+ }}
       >
-        <h2 className="text-center mb-4 fw-bold">Sign In</h2>
+        <h2 className="text-center mb-4 fw-bold text-[#073801]">Sign In</h2>
 
-        <form onSubmit={handleSubmit(loginSubmitHandler)}>
+        <form onSubmit={handleSubmit(loginSubmitHandler)} >
           {/* Email Input */}
           <div className="mb-3">
             <input
@@ -177,7 +188,7 @@ function Login() {
           )}
 
           {/* Submit Button */}
-          <button type="submit" className="btn btn-primary w-100">
+          <button type="submit" className="rounded bg-[#467927] text-white w-100">
             Sign in
           </button>
         </form>
@@ -186,7 +197,7 @@ function Login() {
         <div className="text-center mt-3">
           <Link
             to="/ForgetPassword"
-            className="text-decoration-none text-warning fw-bold"
+            className="text-[#BF923F] fw-bold"
           >
             Forgot Password?
           </Link>
@@ -198,7 +209,7 @@ function Login() {
             Don't have an account?{" "}
             <Link
               to="/signup"
-              className="text-decoration-none text-warning fw-bold"
+              className="text-decoration-none text-[#BF923F] fw-bold"
             >
               Sign up
             </Link>
@@ -210,6 +221,8 @@ function Login() {
           <div id="googleSignInDiv"></div>
         </div>
       </div>
+    </div>
+    <Footer/>
     </div>
   );
 }

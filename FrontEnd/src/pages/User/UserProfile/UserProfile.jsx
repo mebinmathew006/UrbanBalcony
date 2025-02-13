@@ -7,20 +7,22 @@ import { useDispatch, useSelector } from "react-redux";
 import UserOrderDetails from "./UserOrderDetails";
 import UserCart from "./UserCart";
 import { useLocation, useNavigate } from "react-router-dom";
-import { destroyDetails } from "../../../store/UserDetailsSlice"; 
+import { destroyDetails } from "../../../store/UserDetailsSlice";
 import axiosInstance from "../../../axiosconfig";
 import UserSingleOrderDetailsPage from "./UserSingleOrderDetailsPage";
 import UserWishlist from "./UserWishlist";
 import UserWallet from "./UserWallet";
+import UserChat from "./UserChat";
+import Footer from "../../../components/footer/Footer";
 
 const UserProfile = () => {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'profile');
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "profile");
   console.log(activeTab);
-  
+
   const user = useSelector((state) => state.userDetails);
-  const dispatch = useDispatch()
-  const navigate =useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (location.state?.tab) {
@@ -37,14 +39,18 @@ const UserProfile = () => {
     orderDetails: <UserSingleOrderDetailsPage />,
     wishlist: <UserWishlist />,
     userWallet: <UserWallet />,
+    chat: <UserChat />,
   };
 
   return (
-    <div className="container-fluid">
-      <div className="row">
+    <div className="container-fluid sticky bg-[#FCF4D2]">
+      <div className="row ">
         <Header page="userprofile" />
         {/* Sidebar */}
-        <div className="col-md-3 sidebar">
+        <div
+          className="col-md-3 shadow "
+          style={{ backgroundColor: "#FCF4D2" }}
+        >
           <div className="profile-sidebar">
             <div className="profile-image">
               <img
@@ -98,12 +104,10 @@ const UserProfile = () => {
                 </li>
                 {/* cart */}
                 <li
-                  className={`nav-item ${
-                    activeTab === "cart" ? "active" : ""
-                  }`}
+                  className={`nav-item ${activeTab === "cart" ? "active" : ""}`}
                 >
                   <button
-                    className="nav-link"
+                    className="bg-[#073801] nav-link"
                     onClick={() => setActiveTab("cart")}
                   >
                     Cart
@@ -135,20 +139,27 @@ const UserProfile = () => {
                     Wallet
                   </button>
                 </li>
+                {/* Chat */}
                 <li
-                  className={`nav-item ${
-                    activeTab === " " ? "active" : ""
-                  }`}
+                  className={`nav-item ${activeTab === "chat" ? "active" : ""}`}
                 >
                   <button
                     className="nav-link"
-                    onClick={() =>{
+                    onClick={() => setActiveTab("chat")}
+                  >
+                    Customer Care
+                  </button>
+                </li>
+                {/* Logout */}
+                <li className={`nav-item ${activeTab === " " ? "active" : ""}`}>
+                  <button
+                    className="nav-link"
+                    onClick={() => {
                       dispatch(destroyDetails());
                       try {
-                      const response = axiosInstance.post('/userLogout')
-                        navigate('/login')
-                      } catch (error) {
-                      }
+                        const response = axiosInstance.post("/userLogout");
+                        navigate("/login");
+                      } catch (error) {}
                     }}
                   >
                     Logout
@@ -161,6 +172,8 @@ const UserProfile = () => {
 
         {/* Main Content */}
         <div className="col-md-9 main-content">{tabComponents[activeTab]}</div>
+      <Footer/>
+
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { destroyDetails } from "../../../store/UserDetailsSlice";
@@ -7,8 +7,9 @@ import axiosInstance from "../../../axiosconfig";
 const Sidebar = () => {
   const dispatch = useDispatch()
   const navigate =useNavigate()
+ 
   return (
-    <aside className="bg-light shadow-sm h-screen">
+    <aside className="bg-light shadow-sm h-screen ">
       <div className="py-4 border-bottom ">
         <h2 className="m-0">Admin Panel</h2>
       </div>
@@ -50,11 +51,12 @@ const Sidebar = () => {
             Coupons
           </Link>
         </li>
-        {/* <li className="nav-item">
-          <Link to="/salesReport" className="nav-link">
-          Sales-Report
+        <li className="nav-item">
+          <Link to="/adminChat" className="nav-link">
+          Chat
           </Link>
-        </li> */}
+        </li>
+
         <li className="nav-item">
           <button
             className="nav-link text-danger"

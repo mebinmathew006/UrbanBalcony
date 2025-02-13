@@ -35,9 +35,8 @@ function UserAddress() {
     try {
       const response = await axiosInstance.post(`userAddress`, formData);
       console.log(response);
-      
+
       if (response.status === 201) {
-        
         fetchUserAddress(); // Refresh the address list
         setIsCreateModalOpen(false); // Close the modal
       }
@@ -86,7 +85,7 @@ function UserAddress() {
   };
 
   return (
-    <div className="address-content">
+    <div className="address-content  rounded-xl">
       <UserAddressCreate
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -102,20 +101,39 @@ function UserAddress() {
         userAddress={selectedAddress} // Pass the selected address instead of the array
         onSave={handleSave}
       />
-      <div className="d-flex gap-10 align-items-center justify-center">
-        <h3>Address Management</h3>
+      <div className="flex items-center justify-between px-6 py-4 rounded-lg   mb-6">
+        <h3 className="text-2xl  font-semibold text-gray-800">
+          Address Management
+        </h3>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="btn btn-primary"
+          className="flex items-center gap-2 bg-[#467927] hover:bg-[#386020] text-white px-4 py-2 rounded-md transition-colors duration-200 font-medium"
         >
-          Add New Address
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-5 h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 4.5v15m7.5-7.5h-15"
+            />
+          </svg>
+          New Address
         </button>
       </div>
-
       {userAddress &&
         userAddress.map((address, index) => {
           return (
-            <div className="card mb-3" key={index}>
+            <div
+              className="card mb-3 "
+              key={index}
+              style={{ backgroundColor: "#E8D7B4" }}
+            >
               <div className="card-body ">
                 <h5 className="card-title">{address.address_type} Address</h5>
                 <p className="card-text">
@@ -140,7 +158,9 @@ function UserAddress() {
                   </button>
                 </div>
               </div>
+              <hr />
             </div>
+            
           );
         })}
     </div>

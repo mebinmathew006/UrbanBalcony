@@ -29,7 +29,7 @@ function UserCart() {
 
   const handleCheckout = () => {
     navigate("/checkoutPage", {
-      state: { totalAmount },
+      state: { totalAmount,type:'cart' },
     });
   };
   useEffect(() => {
@@ -66,20 +66,21 @@ function UserCart() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen  py-8 bg-[#FCF4D2] }}">
   <div className="max-w-4xl mx-auto px-4">
     <h1 className="text-2xl font-bold mb-6">Cart Details</h1>
 
     {userCart ? (
       userCart.map((cart, index) => (
         <div
-          className="card mb-4 p-4 bg-white rounded-lg shadow"
+          className="card mb-4 p-4  rounded-lg shadow bg-[#E8D7B4]"
           key={index}
+          style={{backgroundColor:'#E8D7B4'}}
         >
           {cart.cart_items.map((item, itemIndex) => (
             <div
               key={itemIndex}
-              className="flex items-center justify-between gap-8 mb-6"
+              className="flex items-center justify-between gap-8 mb-6 "
             >
               {/* Product Image */}
               <img
@@ -119,7 +120,7 @@ function UserCart() {
               {/* Delete Button */}
               <button
                 onClick={() => handleDelete(item.id)}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                className="bg-red-800 text-white px-4 py-2 rounded hover:bg-red-900"
               >
                 Delete
               </button>
@@ -133,7 +134,7 @@ function UserCart() {
 
     {/* Total Amount & Checkout Button */}
     {userCart && (
-      <div className="mt-6 p-4 bg-white rounded-lg shadow">
+      <div className="mt-6 p-4 bg-[#E8D7B4] rounded-lg shadow">
         <h2 className="text-lg font-semibold mb-4">Cart Summary</h2>
         <p className="text-gray-600 text-lg font-medium">
           Total Amount: ₹{totalAmount}
@@ -141,8 +142,8 @@ function UserCart() {
         {totalAmount !== 0 && (
           <button
             onClick={handleCheckout}
-            className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium
-              hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-4 bg-[#467927] text-white px-6 py-3 rounded-lg font-medium
+              hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             Proceed to Checkout
           </button>
@@ -150,6 +151,7 @@ function UserCart() {
       </div>
     )}
   </div>
+  
 </div>
 
   );

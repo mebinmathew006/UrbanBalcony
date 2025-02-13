@@ -7,6 +7,9 @@ import "cropperjs/dist/cropper.css";
 
 function ProductEdit() {
   const cropperRefs = useRef({});
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+  console.log(baseUrl);
+  
   const [croppedImages, setCroppedImages] = useState({});
   const {
     register,
@@ -231,6 +234,10 @@ function ProductEdit() {
                     ref={(ref) => (cropperRefs.current[fieldName] = ref)}
                   />
                 )}
+                {/* existing image */}
+                <img src={`${baseUrl}/${productDetails[`product_img${index + 1}`]}`} alt="Product Image" />
+
+
               </div>
             )
           )}
