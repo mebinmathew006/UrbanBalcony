@@ -4,8 +4,10 @@ import { destroyDetails,setUserDetails } from './store/UserDetailsSlice'; // Adj
 import history from './history';
 import { toast } from "react-toastify";
 
+const baseurl=import.meta.env.VITE_BASE_URL
+
 const adminaxiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/adminPanel/',
+  baseURL: `${baseurl}/adminPanel/`,
   withCredentials: true,
 });
 
@@ -33,7 +35,7 @@ adminaxiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Attempt to refresh the access token using the refresh token stored in an HttpOnly cookie
-        const response = await axios.post('http://localhost:8000/user/refresh_token', {}, {
+        const response = await axios.post(`${baseurl}/user/refresh_token`, {}, {
           withCredentials: true, // Send cookies with the request
         });
         const userDetails=response.data.user

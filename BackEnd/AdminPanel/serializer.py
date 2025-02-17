@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from User.models import Category,Product,ProductVariant,Coupon,Offer
+from User.models import Category,Product,ProductVariant,Coupon,Offer,Banner
 import re
 
 
@@ -150,3 +150,8 @@ class OfferSerializer(serializers.ModelSerializer):
     def get_product_name(self, obj):
         """Retrieve the name of the related product."""
         return obj.product.title
+    
+class BannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banner
+        fields = "__all__"

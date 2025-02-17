@@ -1,14 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order,OrderItem,Wallet,WalletTransaction,Coupon,Offer
+from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order,OrderItem,Wallet,WalletTransaction,Coupon,Offer,Banner
 from django.utils.timezone import now
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
-from .serializer import CategorySerializer,ProductSerializer,ProductVariantSerializer,CouponSerializer,OfferSerializer
+from .serializer import CategorySerializer,ProductSerializer,ProductVariantSerializer,CouponSerializer,OfferSerializer,BannerSerializer
 from User.serializer import CartSerializer,OrderSerializer
 from rest_framework.exceptions import ErrorDetail,ValidationError
 from django.http import HttpResponse
@@ -387,7 +387,7 @@ class SalesReportView(APIView):
             end_date = datetime.fromisoformat(end_date)
 
             # Fetch orders within the date range
-            orders = Order.objects.filter(order_date__range=(start_date, end_date))
+            orders = Order.objects.filter(order_date__range=(start_date,end_date))
 
             # Calculate total revenue
             total_revenue = orders.aggregate(total=Sum('order_items__total_amount'))['total'] or 0
@@ -437,7 +437,6 @@ class SalesReportView(APIView):
                     )
                     .order_by('-total_quantity')[:10]  # Get top 10 selling categories
                 )
-            print('dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',top_categories)
            # Get top-selling products
             top_products = (
                 OrderItem.objects.filter(order__in=orders)
@@ -452,12 +451,9 @@ class SalesReportView(APIView):
                     quantity=Sum('quantity'),
                     price=ExpressionWrapper(F('product_variant__variant_price') * F('quantity'),output_field=FloatField()),
                     revenue=Sum('total_revenue'),
-                     discount=ExpressionWrapper(
-        (F('product_variant__variant_price') * F('quantity')) - F('total_amount'),
-        output_field=FloatField()
-    )
+                     discount=F('order__discout_percentage')
                 )
-                .order_by('-quantity')[:10]
+                .order_by('-quantity')
             )
 
             # Prepare response data
@@ -474,9 +470,63 @@ class SalesReportView(APIView):
         except ValidationError as ve:
             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': 'An error occurred while processing the request.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(e)
+            return Response({'error': 'An error occurred while processing the request.' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ChatUserDetails(APIView):
     def get (self,request):
         customuser = CustomUser.objects.select_related  ('user_chatroom').exclude(id=12)
         return Response(customuser.values(),200)
+    
+class BannerManagementView(APIView):
+    """
+    API view for managing banners: fetching, adding, and updating.
+    """
+
+    def get(self, request, banner_id=None):
+        """Retrieve all banners or a single banner by ID."""
+        if banner_id:
+            try:
+                banner = Banner.objects.get(id=banner_id)
+                serializer = BannerSerializer(banner)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Banner.DoesNotExist:
+                return Response({"error": "Banner not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        banners = Banner.objects.all()
+        serializer = BannerSerializer(banners, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """Create a new banner."""
+        serializer = BannerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, banner_id):
+        """Update an existing banner."""
+        try:
+            banner = Banner.objects.get(id=banner_id)
+        except Banner.DoesNotExist:
+            return Response({"error": "Banner not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BannerSerializer(banner, data=request.data, partial=False)  # Full update
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, banner_id):
+        """Partially update an existing banner."""
+        try:
+            banner = Banner.objects.get(id=banner_id)
+        except Banner.DoesNotExist:
+            return Response({"error": "Banner not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BannerSerializer(banner, data=request.data, partial=True)  # Partial update
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -27,17 +27,15 @@ const AdminChat = () => {
     if (!selectedUser) return;
 
     const roomName = `user_${selectedUser.id}_admin`;
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/chat/${roomName}/`);
+    const ws = new WebSocket(`${import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET}/${roomName}/`);
 
     ws.onopen = () =>
       console.log(`Connected to chat with ${selectedUser.name}`);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("sssssssssssssssssssssssssss", data.messages);
       if (data.type === "chat_history") {
         setMessages(data.messages); // Set previous messages
-        console.log(data.messages);
       } else if (data.type === "chat_message") {
         setMessages((prev) => [...prev, data]); // Append new message
       }
@@ -70,7 +68,9 @@ const AdminChat = () => {
       );
       setMessage("");
     } else {
-      console.error("WebSocket is not ready yet.");
+            toast.error("Something Went Wrong. Please try again", {position:"bottom-center"});
+      
+      // console.error("WebSocket is not ready yet.");
     }
   };
 

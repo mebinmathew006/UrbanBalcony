@@ -94,7 +94,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     payment_details = PaymentSerializer(source='order.payment', read_only=True) 
     class Meta:
         model = OrderItem
-        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details','payment_details']  
+        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details','payment_details','image_url','shipping_price_per_order']  
         
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -115,7 +115,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'user', 'payment', 'address_details','address', 'shipping_charge', 
                   'net_amount', 'order_items', 'payment_details', 'order_date', 
-                  'delivery_date', 'status']
+                  'delivery_date', 'status','discout_percentage']
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_variant = ProductVariantSerializer(read_only=True)

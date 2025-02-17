@@ -133,6 +133,7 @@ class Order(models.Model):
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='users')
     payment = models.ForeignKey('Payment', on_delete=models.SET_NULL, null=True, blank=True, related_name='payments')
     address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='address')
+    discout_percentage=models.IntegerField(default=0)
     order_date = models.DateField(default=timezone.now)
     delivery_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=50, default='pending')
@@ -151,7 +152,8 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=50, default='pending')
-    
+    image_url = models.CharField(max_length=500, null=True, blank=True)
+    shipping_price_per_order=models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     def save(self, *args, **kwargs):
         # Calculate the total amount
         if self.product_variant:
@@ -281,8 +283,8 @@ class Offer(models.Model):
     
     
 class Banner(models.Model):
-    title = models.CharField(max_length=255, help_text="Title for the banner")
-    image = models.ImageField(upload_to="banners/", help_text="Upload a banner image")
-    is_active = models.BooleanField(default=True, help_text="Should this banner be displayed?")
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to="banners/")
+    is_active = models.BooleanField(default=True)   
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True) 

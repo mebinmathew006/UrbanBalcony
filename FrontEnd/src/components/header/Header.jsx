@@ -4,7 +4,7 @@ import publicaxiosconfig from "../../publicaxiosconfig";
 import { useSelector } from "react-redux";
 function Header(props) {
   const [categories, setCategories] = useState([]);
-  const user_id = useSelector((state)=>state.userDetails.id)
+  const user_id = useSelector((state) => state.userDetails.id);
   const [search, setSearch] = useState(props.searchValue);
   const navigate = useNavigate();
   async function fetchCategories() {
@@ -29,21 +29,22 @@ function Header(props) {
 
       <div className=" d-flex align-items-center justify-content-between">
         {/* Logo */}
-        <div className="logo d-flex align-items-center">
-          <h1
-            className="m-0 text-primary"
-            style={{ fontWeight: "bold", fontSize: "2rem" }}
-          >
-            
-          </h1>
-          <img className="rounded-sm" src="../public\logo.svg" alt="notFound" width={150} height={200} onClick={() => navigate(user_id ? "/HomePage" : "/" )}/>
+        <div className="d-flex align-items-center hover:cursor-pointer">
+          <img
+            className="rounded-sm"
+            src="../public\spice new.png"
+            alt="notFound"
+            width={100}
+            height={200}
+            onClick={() => navigate(user_id ? "/HomePage" : "/")}
+          />
           {/* <span
             onClick={() => navigate(user_id ? "/HomePage" : "/" )}
             className="ms-2 fw-bold "
           >
           </span> */}
         </div>
-        
+
         <div className="search-bar w-50">
           <div className="input-group">
             <input
@@ -51,7 +52,7 @@ function Header(props) {
               className="form-control"
               placeholder="Search Here"
               value={search}
-              onChange={(event)=>setSearch(event.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               style={{ borderRadius: "20px 0px 0px 20px", borderColor: "#ddd" }}
             />
             <button
@@ -75,18 +76,25 @@ function Header(props) {
                 style={{ fontSize: "1.2rem", cursor: "pointer" }}
               ></i>
               {/* cart */}
-            {user_id && <i
-                className="fas fa-shopping-cart me-3 text-[#073801]"
-                onClick={() =>
-                  navigate("/userProfile", { state: { tab: "cart" } })
-                }
-                style={{ fontSize: "1.2rem", cursor: "pointer" }}
-              ></i>}  
+              {user_id && (
+                <i
+                  className="fas fa-shopping-cart me-3 text-[#073801]"
+                  onClick={() =>
+                    navigate("/userProfile", { state: { tab: "cart" } })
+                  }
+                  style={{ fontSize: "1.2rem", cursor: "pointer" }}
+                ></i>
+              )}
               {/* wishlist */}
-              {user_id &&<i
-                className="fas fa-heart me-3 text-[#073801]"
-                style={{ fontSize: "1.2rem", cursor: "pointer" }}
-              ></i>}
+              {user_id && (
+                <i
+                  className="fas fa-heart me-3 text-[#073801]"
+                  style={{ fontSize: "1.2rem", cursor: "pointer" }}
+                  onClick={() =>
+                    navigate("/userProfile", { state: { tab: "wishlist" } })
+                  }
+                ></i>
+              )}
             </>
           )}
           <i
@@ -103,7 +111,10 @@ function Header(props) {
           <div className="container d-flex justify-content-center">
             <ul className="nav">
               <li className="nav-item">
-                <Link to={user_id ? "/Homepage" : "/"} className="nav-link text-[#467927]" >
+                <Link
+                  to={user_id ? "/Homepage" : "/"}
+                  className="nav-link text-[#467927]"
+                >
                   Home
                 </Link>
               </li>
@@ -111,7 +122,6 @@ function Header(props) {
                 return (
                   <li className="nav-item" key={index}>
                     <Link
-                    
                       to={user_id ? "/Homepage" : "/"}
                       state={{ category_id: category.id }}
                       className="nav-link text-[#467927]"

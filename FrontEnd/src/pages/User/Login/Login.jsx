@@ -71,7 +71,7 @@ function Login() {
       const backendResponse = await publicaxiosconfig.post('/google_login', {
         credential: response.credential // Send the credential token to your backend
       });
-      console.log('Backend Response:', backendResponse.data);
+      
       const userDetailsGoogle=backendResponse.data.user
       dispatch(setUserDetails(userDetailsGoogle));
       toast.success("Login Successful.", {
@@ -98,7 +98,7 @@ function Login() {
 
       // setting the user details in redux store
       const userDetails = response.data.user;
-      console.log(userDetails);
+    
       
       dispatch(setUserDetails(userDetails));
       // localStorage.setItem('userDetails',JSON.stringify(userDetails));

@@ -4,6 +4,8 @@ import axiosInstance from "../../../axiosconfig";
 import { toast } from "react-toastify";
 
 function UserWishlist() {
+  const baseurl = import.meta.env.VITE_BASE_URL;
+
   const user_id = useSelector((state) => state.userDetails.id);
   const [wishlist, setWishlist] = useState();
 
@@ -62,7 +64,7 @@ function UserWishlist() {
               <div className="flex items-center justify-between gap-8">
                 {/* Product Image */}
                 <img
-                  src={`http://localhost:8000/${item.product_variant.product.product_img1}`}
+                  src={`${baseurl}${item.product_variant.product.product_img1}`}
                   alt="Product"
                   className="w-24 h-24 rounded-md object-cover"
                 />

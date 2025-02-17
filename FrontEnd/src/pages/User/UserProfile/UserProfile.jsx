@@ -16,11 +16,12 @@ import UserChat from "./UserChat";
 import Footer from "../../../components/footer/Footer";
 
 const UserProfile = () => {
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || "profile");
-  console.log(activeTab);
+  const baseurl = import.meta.env.VITE_BASE_URL;
 
-  const user = useSelector((state) => state.userDetails);
+  const location = useLocation();
+  const user_id = useSelector((state) => state.userDetails.id);
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "profile");
+  const [user, setUser] = useState({});
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -28,6 +29,13 @@ const UserProfile = () => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
     }
+    const fetchUserDetails = async () => {
+      const response = await axiosInstance.get(`userDetails/${user_id}`);
+
+      setUser(response.data);
+    };
+
+    fetchUserDetails();
   }, [location.state]);
 
   // Component mapping for tabs
@@ -46,7 +54,6 @@ const UserProfile = () => {
     <div className="container-fluid sticky bg-[#FCF4D2]">
       <div className="row ">
         <Header page="userprofile" />
-        {/* Sidebar */}
         <div
           className="col-md-3 shadow "
           style={{ backgroundColor: "#FCF4D2" }}
@@ -54,7 +61,7 @@ const UserProfile = () => {
           <div className="profile-sidebar">
             <div className="profile-image">
               <img
-                src={`http://localhost:8000/${user.profile_picture}`}
+                src={`${baseurl}${user.profile_picture}`}
                 alt="profile"
                 className="rounded-circle"
               />
@@ -172,8 +179,7 @@ const UserProfile = () => {
 
         {/* Main Content */}
         <div className="col-md-9 main-content">{tabComponents[activeTab]}</div>
-      <Footer/>
-
+        <Footer />
       </div>
     </div>
   );

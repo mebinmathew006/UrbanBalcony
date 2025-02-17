@@ -4,10 +4,11 @@ import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 
 const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
+  const baseurl = import.meta.env.VITE_BASE_URL;
 
 
   const [preview, setPreview] = useState(
-    `http://localhost:8000/${user.profile_picture}`
+    `${baseurl}${user.profile_picture}`
   );
 
 
@@ -49,7 +50,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
+      <div className="bg-[#FCF4D2] rounded-lg w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 bg-white hover:text-black-700"
@@ -111,7 +112,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             )}
           </div>
           {/* Email Field */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
             </label>
@@ -131,7 +132,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
                 {errors.email.message}
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* file field */}
           <div>

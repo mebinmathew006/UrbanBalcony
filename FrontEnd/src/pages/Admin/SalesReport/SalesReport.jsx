@@ -112,8 +112,9 @@ function SalesReport() {
           endDate: endDate.toISOString(),
         },
       });
+      console.log(response.data);
       setSalesData(response.data);
-      console.log(salesData);
+      
     } catch (error) {
       console.error("Error fetching sales report", error);
     }

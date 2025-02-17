@@ -27,18 +27,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             # Fetch previous messages
             messages = await sync_to_async(list)(
-                ChatMessage.objects.filter(
-                    sender_id__in=[sender_id, receiver_id],
-                    receiver_id__in=[sender_id, receiver_id]
-                ).order_by("-timestamp").values(
+            ChatMessage.objects.filter(
+            sender_id__in=[sender_id, receiver_id],
+            receiver_id__in=[sender_id, receiver_id]
+                )
+                .order_by("-timestamp")  # ✅ Get latest messages first
+                .values(
                     "sender__id", 
                     "receiver__id", 
                     "sender__first_name", 
                     "receiver__first_name", 
                     "message"
-                )[:10]
+                )[:10]  # ✅ Fetch last 10 messages
             )
-
+            messages.reverse()
             # Send chat history
             await self.send(text_data=json.dumps({
                 "type": "chat_history",

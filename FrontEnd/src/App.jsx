@@ -48,6 +48,7 @@ import PublicRoute from './PublicRoute'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import UserChat from './pages/User/UserProfile/UserChat'
 import AdminChat from './pages/Admin/AdminChat/AdminChat'
+import BannerManagement from './pages/Admin/BannerManagement/BannerManagement'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +118,7 @@ function AppRoutes() {
       <Route path='/userWallet' element={<UserWallet/>}/>
       <Route path='/userChat' element={<UserChat/>}/>
       <Route path='/adminChat' element={<AdminChat/>}/>
+      <Route path='/bannerManagement' element={<BannerManagement/>}/>
     </Routes>
     </QueryClientProvider>
   );

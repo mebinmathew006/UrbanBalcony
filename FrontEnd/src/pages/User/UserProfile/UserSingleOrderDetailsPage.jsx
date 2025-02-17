@@ -17,28 +17,7 @@ const UserSingleOrderDetailsPage = () => {
     fetchOrderDetails();
   }, []);
 
-  // const generateInvoice = async () => {
-  //   const invoiceElement = document.getElementById("invoice");
   
-  //   if (!invoiceElement) {
-  //     console.error("Invoice element not found!");
-  //     return;
-  //   }
-  
-  //   try {
-  //     const canvas = await html2canvas(invoiceElement, { scale: 2 });
-  //     const imgData = canvas.toDataURL("image/png");
-  
-  //     const pdf = new jsPDF("p", "mm", "a4");
-  //     const imgWidth = 190; // Fit within A4 width
-  //     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
-  //     pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
-  //     pdf.save(`Invoice_Order_${orderId}.pdf`);
-  //   } catch (error) {
-  //     console.error("Error generating invoice:", error);
-  //   }
-  // };
   // Define styles for PDF
   const generateInvoice = () => {
     // Initialize PDF document
@@ -97,113 +76,14 @@ const UserSingleOrderDetailsPage = () => {
 
    const handleCancel = async () => {
     try {
-      await axiosInstance.patch(`userOrders/${orderId}`, { action: "Cancelled" });
+      await axiosInstance.patch(`userOrders/${orderId}`, { action: "Cancelled",user_id });
       fetchOrderDetails();
     } catch (error) {
       console.error("Error cancelling order:", error);
     }
   };
 
-   const handlePayment = async () => {
-    try {
-          const razorpayOrderResponse = await axiosInstance.post(
-            "/createRazorpayOrder",
-            {
-              user_id: user_id,
-              totalAmount: order.total_amount,
-            }
-          );
-
-          const { razorpay_order_id, amount, currency } =
-            razorpayOrderResponse.data;
-
-          const options = {
-            key: keyId,
-            amount: amount * 100,
-            currency,
-            name: "Urban Balcony",
-            description: "Order Payment",
-            order_id: razorpay_order_id,
-            handler: async (response) => {
-              try {
-                const orderResponse = await axiosInstance.patch(
-                  "/changePaymentstatus",
-                  {
-                    payment_id: (order.payment_details && order.payment_details.id),
-                  }
-                );
-                fetchOrderDetails();
-                if (orderResponse.status === 201) {
-                  toast.success("Payment Successful! ", {
-                    position: "bottom-center",
-                  });
-                  // navigate("/userProfile", { state: { tab: "orders" } });
-                 
-                }
-              } catch (orderError) {
-                console.error("Failed:", orderError);
-                // toast.error(
-                //   "Payment successful but order creation failed. Our team will contact you."
-                // );
-              }
-            },
-            modal: {
-              ondismiss: function () {
-                setLoading(false);
-                // Only show message and navigate if it was a cancellation, not a failure
-                // We can check this by looking at a flag we'll set in payment.failed
-                if (!window.paymentFailedFlag) {
-                  toast.info("Payment cancelled. No order created.", {
-                    position: "bottom-center",
-                  });
-                  // if (type === "buyNow") {
-                  //   navigate("/cart");
-                  // } else {
-                  //   navigate(-1);
-                  // }
-                }
-                // Reset the flag
-                window.paymentFailedFlag = false;
-              },
-              confirm_close: true,
-              escape: true,
-              animation: true,
-            },
-            retry: {
-              enabled: false,
-            },
-            prefill: {
-              name: "Guest",
-              email: "customercare@urbanbalcony.com",
-              contact: "7356332693",
-            },
-            theme: {
-              color: "#3399cc",
-            },
-          };
-
-          const rzp = new Razorpay(options);
-
-          rzp.on("payment.failed", async function (response) {
-            // Set flag to indicate this was a failure, not a cancellation
-            window.paymentFailedFlag = true;
-
-            rzp.close();
-            setLoading(false);
-          });
-
-          rzp.open();
-        } catch (error) {
-          console.error("Failed to create Razorpay order:", error);
-          toast.error("Failed to initialize payment. Please try again.");
-          setLoading(false);
-          // if (type === "buyNow") {
-          //   navigate("/cart");
-          // } else {
-          //   navigate(-1);
-          // }
-        }
-  };
+   
 
    const handleReturn = async () => {
     try {
@@ -218,8 +98,8 @@ const UserSingleOrderDetailsPage = () => {
   const fetchOrderDetails = async () => {
     try {
       const response = await axiosInstance.get(`singleOrderDetails/${orderId}`);
-      console.log(response.data);
-
+     
+      
       setOrder(response.data);
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -239,7 +119,7 @@ const UserSingleOrderDetailsPage = () => {
   return (
     
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-lg p-6" id="invoice" >
+      <div className="bg-[#E8D7B4] rounded-lg shadow-lg p-6" id="invoice" >
         {/* Order Header */}
         <div className="border-b pb-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
@@ -257,7 +137,7 @@ const UserSingleOrderDetailsPage = () => {
           <h2 className="text-xl font-semibold mb-3 text-gray-800">
             Shipping Information
           </h2>
-          <div className="bg-gray-50 p-4 rounded-md">
+          <div className="bg-[#E8D7B4] p-4 rounded-md">
             <p className="text-gray-700">
               {order.address_details?.address_type}
               <br />
@@ -281,7 +161,7 @@ const UserSingleOrderDetailsPage = () => {
               {/* Product Image */}
               <div className="w-24 h-24 flex-shrink-0">
                 <img
-                  src={`http://localhost:8000/${order.variant.product.product_img1}`}
+                  src={`${import.meta.env.VITE_BASE_URL_WITH_MEDIA}/${order.image_url}`}
                   alt={order.variant.product.title}
                   className="w-full h-full object-cover rounded"
                 />
@@ -289,13 +169,16 @@ const UserSingleOrderDetailsPage = () => {
 
               {/* Product Details */}
               <div className="flex-grow">
-                {/* <h3 className="font-semibold text-lg text-gray-800">
-                  {order.variant.weight}
-                </h3> */}
+                <h3 className="font-semibold text-lg text-gray-800">
+                  {order.variant.product.title}
+                </h3>
                 <div className="mt-2 space-y-1 text-sm text-gray-600">
                   <p>Weight: {order.variant.weight}</p>
                   <p>Quantity: {order.quantity}</p>
                   <p>Price: ₹{order.total_amount}</p>
+                  <p>Shipping: ₹{order.shipping_price_per_order}</p>
+                  <p>Total: ₹{parseInt(order.shipping_price_per_order)+parseInt(order.total_amount)}</p>
+                  
                   <p>
                     Status:
                     <span
@@ -335,28 +218,19 @@ const UserSingleOrderDetailsPage = () => {
                 )}
                 </div>
 
-                <div className="flex-shrink-0 w-full md:w-auto">
-                {order.payment_details.status=='pending' && (
-                   <button
-                   onClick={() => handlePayment(order.id)}
-                   className="w-full md:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors duration-200"
-                 >
-                   Pay Now
-                 </button>
-                )}
-              </div>
+               
             </div>
           </div>
         </div>
 
       
       </div>
-      <button
+      {/* <button
         onClick={generateInvoice}
         className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-200"
       >
         Download Invoice
-      </button>
+      </button> */}
     </div>
   );
 };

@@ -15,7 +15,7 @@ from django.conf import settings
 from django.db import transaction
 import random
 import string
-from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min
+from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min,Count
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -546,21 +546,33 @@ class ChangePaymentstatus(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserOrder(APIView):
-    def patch(self,request,id):
+    def patch(self, request, id):
         try:
+            # Retrieve the order item
             orderItem = OrderItem.objects.get(id=id)
-            
             orderItem.status = request.data.get('action')
             orderItem.save()
-            data = {
-                'id': orderItem.id,
-            }
-            return Response(data,status.HTTP_200_OK)
-        except:
-            data = {
-                'status': 'failed',
-            }
-            return Response(data,status.HTTP_400_BAD_REQUEST)
+
+            # Check if the order was cancelled and handle refund
+            if request.data.get('action') == 'Cancelled':
+                payment_status = orderItem.order.payment.status  # Access related field
+                if payment_status == 'success':
+                    wallet = Wallet.objects.get(user=orderItem.order.user)
+                    wallet.balance = F('balance') + orderItem.shipping_price_per_order + orderItem.total_amount
+                    wallet.save()
+
+            # Successful response
+            return Response({'id': orderItem.id}, status=status.HTTP_200_OK)
+
+        except OrderItem.DoesNotExist:
+            return Response({'error': 'Order item not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Wallet.DoesNotExist:
+            return Response({'error': 'Wallet not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
     def get(self, request, id):
         try:
@@ -716,24 +728,26 @@ class UserPlaceOrder(APIView):
         transaction_serializer.is_valid(raise_exception=True)
         return transaction_serializer.save()
 
-    def create_order(self, user_id, payment_id, address_id, total_amount):
+    def create_order(self, user_id, payment_id, address_id, total_amount,discoutPercentage):
         order_data = {
             'user': user_id,
             'payment': payment_id,
             'address': address_id,
             'shipping_charge': 100,  # Consider making this configurable
             'net_amount': total_amount,
+            'discout_percentage': discoutPercentage,
             'delivery_date': (datetime.now() + timedelta(days=10)).date(),
         }
         order_serializer = OrderSerializer(data=order_data)
         order_serializer.is_valid(raise_exception=True)
         return order_serializer.save()
 
-    def process_cart_order(self, user_id, order_id):
+    def process_cart_order(self, user_id, order_id,shipping_charge):
         cart_items = CartItem.objects.filter(
             cart__user_id=user_id
         ).select_related('product_variant')
         
+        total_quantity = cart_items.aggregate(total=Sum('quantity'))['total'] or 0
         if not cart_items.exists():
             raise ValueError("Cart is empty")
 
@@ -743,7 +757,11 @@ class UserPlaceOrder(APIView):
             if variant.stock < item.quantity:
                 raise ValueError(f"Insufficient stock for product variant {variant.id}")
 
-            price = self.calculate_price_with_offer(variant)
+            price = self.calculate_price_with_offer(variant)*item.quantity
+            
+            product_image=Product.objects.values_list('product_img1',flat=True).get(variants__id=variant.id)
+            
+            shipping_price_per_order=(int(shipping_charge)*(int(item.quantity)/int(total_quantity)))
             
             # Update stock
             ProductVariant.objects.filter(id=variant.id).update(
@@ -754,7 +772,9 @@ class UserPlaceOrder(APIView):
                 'order': order_id,
                 'product_variant': variant.id,
                 'quantity': item.quantity,
-                'total_amount': item.quantity * price,
+                'image_url': product_image,
+                'total_amount': price,
+                'shipping_price_per_order': shipping_price_per_order,
             })
 
         # Create order items
@@ -765,7 +785,7 @@ class UserPlaceOrder(APIView):
         # Clear cart
         cart_items.delete()
 
-    def process_direct_order(self, order_id, product_id, quantity):
+    def process_direct_order(self, order_id, product_id, quantity,shipping_charge):
         variant = ProductVariant.objects.get(id=product_id)
         if variant.stock < quantity:
             raise ValueError(f"Insufficient stock for product variant {variant.id}")
@@ -776,12 +796,14 @@ class UserPlaceOrder(APIView):
         ProductVariant.objects.filter(id=variant.id).update(
             stock=F('stock') - quantity
         )
-
+        product_image=Product.objects.values_list('product_img1',flat=True).get(variants__id=variant.id)
         order_item = {
             'order': order_id,
             'product_variant': variant.id,
             'quantity': quantity,
-            'total_amount': quantity * price,
+            'image_url': product_image,
+            'total_amount': (quantity * price),
+            'shipping_price_per_order': shipping_charge,
         }
 
         order_item_serializer = OrderItemSerializer(data=order_item)
@@ -827,17 +849,18 @@ class UserPlaceOrder(APIView):
                     request.data.get('user_id'),
                     payment.id,
                     request.data.get('addressId'),
-                    request.data.get('totalAmount')
+                    request.data.get('totalAmount'),
+                    request.data.get('discoutPercentage')
                 )
-
                 # Process order items based on type
                 if request.data.get('type') == 'cart':
-                    self.process_cart_order(request.data.get('user_id'), order.id)
+                    self.process_cart_order(request.data.get('user_id'), order.id,order.shipping_charge)
                 else:
                     self.process_direct_order(
                         order.id,
                         request.data.get('productId'),
                         request.data.get('quantity')
+                        ,order.shipping_charge
                     )
 
                 return Response(
@@ -964,8 +987,9 @@ class SingleOrderDetails(APIView):
                 'product_variant__product',
                 'order__address'
             ).get(id=id)
-            serializer=OrderItemSerializer(order_item_details, context={'include_address_details': True})
+            # print(order_item_details.query)
             
+            serializer=OrderItemSerializer(order_item_details, context={'include_address_details': True})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except OrderItem.DoesNotExist:
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -1071,13 +1095,30 @@ class UserWallet(APIView):
             wallet,created = Wallet.objects.get_or_create(user_id=id)
             data = {
                 'balance': str(wallet.balance),
-                'created_at': wallet.created_at,
+                'id': wallet.id,
                 'updated_at': wallet.updated_at,
             }
-            return Response(data, status=200)
+            return Response(data, status.HTTP_200_OK)
 
         except Wallet.DoesNotExist:
             return Response({'error': 'Wallet not found'}, status=404)
+        
+    def patch(self,request,id):
+        try:
+            wallet = Wallet.objects.get(id=id)
             
+            wallet.balance += request.data.get('totalAmount')
+            wallet.save()
+            data = {
+                'id': wallet.id,
+            }
+            return Response(data,status.HTTP_200_OK)
+        except:
+            data = {
+                'status': 'failed',
+            }
+            return Response(data,status.HTTP_400_BAD_REQUEST)
+        
+        
         
         

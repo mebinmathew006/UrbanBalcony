@@ -3,6 +3,8 @@ import Sidebar from "../../../components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
 function ProductManage() {
+const baseurl=import.meta.env.VITE_BASE_URL
+
   const navigate = useNavigate();
     const toggleProductStatus = async (id) => {
         try {
@@ -59,8 +61,7 @@ function ProductManage() {
                       product.map((product, index) => (
                         <tr key={index}>
                           <th scope="row">{index + 1}</th>
-                          <td><img src={`http://127.0.0.1:8000/${product.product_img1}`} alt="Product Image" width={100} height={100}/></td>
-                          {console.log(`http://127.0.0.1:8000/${product.product_img1}`)}
+                          <td><img src={`${baseurl}${product.product_img1}`} alt="Product Image" width={100} height={100}/></td>
                           <td>{product.title}</td>
                           <td>{product.category.name}</td>
                           <td>{product.available_quantity}</td>

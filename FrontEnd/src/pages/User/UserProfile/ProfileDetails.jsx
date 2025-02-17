@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import UserEditDetails from "./UserEditDetails";
-import { Component } from "lucide-react";
 function ProfileDetails() {
+const baseurl=import.meta.env.VITE_BASE_URL
+
   const user_id = useSelector((state) => state.userDetails.id);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,8 +66,9 @@ function ProfileDetails() {
       <div className="p-4 rounded-lg bg-[#E8D7B4] ">
         <div className="flex justify-center items-center mb-4">
           <div className="flex flex-col items-center">
+
             <img
-              src={`http://localhost:8000/${user.profile_picture}`}
+              src={`${baseurl}${user.profile_picture}`}
               className="w-24 h-24 rounded-full border-2 border-gray-300"
               alt="Profile"
             />

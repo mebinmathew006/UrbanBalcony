@@ -9,7 +9,7 @@ const Sidebar = () => {
   const navigate =useNavigate()
  
   return (
-    <aside className="bg-light shadow-sm h-screen ">
+    <aside className="bg-light shadow-sm h-full ">
       <div className="py-4 border-bottom ">
         <h2 className="m-0">Admin Panel</h2>
       </div>

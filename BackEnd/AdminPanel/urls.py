@@ -24,6 +24,7 @@ urlpatterns = [
     path('salesReportView',SalesReportView.as_view(),name='SalesReportView'),
     path('productVarientmanage',Varientmanage.as_view(),name='productVarientadd'),
     path('chatUserDetails',ChatUserDetails.as_view(),name='chatUserDetails'),
+    path('bannerManagementView',BannerManagementView.as_view(),name='BannerManagementView'),
     path('productVarientmanage/<int:id>',Varientmanage.as_view(),name='productVarientmanage'),  
 ]
 
