@@ -16,7 +16,7 @@ import UserChat from "./UserChat";
 import Footer from "../../../components/footer/Footer";
 
 const UserProfile = () => {
-  const baseurl = import.meta.env.VITE_BASE_URL;
+  const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
   const location = useLocation();
   const user_id = useSelector((state) => state.userDetails.id);

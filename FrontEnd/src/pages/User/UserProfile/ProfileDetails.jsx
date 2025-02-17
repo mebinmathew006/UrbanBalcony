@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import UserEditDetails from "./UserEditDetails";
 function ProfileDetails() {
-const baseurl=import.meta.env.VITE_BASE_URL
+const baseurl=import.meta.env.VITE_BASE_URL_FOR_IMAGE
 
   const user_id = useSelector((state) => state.userDetails.id);
 

@@ -3,7 +3,7 @@ import Sidebar from "../../../components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
 function ProductManage() {
-const baseurl=import.meta.env.VITE_BASE_URL
+const baseurl=import.meta.env.VITE_BASE_URL_FOR_IMAGE
 
   const navigate = useNavigate();
     const toggleProductStatus = async (id) => {

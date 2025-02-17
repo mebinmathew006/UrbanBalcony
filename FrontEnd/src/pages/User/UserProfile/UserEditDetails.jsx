@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { X } from "lucide-react";
 
 const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
-  const baseurl = import.meta.env.VITE_BASE_URL;
+  const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
 
   const [preview, setPreview] = useState(

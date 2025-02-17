@@ -4,7 +4,7 @@ import axiosInstance from "../../../axiosconfig";
 import { toast } from "react-toastify";
 
 function UserWishlist() {
-  const baseurl = import.meta.env.VITE_BASE_URL;
+  const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
   const user_id = useSelector((state) => state.userDetails.id);
   const [wishlist, setWishlist] = useState();

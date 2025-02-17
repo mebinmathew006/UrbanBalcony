@@ -4,15 +4,17 @@ import { destroyDetails,setUserDetails } from './store/UserDetailsSlice'; // Adj
 import history from './history';
 import { toast } from "react-toastify";
 
+const baseurl=import.meta.env.VITE_BASE_URL
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/user/',
+  baseURL: `${baseurl}/user/`,
   withCredentials: true, // Ensures cookies are sent with requests
 });
 
 // Attach the access token from Redux to the headers of each request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const state = store.getState();
+    const state = store.getState(); 
     const accessToken = state.userDetails?.access_token; // Adjust the path based on your Redux state structure
 
     if (accessToken) {
@@ -33,7 +35,7 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Attempt to refresh the access token using the refresh token stored in an HttpOnly cookie
-        const response = await axios.post('http://localhost:8000/user/refresh_token', {}, {
+        const response = await axios.post(`${baseurl}/user/refresh_token`, {}, {
           withCredentials: true, // Send cookies with the request
         });
         const userDetails=response.data.user
@@ -49,7 +51,7 @@ axiosInstance.interceptors.response.use(
               });
         // If refresh fails, clear Redux state and redirect to login
         store.dispatch(destroyDetails());
-        const response = await axios.post('http://localhost:8000/user/userLogout');
+        const response = await axios.post(`${baseurl}/user/userLogout`);
         history.push('/login');
         return Promise.reject(refreshError);
       }

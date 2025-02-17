@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import { toast } from "react-toastify";
 const UserOrderDetails = () => {
-  const baseurl = import.meta.env.VITE_BASE_URL;
+  const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
   const keyId = import.meta.env.RAZORPAY_KEY_ID;
 
   const navigate = useNavigate();

@@ -55,7 +55,7 @@ adminaxiosInstance.interceptors.response.use(
               });
         // If refresh fails, clear Redux state and redirect to login
         store.dispatch(destroyDetails());
-        const response = await axios.post('http://localhost:8000/user/userLogout');
+        const response = await axios.post(`${baseurl}/user/userLogout`);
         history.push('/login');
         return Promise.reject(refreshError);
       }

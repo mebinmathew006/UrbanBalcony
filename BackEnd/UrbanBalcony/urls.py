@@ -21,8 +21,8 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('user/',include('User.urls')),
-    path('adminPanel/',include('AdminPanel.urls')),
+    path('api/user/',include('User.urls')),
+    path('api/adminPanel/',include('AdminPanel.urls')),
     path('api/auth/', include('dj_rest_auth.urls')),
     path('api/auth/google/', include('allauth.socialaccount.urls')),
     path('accounts/', include('allauth.urls')),
