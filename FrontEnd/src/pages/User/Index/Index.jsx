@@ -4,8 +4,8 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer/Footer";
-import ProductView from "../../../components/productView/ProductView";
-import Filters from "../../../components/Filters/Filters";
+import ProductView from "../../../components/productView";
+import Filters from "../../../components/Filters";
 import publicaxiosconfig from "../../../publicaxiosconfig";
 
 function Index() {
