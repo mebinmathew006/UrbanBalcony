@@ -1,7 +1,7 @@
 import React from 'react'
-import Sidebar from '../../../components/Admin/Sidebar'
+import Sidebar from '../../../Components/Admin/Sidebar'
 import './AdminDashboard.css'
-import DashboardBody from '../../../components/Admin/DashboardBody'
+import DashboardBody from '../../../Components/Admin/DashboardBody'
 
 function AdminDashboard() {
   return (
