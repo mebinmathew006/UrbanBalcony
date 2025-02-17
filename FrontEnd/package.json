@@ -19,6 +19,7 @@
     "bootstrap": "^5.3.3",
     "dotenv": "^16.4.7",
     "jspdf": "^2.5.2",
+    "lucide-react": "^0.475.0",
     "papaparse": "^5.5.1",
     "react": "^18.3.1",
     "react-cropper": "^2.3.3",
