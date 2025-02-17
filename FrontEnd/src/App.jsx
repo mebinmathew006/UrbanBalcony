@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
-import Index from './pages/User/Index/Index'
+import IndexPage from './Pages/User/IndexPage/IndexPage'
 import Login from './pages/User/Login/Login'
 import SignupPage from './pages/User/SignupPage/SignupPage'
 import ForgetPassword from './pages/User/SignupPage/ForgetPassword'
@@ -83,7 +83,7 @@ function AppRoutes() {
   return (
     <QueryClientProvider client={queryClient}>
     <Routes>
-      <Route path='/'  element={<PublicRoute><Index/></PublicRoute>}/>
+      <Route path='/'  element={<PublicRoute><IndexPage/></PublicRoute>}/>
       <Route path='/signup'  element={<SignupPage/>}/>
       <Route path='/forgetPassword'  element={<ForgetPassword/>}/>
       <Route path='/login' element={<PublicRoute><Login/></PublicRoute>}/>

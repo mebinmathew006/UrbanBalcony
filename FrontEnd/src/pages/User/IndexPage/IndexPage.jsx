@@ -8,7 +8,7 @@ import Footer from "../../../Components/Footer/Footer";
 import Filters from "../../../Components/Filters/Filters";
 import publicaxiosconfig from "../../../publicaxiosconfig";
 
-function Index() {
+function IndexPage() {
   const location = useLocation();
   let { category_id } = location.state || {};
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,4 +123,4 @@ function Index() {
   );
 }
 
-export default Index;
+export default IndexPage;
