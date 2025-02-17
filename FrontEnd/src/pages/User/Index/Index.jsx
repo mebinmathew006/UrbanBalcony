@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
-import Header from "../../../components/header/header";
+import Header from "../../../components/header";
 import Footer from "../../../components/footer/Footer";
 import ProductView from "../../../components/productView/ProductView";
 import Filters from "../../../components/Filters/Filters";
