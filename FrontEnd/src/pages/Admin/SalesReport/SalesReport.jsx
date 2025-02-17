@@ -75,7 +75,7 @@ function SalesReport() {
     const pdfData = salesData.topSellingProducts.map((product) => ({
       name: product.name,
       quantity: product.quantity,
-      quantity: product.discount,
+      Discount: product.discount,
       revenue: product.revenue,
     }));
 
