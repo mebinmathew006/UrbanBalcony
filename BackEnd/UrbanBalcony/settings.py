@@ -14,6 +14,7 @@ from pathlib import Path
 from decouple import config
 from datetime import datetime, timedelta
 import jwt
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -170,3 +171,4 @@ RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
 
 ASGI_APPLICATION = "UrbanBalcony.asgi.application"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
