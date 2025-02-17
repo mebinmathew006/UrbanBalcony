@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
-import Header from "../../../components/header";
+import Header from "../../../components/header/Header";
 import Footer from "../../../components/footer/Footer";
-import ProductView from "../../../components/productView";
-import Filters from "../../../components/Filters";
+import ProductView from "../../../components/productView/ProductView";
+import Filters from "../../../components/Filters/Filters";
 import publicaxiosconfig from "../../../publicaxiosconfig";
 
 function Index() {
