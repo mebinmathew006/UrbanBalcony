@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import Header from '../../../components/Header/Header'
+import Header from '../../../Components/Header/Header'
 import Singleprodct from '../../../components/Singleproduct/Singleprodct'
-import Footer from '../../../components/Footer/Footer'
-import Breadcrumbs from '../../../components/Breadcrumps'
-import ProductView from '../../../components/ProductView/ProductView'
+import Footer from '../../../Components/Footer/Footer'
+import Breadcrumbs from '../../../Components/Breadcrumps'
+import ProductView from '../../../Components/ProductView/ProductView'
 import { useLocation } from 'react-router-dom'
 import axiosInstance from '../../../axiosconfig'
 
