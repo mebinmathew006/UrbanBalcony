@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Send, User, MessageSquare, Search } from "lucide-react";
-import Sidebar from "../../../components/Admin/Sidebar";
+import Sidebar from "../../../components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 
 const AdminChat = () => {

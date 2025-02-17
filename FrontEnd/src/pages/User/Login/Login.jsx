@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {setUserDetails} from '../../../store/UserDetailsSlice'
 import publicaxiosconfig from "../../../publicaxiosconfig";
 import { toast } from "react-toastify";
-import Header from "../../../components/header";
+import Header from "../../../components/Header/Header";
 import Footer from "../../../components/footer/Footer";
 
 

@@ -10,7 +10,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import HomePage from './pages/User/HomePage/HomePage'
 import ProductDetails from './pages/User/productDetails/ProductDetails'
-import AdminDashboard from './pages/Admin/AdminDashboard/AdminDashboard'
 import UserManage from './pages/Admin/UserManage/UserManage'
 import CategoryManage from './pages/Admin/CategoryManage/CategoryManage'
 import ProductManage from './pages/Admin/ProductManage/ProductManage'
@@ -91,7 +90,7 @@ function AppRoutes() {
       <Route path='/HomePage' element={ <ProtectedRoute><HomePage/></ProtectedRoute>}/>
       <Route path='/productDetails' element={<ProductDetails/>}/>
       <Route path='/ResetPassword' element={<ResetPassword/>}/>
-      <Route path='/AdminDashboard' element={<AdminDashboard/>}/>
+      {/* <Route path='/AdminDashboard' element={<AdminDashboard/>}/> */}
       <Route path='/UserManage' element={<UserManage/>}/>
       <Route path='/CategoryManage' element={<CategoryManage/>}/>
       <Route path='/CategoryAdd' element={<CategoryAdd/>}/>
