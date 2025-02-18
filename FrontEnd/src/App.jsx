@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
-import IndexPage from './Pages/User/IndexPage/IndexPage'
+import IndexPage from '../src/Pages/User/IndexPage/IndexPage'
 import Login from './pages/User/Login/Login'
 import SignupPage from './pages/User/SignupPage/SignupPage'
 import ForgetPassword from './pages/User/SignupPage/ForgetPassword'
