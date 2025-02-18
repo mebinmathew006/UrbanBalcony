@@ -1,7 +1,7 @@
 import axios from 'axios';
 import store from './store/store'; 
 import { destroyDetails,setUserDetails } from './store/UserDetailsSlice'; // Adjust the path as needed
-import history from './history';
+import History from './History';
 import { toast } from "react-toastify";
 
 const baseurl=import.meta.env.VITE_BASE_URL
@@ -56,7 +56,7 @@ adminaxiosInstance.interceptors.response.use(
         // If refresh fails, clear Redux state and redirect to login
         store.dispatch(destroyDetails());
         const response = await axios.post(`${baseurl}/user/userLogout`);
-        history.push('/login');
+        History.push('/login');
         return Promise.reject(refreshError);
       }
     }

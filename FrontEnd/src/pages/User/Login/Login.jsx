@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import {setUserDetails} from '../../../store/UserDetailsSlice'
-import publicaxiosconfig from "../../../publicaxiosconfig";
+import publicaxiosconfig from "../../../Publicaxiosconfig";
 import { toast } from "react-toastify";
 import Header from "../../../Components/Header/Header";
 import Footer from "../../../Components/Footer/Footer";

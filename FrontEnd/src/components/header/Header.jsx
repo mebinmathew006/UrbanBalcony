@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import publicaxiosconfig from "../../publicaxiosconfig";
+import publicaxiosconfig from "../../Publicaxiosconfig";
 import { useSelector } from "react-redux";
 function Header(props) {
   const [categories, setCategories] = useState([]);

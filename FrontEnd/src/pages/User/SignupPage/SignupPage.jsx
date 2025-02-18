@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from 'react-toastify';
-import publicaxiosconfig from "../../../publicaxiosconfig";
+import publicaxiosconfig from "../../../Publicaxiosconfig";
 import Footer from "../../../components/footer/Footer";
 import Header from "../../../components/header/header";
 

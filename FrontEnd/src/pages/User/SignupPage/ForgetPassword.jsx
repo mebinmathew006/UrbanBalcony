@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import publicaxiosconfig from '../../../publicaxiosconfig'
+import publicaxiosconfig from '../../../Publicaxiosconfig'
 import Header from '../../../components/header/header'
 import Footer from '../../../components/footer/Footer'
 

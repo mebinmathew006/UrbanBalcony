@@ -1,7 +1,7 @@
 import axios from 'axios';
 import store from './store/store';
 import { destroyDetails,setUserDetails } from './store/UserDetailsSlice'; // Adjust the path as needed
-import history from './history';
+import history from './History';
 import { toast } from "react-toastify";
 
 const baseurl=import.meta.env.VITE_BASE_URL
