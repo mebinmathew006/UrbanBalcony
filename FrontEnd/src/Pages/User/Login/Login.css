@@ -1,0 +1,71 @@
+
+/*
+.bg-light-custom {
+  display: flex;
+  min-height: 70vh;
+}
+
+/* Card shadow and design */
+/*.card {
+  border-radius: 12px;
+}
+
+/* Custom input fields */
+/*.input-custom {
+  background-color: #f6f6f6; /* Light grey */
+ /* border: 1px solid #e0e0e0;
+  height: 45px;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+/* Input hover and focus styles */
+.input-custom:focus {
+  border-color: #c0c0c0;
+  box-shadow: none;
+}
+
+/* Custom primary button */
+/*.btn-primary-custom {
+  background-color: #0a2e57; /* Dark navy blue */
+/*  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 10px;
+}
+
+.btn-primary-custom:hover {
+  background-color: #082648;
+}
+
+/* Google button styles */
+.google-btn {
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 10px;
+}
+
+.google-btn:hover {
+  background-color: #f6f6f6;
+}
+
+/* Forgot Password link */
+.text-warning {
+  color: #c7763e; /* Orange as per the image */
+}
+
+.text-warning:hover {
+  text-decoration: underline;
+}
+
+/* Sign-up link */
+/*.text-primary {
+  color: #0a2e57; /* Same as primary button */
+/*}
+
+.text-primary:hover {
+  text-decoration: underline;
+}
+*/
