@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Sidebar from "../../../components/Admin/Sidebar/Sidebar";
+import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import Papa from "papaparse";
 import jsPDF from "jspdf";

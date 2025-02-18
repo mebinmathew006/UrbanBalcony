@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../../axiosconfig";
 import { useParams } from "react-router-dom";
-import Header from "../../../components/header/header";
-import Breadcrumbs from "../../../components/Breadcrumps";
-import Footer from "../../../components/footer/Footer";
+import Header from "../../../Components/Header/Header";
+import Breadcrumbs from "../../../Components/Breadcrumps";
+import Footer from "../../../Components/Footer/Footer";
 
 const Review = () => {
   const { id } = useParams();

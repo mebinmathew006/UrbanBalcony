@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from 'react-toastify';
 import publicaxiosconfig from "../../../Publicaxiosconfig";
-import Footer from "../../../components/footer/Footer";
-import Header from "../../../components/header/header";
+import Footer from "../../../Components/Footer/Footer";
+import Header from "../../../Components/Header/Header";
 
 function SignupPage() {
   

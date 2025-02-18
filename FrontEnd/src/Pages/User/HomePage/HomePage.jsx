@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Header from "../../../components/header/header";
-import Footer from "../../../components/footer/Footer";
+import Header from "../../../Components/Header/Header";
+import Footer from "../../../Components/Footer/Footer";
 import axiosInstance from "../../../axiosconfig";
-import ProductView from "../../../components/productView/ProductView";
-import Filters from "../../../components/Filters/Filters";
+import ProductView from "../../../Components/ProductView/ProductView";
+import Filters from "../../../Components/Filters/Filters";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
 

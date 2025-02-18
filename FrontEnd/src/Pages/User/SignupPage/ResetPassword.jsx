@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import publicaxiosconfig from "../../../Publicaxiosconfig";
-import Header from "../../../components/header/header";
-import Footer from "../../../components/footer/Footer";
+import Header from "../../../Components/Header/Header";
+import Footer from "../../../Components/Footer/Footer";
 import { toast } from "react-toastify";
 
 function ResetPassword() {

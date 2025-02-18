@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./UserProfile.css";
-import Header from "../../../components/header/header";
+import Header from "../../../Components/Header/Header";
 import ProfileDetails from "./ProfileDetails";
 import UserAddress from "./UserAddress";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,7 +13,7 @@ import UserSingleOrderDetailsPage from "./UserSingleOrderDetailsPage";
 import UserWishlist from "./UserWishlist";
 import UserWallet from "./UserWallet";
 import UserChat from "./UserChat";
-import Footer from "../../../components/footer/Footer";
+import Footer from "../../../Components/Footer/Footer";
 
 const UserProfile = () => {
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;

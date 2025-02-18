@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import adminaxiosInstance from '../../../adminaxiosconfig';
-import Sidebar from '../../../components/Admin/Sidebar/Sidebar';
+import Sidebar from '../../../Components/Admin/Sidebar/Sidebar';
 
 const BannerManagement = ({ banners, toggleBannerStatus }) => {
     const handleAddBanner = async (formData) => {
