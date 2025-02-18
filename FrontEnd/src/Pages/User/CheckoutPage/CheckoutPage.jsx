@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { CreditCard, Truck, Wallet } from "lucide-react";
 import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
-import Header from "../../../Components/Feader/header";
+import Header from "../../../Components/Header/Header";
 import Footer from "../../../Components/Footer/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
