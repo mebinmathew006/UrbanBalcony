@@ -9,7 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import HomePage from './Pages/User/HomePage/HomePage'
-import ProductDetails from './Pages/User/productDetails/ProductDetails'
+import ProductDetails from './Pages/User/ProductDetails/ProductDetails'
 import UserManage from './Pages/Admin/UserManage/UserManage'
 import CategoryManage from './Pages/Admin/CategoryManage/CategoryManage'
 import ProductManage from './Pages/Admin/ProductManage/ProductManage'
