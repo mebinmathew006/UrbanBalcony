@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../../../Components/Header/Header'
-import Singleprodct from '../../../components/Singleproduct/Singleprodct'
+import Singleprodct from '../../../Components/Singleproduct/Singleprodct'
 import Footer from '../../../Components/Footer/Footer'
 import Breadcrumbs from '../../../Components/Breadcrumps'
 import ProductView from '../../../Components/ProductView/ProductView'
