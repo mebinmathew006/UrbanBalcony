@@ -69,23 +69,23 @@ const queryClient = new QueryClient({
 //       navigate('/login')
 //   }
 // };
-const fetchUserDetails = async (dispatch, navigate) => {
-  try {
-    const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
-      withCredentials: true,
-    });
-    dispatch(setUserDetails(response.data.user));
-  } catch (error) {
-    console.error("Auth check failed:", error.response?.data); // Debugging
+// const fetchUserDetails = async (dispatch, navigate) => {
+//   try {
+//     const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
+//       withCredentials: true,
+//     });
+//     dispatch(setUserDetails(response.data.user));
+//   } catch (error) {
+//     console.error("Auth check failed:", error.response?.data); // Debugging
     
-    dispatch(setUserDetails(null));
+//     dispatch(setUserDetails(null));
 
-    // Only navigate if the error is a 401 (Unauthorized)
-    if (error.response?.status === 401) {
-      navigate('/login');
-    }
-  }
-};
+//     // Only navigate if the error is a 401 (Unauthorized)
+//     if (error.response?.status === 401) {
+//       navigate('/login');
+//     }
+//   }
+// };
 
 
 
@@ -95,7 +95,7 @@ function AppRoutes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserDetails(dispatch, navigate);
+    // fetchUserDetails(dispatch, navigate);
   }, [dispatch]);
 
   return (
