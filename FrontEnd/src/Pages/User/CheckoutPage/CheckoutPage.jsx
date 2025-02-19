@@ -106,7 +106,7 @@ const CheckoutPage = () => {
             key: keyId,
             amount: amount * 100,
             currency,
-            name: "Spice Forest",
+            name: "Spice Lush",
             description: "Order Payment",
             order_id: razorpay_order_id,
             handler: async (response) => {

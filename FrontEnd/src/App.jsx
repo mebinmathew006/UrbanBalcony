@@ -58,7 +58,17 @@ const queryClient = new QueryClient({
   },
 })
 
-
+const fetchUserDetails = async (dispatch,navigate) => {
+  try {
+      const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
+          withCredentials: true, // Ensure cookies are included in the request
+      });
+      dispatch(setUserDetails(response.data.user));
+  } catch (error) {
+      dispatch(setUserDetails(null)); 
+      navigate('/login')
+  }
+};
 
 
 // Separate component for the routes
@@ -67,7 +77,7 @@ function AppRoutes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // fetchUserDetails(dispatch, navigate);
+    fetchUserDetails(dispatch, navigate);
   }, [dispatch]);
 
   return (
