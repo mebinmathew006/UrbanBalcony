@@ -61,19 +61,19 @@ function IndexPage() {
     setSearchParams({ page: newPage.toString() });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center min-h-screen">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+  //     </div>
+  //   );
+  // }
 
-  if (isError) {
-    return (
-      <div className="text-red-500 text-center p-4">Error: {error.message}</div>
-    );
-  }
+  // if (isError) {
+  //   return (
+  //     <div className="text-red-500 text-center p-4">Error: {error.message}</div>
+  //   );
+  // }
 
   return (
     <div >
