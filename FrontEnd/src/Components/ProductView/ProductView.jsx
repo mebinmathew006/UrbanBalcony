@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 function ProductView(props) {
   const navigate =useNavigate()
-
+  const baseurl=import.meta.env.VITE_BASE_URL_WITH_MEDIA
   const navigationToProductDetailsPage=(spiceDetails)=>{
     navigate('/productDetails',{state:{spiceDetails}})
   }
@@ -22,7 +22,7 @@ function ProductView(props) {
           <div className="col-3 "  key={index} onClick={() =>navigationToProductDetailsPage(spice)}>
             
             <div className="card max-h-96 min-h-96 "  style={{ backgroundColor: '#E8D7B4'}}>
-              <img src={`http://127.0.0.1:8000/media/${spice.product_img1}`} alt="Product Image" style={{maxHeight:'120px'}}
+              <img src={`${baseurl}/${spice.product_img1}`} alt="Product Image" style={{maxHeight:'120px'}}
               />
               <div className="card-body ">
                 <h5 className="card-title">{spice.title}</h5>
