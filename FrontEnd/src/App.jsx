@@ -58,17 +58,35 @@ const queryClient = new QueryClient({
   },
 })
 
-const fetchUserDetails = async (dispatch,navigate) => {
+// const fetchUserDetails = async (dispatch,navigate) => {
+//   try {
+//       const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
+//           withCredentials: true, // Ensure cookies are included in the request
+//       });
+//       dispatch(setUserDetails(response.data.user));
+//   } catch (error) {
+//       dispatch(setUserDetails(null)); 
+//       navigate('/login')
+//   }
+// };
+const fetchUserDetails = async (dispatch, navigate) => {
   try {
-      const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
-          withCredentials: true, // Ensure cookies are included in the request
-      });
-      dispatch(setUserDetails(response.data.user));
+    const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
+      withCredentials: true,
+    });
+    dispatch(setUserDetails(response.data.user));
   } catch (error) {
-      dispatch(setUserDetails(null)); 
-      navigate('/login')
+    console.error("Auth check failed:", error.response?.data); // Debugging
+    
+    dispatch(setUserDetails(null));
+
+    // Only navigate if the error is a 401 (Unauthorized)
+    if (error.response?.status === 401) {
+      navigate('/login');
+    }
   }
 };
+
 
 
 // Separate component for the routes
@@ -91,7 +109,7 @@ function AppRoutes() {
       <Route path='/productDetails' element={<ProductDetails/>}/>
       <Route path='/ResetPassword' element={<ResetPassword/>}/>
       {/* <Route path='/AdminDashboard' element={<AdminDashboard/>}/> */}
-      <Route path='/UserManage' element={<UserManage/>}/>
+      <Route path='/UserManage' element={<UserManage/>}/> 
       <Route path='/CategoryManage' element={<CategoryManage/>}/>
       <Route path='/CategoryAdd' element={<CategoryAdd/>}/>
       <Route path='/CategoryUpdate' element={<CategoryUpdate/>}/>
