@@ -7,6 +7,8 @@ import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 
 function Singleprodct() {
+  const baseurl=import.meta.env.VITE_BASE_URL_WITH_MEDIA
+
   const user_id = useSelector((state) => state.userDetails.id);
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +20,7 @@ function Singleprodct() {
     setQuantity(1);
   }
   const [product_img, setProduct_img] = useState(
-    `http://127.0.0.1:8000/media/${productDetails.product_img1}`
+    `${baseurl}/${productDetails.product_img1}`
   );
 
   const [quantity, setQuantity] = useState(1);
