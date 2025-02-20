@@ -9,7 +9,7 @@ const ProtectedRoute = ({ children }) => {
   if (isAuthenticated) {
     return children;
   } else {
-    toast.error('Please Login',{position:'bottom-center'})
+    // toast.error('Please Login',{position:'bottom-center'})
     return <Navigate to="/login" />;
   }
 };

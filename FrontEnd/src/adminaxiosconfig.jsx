@@ -50,7 +50,7 @@ adminaxiosInstance.interceptors.response.use(
         // Retry the original request with the refreshed token
         return adminaxiosInstance(originalRequest);
       } catch (refreshError) {
-        toast.error("Please Login again", {
+        toast.error("Session expired. Please log in again", {
                 position: "bottom-center",
               });
         // If refresh fails, clear Redux state and redirect to login

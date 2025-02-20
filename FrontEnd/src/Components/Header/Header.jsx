@@ -32,7 +32,7 @@ function Header(props) {
         <div className="d-flex align-items-center hover:cursor-pointer">
           <img
             className="rounded-sm"
-            src="../public\spice new.png"
+            src="/spice new.png"
             alt="notFound"
             width={100}
             height={200}
