@@ -161,7 +161,7 @@ function Singleprodct() {
         <div className="space-y-6">
           {/* Main Image */}
           <div className="bg-[#E8D7B4] rounded-xl shadow-lg p-6">
-            <div className="w-full max-w-md mx-auto">
+            <div className="w-full max-w-md mx-auto bg-[#FCF4D2]">
               <ReactImageMagnify
                 {...{
                   smallImage: {
@@ -189,21 +189,21 @@ function Singleprodct() {
           <div className="flex justify-center gap-4">
             <img
               className="w-24 h-24 rounded-lg shadow hover:ring-2 ring-blue-500 transition-all cursor-pointer object-cover"
-              src={`http://127.0.0.1:8000/media/${productDetails.product_img1}`}
+              src={`${baseurl}/${productDetails.product_img1}`}
               alt="Product thumbnail 1"
               onClick={() =>
                 setProduct_img(
-                  `http://127.0.0.1:8000/media/${productDetails.product_img1}`
+                  `${baseurl}/${productDetails.product_img1}`
                 )
               }
             />
             <img
               className="w-24 h-24 rounded-lg shadow hover:ring-2 ring-blue-500 transition-all cursor-pointer object-cover"
-              src={`http://127.0.0.1:8000/media/${productDetails.product_img2}`}
+              src={`${baseurl}/${productDetails.product_img2}`}
               alt="Product thumbnail 2"
               onClick={() =>
                 setProduct_img(
-                  `http://127.0.0.1:8000/media/${productDetails.product_img2}`
+                  `${baseurl}/${productDetails.product_img2}`
                 )
               }
             />
