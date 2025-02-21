@@ -48,6 +48,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import UserChat from './Pages/User/UserProfile/UserChat'
 import AdminChat from './Pages/Admin/AdminChat/AdminChat'
 import BannerManagement from './Pages/Admin/BannerManagement/BannerManagement'
+import ConfirmOtp from './Pages/User/SignupPage/ConfirmOtp'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,7 +91,7 @@ function AppRoutes() {
       <Route path='/HomePage' element={ <ProtectedRoute><HomePage/></ProtectedRoute>}/>
       <Route path='/productDetails' element={<ProductDetails/>}/>
       <Route path='/ResetPassword' element={<ResetPassword/>}/>
-      {/* <Route path='/AdminDashboard' element={<AdminDashboard/>}/> */}
+      <Route path='/confirmOtp' element={<ConfirmOtp/>}/>
       <Route path='/UserManage' element={<UserManage/>}/> 
       <Route path='/CategoryManage' element={<CategoryManage/>}/>
       <Route path='/CategoryAdd' element={<CategoryAdd/>}/>

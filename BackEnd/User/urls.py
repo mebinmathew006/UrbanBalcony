@@ -36,6 +36,7 @@ urlpatterns = [
     path('google_login',GoogleAuth.as_view(),name='google_login'),
     path('forgetPassword',ForgetPassword.as_view(),name='ForgetPassword'),
     path('resetPassword',ResetPassword.as_view(),name='ResetPassword'),
+    path('confirmOtp',ConfirmOtp.as_view(),name='confirmOtp'),
     path('reviewAndRating/<int:id>',ReviewAndRating.as_view(),name='ReviewAndRating'),
     path('userCart/<int:id>',UserCart.as_view(),name='userCart'),
     path('userCart',UserCart.as_view(),name='userCart'),

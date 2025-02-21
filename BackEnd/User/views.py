@@ -33,7 +33,8 @@ import razorpay
 from rest_framework.pagination import PageNumberPagination
 import logging
 logger = logging.getLogger(__name__)
-
+from django.core.files.base import ContentFile
+from google.auth.transport import requests as google_requests 
 # Create your views here.
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -69,6 +70,7 @@ def getUserDetailsAgainWhenRefreshing(request):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'is_admin': user.is_superuser,
+                'is_verified': user.is_staff,#uses this field to know whther the user is verified or not
                 'profile_picture': user.profile_picture.url if user.profile_picture else None
             }
         }, status=status.HTTP_200_OK)
@@ -217,7 +219,9 @@ class UserLogin(APIView):
                             'id': user.id,
                             'first_name': user.first_name,
                             'last_name': user.last_name,
+                            'email': user.email,
                             'is_admin': user.is_superuser,
+                            'is_verified': user.is_staff,#uses this field to know whther the user is verified or not
                             'profile_picture': user.profile_picture.url if user.profile_picture else None
                         }
                     }, status=status.HTTP_200_OK)
@@ -280,7 +284,31 @@ class UserSignup(APIView):
                 return Response({'error': 'Email is already in use.'}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 serializer.save()  # Save the validated data to the database
-                return Response({'message': 'User registered successfully.'}, status=status.HTTP_201_CREATED)
+                
+                 # Generate OTP only if user exists
+                otp = ''.join(random.choices(string.digits, k=6))
+                
+                # Save OTP to database
+                OTP.objects.filter(email=serializer.validated_data['email']).delete()  # Delete existing OTPs
+                otp_obj = OTP.objects.create(email=serializer.validated_data['email'], otp=otp)
+                
+                # Send email
+                try:
+                    send_mail(
+                        'Your OTP for Verification',
+                        f'Your OTP is: {otp}. Valid for 10 minutes.',
+                        'spicelush@gmail.com',  # FROM
+                        [serializer.validated_data['email']],  # TO
+                        fail_silently=False,
+                    )
+                    return Response({'message': 'OTP sent successfully','email':serializer.validated_data['email']}, 
+                                status=status.HTTP_200_OK)
+                except Exception as e:
+                    otp_obj.delete()
+                    return Response({'error': str(e)}, 
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                # return Response({'message': 'User registered successfully.'}, status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -300,7 +328,7 @@ class ForgetPassword(APIView):
             
             # Generate OTP only if user exists
             otp = ''.join(random.choices(string.digits, k=6))
-            
+            print(otp)
             # Save OTP to database
             OTP.objects.filter(email=email).delete()  # Delete existing OTPs
             otp_obj = OTP.objects.create(email=email, otp=otp)
@@ -326,6 +354,29 @@ class ForgetPassword(APIView):
             return Response({'message': 'If this email exists, an OTP will be sent.'}, 
                           status=status.HTTP_200_OK)
 
+class ConfirmOtp(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self,request):
+        otp = request.data.get('otp')
+        email = request.data.get('email')
+        print(otp,email)
+        
+        try:
+            otp_obj = OTP.objects.get(email=email, otp=otp)
+        except OTP.DoesNotExist:
+            return Response({'error': 'Invalid OTP or email'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            user.is_staff=True # i uses this field to verify if the user is verified or not
+            user.save()
+            otp_obj.delete()  # Delete OTP after successful password reset
+            return Response({'message': 'user confirmed successfully'}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class ResetPassword(APIView):
     permission_classes = [AllowAny]
@@ -387,33 +438,48 @@ class GoogleAuth(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Verify the Google token
+            # Use google_requests for token verification
             id_info = id_token.verify_oauth2_token(
                 credential,
-                requests.Request(),
-                settings.GOOGLE_CLIENT_ID  # Add this to your Django settings
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID
             )
 
-            # Extract user information from the verified token
             email = id_info.get('email')
-            first_name = id_info.get('given_name', '')
-            last_name = id_info.get('family_name', '')
+            first_name = id_info.get('given_name', '').capitalize()
+            last_name = id_info.get('family_name', '').capitalize()
+            profile_pic = id_info.get('picture', '')
 
-            # Check if user exists
             try:
                 user = CustomUser.objects.get(email=email)
             except CustomUser.DoesNotExist:
-                # Create new user if doesn't exist
                 with transaction.atomic():
                     user = CustomUser.objects.create(
                         email=email,
                         first_name=first_name,
                         last_name=last_name,
+                        is_staff=True,
                         is_active=True
                     )
-                    # Set a random password for the user
                     random_password = self.generate_random_password()
                     user.set_password(random_password)
+                    
+                    # Use regular requests for profile picture
+                    if profile_pic:
+                        try:
+                            # Use regular requests library here
+                            response = requests.get(profile_pic)
+                            if response.status_code == 200:
+                                image_name = f"{email.split('@')[0]}_profile.jpg"
+                                user.profile_picture.save(
+                                    image_name, 
+                                    ContentFile(response.content), 
+                                    save=True
+                                )
+                        except Exception as e:
+                            print(f"Profile picture error: {str(e)}")
+                            # Continue without profile picture
+                    
                     user.save()
 
             # Check if user is active
@@ -436,6 +502,7 @@ class GoogleAuth(APIView):
                             'first_name': user.first_name,
                             'last_name': user.last_name,
                             'is_admin': user.is_superuser,
+                            'is_verified': user.is_staff,#uses this field to know whther the user is verified or not
                             'profile_picture': user.profile_picture.url if user.profile_picture else None
                         }
                     }, status=status.HTTP_200_OK)
@@ -458,6 +525,9 @@ class GoogleAuth(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
+            import traceback 
+            print("Detailed error:", str(e))
+            print("Full traceback:", traceback.format_exc())
             # Handle other exceptions
             return Response(
                 {'error': {'commonError': str(e)}},
@@ -514,6 +584,7 @@ class UserAddress(APIView):
     def patch(self, request, id):
         try:
             orderitem = Address.objects.get(id=id)
+            
             orderitem.delete()
             data = {
                 'status': 'Deleted Successfully',
@@ -922,6 +993,7 @@ class TokenRefreshFromCookieView(APIView):
                     'first_name': user.first_name,
                     'last_name': user.last_name,
                     'is_admin': user.is_superuser,
+                    'is_verified': user.is_staff,#uses this field to know whther the user is verified or not
                     'profile_picture': user.profile_picture.url if user.profile_picture else None
                 }
             }, status=status.HTTP_200_OK)

@@ -26,8 +26,8 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 
 class UserManage(APIView):
     def get (self,request):
-        customuser = CustomUser.objects.all()
-        return Response(customuser.values(),200)
+        customuser = CustomUser.objects.filter(is_staff=True,is_superuser=False)
+        return Response(customuser.values(),status.HTTP_200_OK)
     
     def patch(self,request,id):
         customuser = CustomUser.objects.get(id=id)

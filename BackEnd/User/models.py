@@ -24,6 +24,7 @@ class CustomUserManager(BaseUserManager):
         """
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('is_staff', True)
 
         if not first_name or not last_name:
             raise ValueError('Superuser must have a first name and last name.')
@@ -258,7 +259,7 @@ class OTP(models.Model):
     def save(self, *args, **kwargs):
         # Set OTP expiration to 10 minutes from creation
         if not self.expires_at:
-            self.expires_at = timezone.now() + timedelta(minutes=10)
+            self.expires_at = timezone.now() + timedelta(minutes=10)    
         super().save(*args, **kwargs)
     
     def is_expired(self):
@@ -276,7 +277,7 @@ class WishlistProduct(models.Model):
 class Offer(models.Model):
     id = models.AutoField(primary_key=True)  # Automatically increments ID
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="offers")
-    discount_percentage = models.PositiveIntegerField()  # Restricts to non-negative values 
+    discount_percentage = models.PositiveIntegerField()  # Restricts to non-negative values
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active=models.BooleanField(default=True)

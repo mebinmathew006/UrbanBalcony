@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
         state.last_name = action.payload.last_name;
         state.is_admin = action.payload.is_admin;
         state.profile_picture = action.payload.profile_picture;
+        state.is_verified = action.payload.is_verified;
         state.access_token = action.payload.access_token
       },
 
@@ -27,6 +28,7 @@ import { useNavigate } from "react-router-dom";
         state.last_name = "";
         state.is_admin = "";
         state.profile_picture = "";
+        state.is_verified = "";
         state.access_token = "";
       },
 
