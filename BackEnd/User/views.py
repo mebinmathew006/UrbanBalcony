@@ -297,7 +297,7 @@ class UserSignup(APIView):
                     send_mail(
                         'Your OTP for Verification',
                         f'Your OTP is: {otp}. Valid for 10 minutes.',
-                        'spicelush@gmail.com',  # FROM
+                        'care@spicelush.com',  # FROM
                         [serializer.validated_data['email']],  # TO
                         fail_silently=False,
                     )
@@ -338,7 +338,7 @@ class ForgetPassword(APIView):
                 send_mail(
                     'Your OTP for Verification',
                     f'Your OTP is: {otp}. Valid for 10 minutes.',
-                    'urbanbalcony@ub.com',  # FROM
+                    'care@spicelush.com',  # FROM
                     [email],  # TO
                     fail_silently=False,
                 )
