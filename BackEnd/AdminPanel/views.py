@@ -224,10 +224,11 @@ class AdmingetuserOrders(APIView):
             user_id = request.data.get('userId')
             amount = request.data.get('amount')
             order_id = request.data.get('orderId')
-            
+
             orderitem = OrderItem.objects.get(id=id)
         except OrderItem.DoesNotExist:
             return Response({'error': 'OrderItem not found'}, status=status.HTTP_404_NOT_FOUND)
+
         if action not in ['Delivered', 'Returned']:
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -240,12 +241,17 @@ class AdmingetuserOrders(APIView):
                     orderitem.status = 'Delivered Return not Approved'
                 elif action == 'Returned':
                     orderitem.status = 'Returned'
+                    
+                    # Update wallet balance
                     wallet, created = Wallet.objects.get_or_create(user_id=user_id)
                     if not created:
-                        # Update the existing wallet's balance
                         wallet.balance = F('balance') + amount
                         wallet.save()
                     WalletTransaction.objects.create(wallet=wallet, amount=amount, order_id=order_id)
+
+                    # Update product variant stock
+                    orderitem.product_variant.stock = F('stock') + orderitem.quantity
+                    orderitem.product_variant.save()
 
                 orderitem.save()
 

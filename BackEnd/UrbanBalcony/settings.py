@@ -17,7 +17,7 @@ SECRET_KEY = config("SECRET_KEY")
 # SECURITY WARNING: Don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["api.spicelush.com", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["api.spicelush.com", "127.0.0.1", "localhost",'www.api.spicelush.com']
 
 
 # CORS Settings (Enabled only in development)
@@ -82,9 +82,7 @@ if DEBUG:
     CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 else:
-    GOOGLE_OAUTH2_REDIRECT_URI = 'https://api.spicelush.com/api/auth/google/'
-    GOOGLE_OAUTH2_CLIENT_ID = config("GOOGLE_CLIENT_ID")
-    GOOGLE_OAUTH2_CLIENT_SECRET = config("GOOGLE_OAUTH2_CLIENT_SECRET") 
+    
     
     # Application definition
     INSTALLED_APPS = [

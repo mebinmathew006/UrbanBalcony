@@ -11,39 +11,49 @@ const UserChat = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-  const baseurl = import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET;
+    const baseurl = import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET;
+    const connectWebSocket = () => {
+      const roomName = `user_${userId}_admin`;
+      const ws = new WebSocket(`${baseurl}/${roomName}/`);
 
-    if (socketRef.current) {
-      console.log("Existing WebSocket found, reusing...");
-      return;
-    }
+      ws.onopen = () => {
+        console.log(`✅ Connected to chat with ${roomName}`);
+      };
 
-    const roomName = `user_${userId}_admin`;
-    socketRef.current = new WebSocket(
-      `${baseurl}/${roomName}/`
-    );
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "chat_history") {
+          setMessages(data.messages);
+        } else if (data.type === "chat_message") {
+          setMessages((prev) => [
+            ...prev,
+            { ...data, sender__first_name: "admin" },
+          ]);
+        }
+      };
 
-    socketRef.current.onopen = () => {
-      console.log(`✅ Connected to chat with ${roomName}`);
+      ws.onclose = () => {
+        console.log("❌ WebSocket Disconnected");
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          if (socketRef.current === ws) {
+            console.log("🔄 Attempting to reconnect...");
+            connectWebSocket();
+          }
+        }, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+      };
+
+      socketRef.current = ws;
     };
 
-    socketRef.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "chat_history") {
-        setMessages(data.messages);
-      } else if (data.type === "chat_message") {
-        setMessages((prev) => [...prev, { ...data, sender__first_name: "admin" }]);
-      }
-    };
-
-    socketRef.current.onclose = () => {
-      console.log("❌ WebSocket Disconnected");
-      socketRef.current = null; // Prevent using a stale reference
-    };
+    connectWebSocket();
 
     return () => {
       if (socketRef.current) {
-        console.log("🔌 Closing WebSocket...");
         socketRef.current.close();
       }
     };

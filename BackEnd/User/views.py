@@ -36,6 +36,7 @@ import logging
 logger = logging.getLogger(__name__)
 from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
+from decimal import Decimal
 # Create your views here.
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -651,15 +652,18 @@ class UserOrder(APIView):
             orderItem.save()
 
             # Check if the order was cancelled and handle refund
-            if request.data.get('action') == 'Cancelled':
-                payment_status = orderItem.order.payment.status  # Access related field
-                if payment_status == 'success':
-                    wallet = Wallet.objects.get(user=orderItem.order.user)
-                    wallet.balance = F('balance') + orderItem.shipping_price_per_order + orderItem.total_amount
-                    wallet.save()
-
-            # Successful response
-            return Response({'id': orderItem.id}, status=status.HTTP_200_OK)
+            with transaction.atomic():
+                if request.data.get('action') == 'Cancelled':
+                    payment_status = orderItem.order.payment.status  # Access related field
+                    if payment_status == 'success':
+                        wallet = Wallet.objects.get(user=orderItem.order.user)
+                        wallet.balance = F('balance') + orderItem.shipping_price_per_order + orderItem.total_amount
+                        wallet.save()
+                    # Update product variant stock
+                    orderItem.product_variant.stock = F('stock') + orderItem.quantity
+                    orderItem.product_variant.save()
+                # Successful response
+                return Response({'id': orderItem.id}, status=status.HTTP_200_OK)
 
         except OrderItem.DoesNotExist:
             return Response({'error': 'Order item not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -707,7 +711,7 @@ class UserCart(APIView):
         product_variant = get_object_or_404(ProductVariant, id=product_variant_id)
 
         # Validate quantity
-        if quantity < 1 or quantity > product_variant.stock:
+        if int(quantity) < 1 or int(quantity) > int(product_variant.stock):
             return Response({'error': 'Invalid quantity. Check stock availability.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get or create a cart for the user
@@ -718,7 +722,7 @@ class UserCart(APIView):
         if not created:
             # Update the quantity if the item already exists
             new_quantity = cart_item.quantity + quantity
-            if new_quantity > product_variant.stock:
+            if int(new_quantity) > int(product_variant.stock):
                 return Response({'error': 'Quantity exceeds available stock.'}, status=status.HTTP_400_BAD_REQUEST)
             cart_item.quantity = new_quantity
         else:
@@ -754,7 +758,7 @@ class UserCart(APIView):
             action =request.data.get('action')
             if action == 'increase':
                 cart_item.quantity += 1
-            elif action == 'decrease' and cart_item.quantity > 1:
+            elif action == 'decrease' and int(cart_item.quantity) > 1:
                 cart_item.quantity -= 1
             else:
                 return Response({"error": "Invalid action or quantity cannot be less than 1"}, status=400)
@@ -780,9 +784,10 @@ class UserPlaceOrder(APIView):
         return True
 
     def process_wallet_payment(self, total, user_id):
+        total=Decimal(str(total)) 
         try:
             wallet = Wallet.objects.get(user_id=user_id)  # Fetch the Wallet instance
-            if total > wallet.balance:
+            if total > int(wallet.balance):
                 raise ValueError("Insufficient balance")
             wallet.balance -= total
             wallet.save()  # Save the updated balance
