@@ -62,22 +62,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
         receiver_name = data['receiver_name']
         message = data['message']
 
-        sender = await sync_to_async(CustomUser.objects.get)(id=sender_id)
-        receiver = await sync_to_async(CustomUser.objects.get)(id=receiver_id)
+        print(f"Sender ID: {sender_id}, Receiver ID: {receiver_id}")  # Debugging line
 
-        chat_message = await sync_to_async(ChatMessage.objects.create)(
-            sender=sender, receiver=receiver, message=message
-        )
+        try:
+            sender = await sync_to_async(CustomUser.objects.get)(id=sender_id)
+        except CustomUser.DoesNotExist:
+            print(f"Sender with ID {sender_id} does not exist.")
+            return
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "chat_message",
-                "sender": sender_name,
-                "receiver": receiver_name,
-                "message": message,
-            },
-        )
+        try:
+            receiver = await sync_to_async(CustomUser.objects.get)(id=receiver_id)
+        except CustomUser.DoesNotExist:
+            print(f"Receiver with ID {receiver_id} does not exist.")  # Debugging output
+            return
+
+
 
     async def chat_message(self, event):
         """Send a new chat message to the frontend"""
