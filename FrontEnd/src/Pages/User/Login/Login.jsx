@@ -233,7 +233,7 @@ function Login() {
           </div>
 
           {/* Google Sign-In Button */}
-          <div className="text-center mt-4">
+          <div className="text-center m-4">
             <div id="googleSignInDiv"></div>
           </div>
         </div>

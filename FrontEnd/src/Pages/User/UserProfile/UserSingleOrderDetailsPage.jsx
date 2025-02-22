@@ -10,22 +10,24 @@ const UserSingleOrderDetailsPage = () => {
   const [order, setOrder] = useState(null);
   const orderId = location.state?.orderId;
   const user_id = useSelector((state) => state.userDetails.id);
-  const [productId,setProductId] =useState()
-  const navigate =useNavigate()
+  const [productId, setProductId] = useState();
+  const navigate = useNavigate();
   useEffect(() => {
     fetchOrderDetails();
   }, []);
 
- 
   const handleCancel = async () => {
     try {
       await axiosInstance.patch(`userOrders/${orderId}`, {
         action: "Cancelled",
         user_id,
       });
+      toast.success("Your Order Cancelled successfully", {
+        position: "bottom-center",
+      });
       fetchOrderDetails();
     } catch (error) {
-      console.error("Error cancelling order:", error);
+      toast.error("Error cancelling order");
     }
   };
 
@@ -34,23 +36,28 @@ const UserSingleOrderDetailsPage = () => {
       await axiosInstance.patch(`userOrders/${orderId}`, {
         action: "Requested for Return",
       });
+      toast.success("Requested For Return successfully", {
+        position: "bottom-center",
+      });
+
       fetchOrderDetails();
     } catch (error) {
-      console.error("Error cancelling order:", error);
+      toast.error("Error Returning order:");
     }
   };
 
   const handleReview = async () => {
-    navigate('/UserReview',{state:{
-      orderId,
-      productId
-    }})
+    navigate("/UserReview", {
+      state: {
+        orderId,
+      },
+    });
   };
 
   const fetchOrderDetails = async () => {
     try {
       const response = await axiosInstance.get(`singleOrderDetails/${orderId}`);
-      setProductId(response.data.variant.product.id)
+      setProductId(response.data.variant.product.id);
       setOrder(response.data);
     } catch (error) {
       console.error("Error fetching order details:", error);
@@ -174,8 +181,8 @@ const UserSingleOrderDetailsPage = () => {
                 )}
               </div>{" "}
               <div>
-                { (order.status === "Delivered Return not Approved" ||
-                  order.status === "Delivered" )&& (
+                {(order.status === "Delivered Return not Approved" ||
+                  order.status === "Delivered") && (
                   <button
                     onClick={() => handleReview(order.id)}
                     className="w-full md:w-auto px-4 py-2 bg-green-800 hover:bg-green-900 text-white rounded transition-colors duration-200"
@@ -188,7 +195,6 @@ const UserSingleOrderDetailsPage = () => {
           </div>
         </div>
       </div>
-      
     </div>
   );
 };

@@ -111,7 +111,7 @@ const UserOrderDetails = () => {
 
     // Add title
     doc.setFontSize(35);
-    doc.text("Spice Forest", 15, 20);
+    doc.text("Spice Lush", 15, 20);
     doc.setFontSize(20);
     doc.text("Invoice", 15, 28);
 

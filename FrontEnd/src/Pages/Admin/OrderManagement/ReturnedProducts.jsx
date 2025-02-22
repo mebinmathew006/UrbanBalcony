@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
+import { toast } from "react-toastify";
 
 function ReturnedProducts() {
   const navigate = useNavigate();
@@ -19,9 +20,10 @@ function ReturnedProducts() {
         `admingetuserOrders/${itemId}`,
         { action, userId, amount, orderId }
       );
+      toast.success(`Order status Changed to ${action}`)
       fetchReturnRequests();
     } catch (error) {
-      console.error("Error handling return request:", error);
+      toast.error("Error handling return request:");
     }
   };
 
