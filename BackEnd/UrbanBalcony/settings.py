@@ -82,6 +82,10 @@ if DEBUG:
     CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 else:
+    GOOGLE_OAUTH2_REDIRECT_URI = 'https://api.spicelush.com/api/auth/google/'
+    GOOGLE_OAUTH2_CLIENT_ID = config("GOOGLE_CLIENT_ID")
+    GOOGLE_OAUTH2_CLIENT_SECRET = config("GOOGLE_OAUTH2_CLIENT_SECRET") 
+    
     # Application definition
     INSTALLED_APPS = [
         "daphne",
@@ -245,3 +249,4 @@ EMAIL_HOST_PASSWORD = config("APP_PASSWORD_FOR_GMAIL")
 # Razorpay Settings
 RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET")
+
