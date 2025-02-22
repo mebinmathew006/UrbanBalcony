@@ -14,53 +14,68 @@ const UserChat = () => {
     const baseurl = import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET;
     const roomName = `user_${userId}_admin`;
     const wsUrl = `${baseurl}/${roomName}/`;
-    console.log("WebSocket URL:", wsUrl);  // Debugging line
-    const ws = new WebSocket(wsUrl);
+    let reconnectTimeout = null;
+
     const connectWebSocket = () => {
-      const ws = new WebSocket(`${baseurl}/${roomName}/`);
+        console.log("🔄 Connecting to WebSocket...");
+        const ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => {
-        console.log(`✅ Connected to chat with ${roomName}`);
-      };
+        ws.onopen = () => {
+            console.log(`✅ Connected to chat with ${roomName}`);
+            // Clear any pending reconnection attempts
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = null;
+            }
+        };
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "chat_history") {
-          setMessages(data.messages);
-        } else if (data.type === "chat_message") {
-          setMessages((prev) => [
-            ...prev,
-            { ...data, sender__first_name: "admin" },
-          ]);
-        }
-      };
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "chat_history") {
+                setMessages(data.messages);
+            } else if (data.type === "chat_message") {
+                setMessages((prev) => [
+                    ...prev,
+                    { ...data, sender__first_name: "admin" },
+                ]);
+            }
+        };
 
-      ws.onclose = () => {
-        console.log("❌ WebSocket Disconnected");
-        // Attempt to reconnect after 3 seconds
-        setTimeout(() => {
-          if (socketRef.current === ws) {
-            console.log("🔄 Attempting to reconnect...");
-            connectWebSocket();
-          }
-        }, 7000);
-      };
+        ws.onclose = (event) => {
+            console.log("❌ WebSocket Disconnected");
+            // Clean up existing WebSocket reference
+            if (socketRef.current === ws) {
+                socketRef.current = null;
+            }
+            // Attempt to reconnect only if closed abnormally
+            if (event.code !== 1000) { // 1000 = Normal closure
+                reconnectTimeout = setTimeout(() => {
+                    console.log("🔄 Attempting to reconnect...");
+                    connectWebSocket();
+                }, 7000);
+            }
+        };
 
-      ws.onerror = (error) => {
-        console.error("WebSocket Error:", error);
-      };
+        ws.onerror = (error) => {
+            console.error("WebSocket Error:", error);
+        };
 
-      socketRef.current = ws;
+        socketRef.current = ws;
     };
 
     connectWebSocket();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
+        // Cleanup: Close WebSocket and clear timeout
+        if (socketRef.current) {
+            socketRef.current.close(1000); // Close with normal status code
+            socketRef.current = null;
+        }
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+        }
     };
-  }, [userId]); // ✅ Ensures WebSocket updates when user changes
+}, [userId]);
 
   const sendMessage = () => {
     if (!socketRef.current) {
