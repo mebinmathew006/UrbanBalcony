@@ -916,6 +916,7 @@ class UserPlaceOrder(APIView):
 
     def post(self, request):
         try:
+            print(request.data)
             self.validate_input(request.data)
             
             with transaction.atomic():

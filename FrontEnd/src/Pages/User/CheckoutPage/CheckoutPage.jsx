@@ -231,6 +231,8 @@ const CheckoutPage = () => {
                   productId,
                   quantity,
                   status: "pending",
+                  discoutPercentage:
+                  (appliedCoupon && appliedCoupon.value) || 0,
                 }
               );
 
@@ -364,14 +366,13 @@ const CheckoutPage = () => {
     onSave={handleUserCreation}
   />
   <Header />
-  <div className="min-h-screen bg-[#FCF4D2] py-8">
-  <h1 className="text-2xl font-bold mb-8">Checkout</h1>
+  <form onSubmit={handleSubmit} className="space-y-8">
 
+  <div className="min-h-screen bg-[#FCF4D2] py-8">
+    <h1 className="text-2xl font-bold mb-8">Checkout</h1>
     <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Left Column - Form Sections */}
-
       <div>
-        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Delivery Address Section */}
           <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center">
@@ -586,7 +587,10 @@ const CheckoutPage = () => {
               )}
             </div>
           </div>
-        </form>
+
+          {/* Place Order Button */}
+         
+        
       </div>
 
       {/* Right Column - Order Summary */}
@@ -618,22 +622,27 @@ const CheckoutPage = () => {
                   ₹{finalTotal && finalTotal}
                 </span>
               </div>
+              
             </div>
+            
           </div>
+          <div className="mt-5">
+           <button
+            type="submit"
+            disabled={!selectedAddress || loading}
+            className="w-full bg-green-700 text-white py-3 rounded-lg font-medium
+            hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500
+            disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {loading ? "Processing..." : "Place Order"}
+          </button>
         </div>
-        {/* Place Order Button */}
-        <button
-          type="submit"
-          disabled={!selectedAddress || loading}
-          className="w-full bg-green-700 text-white py-3 rounded-lg font-medium
-          hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500
-          disabled:bg-gray-400 disabled:cursor-not-allowed mt-8"
-        >
-          {loading ? "Processing..." : "Place Order"}
-        </button>
+        </div>
       </div>
     </div>
   </div>
+  
+  </form>
   <Footer />
 </div>
   );
