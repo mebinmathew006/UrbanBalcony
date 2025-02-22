@@ -21,7 +21,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender_id = int(sender_id)
 
             if receiver_role == "admin":
-                receiver_id = 12  # Admin's ID
+                receiver_id = 1  # Admin's ID
             else:
                 receiver_id = sender_id  # Assume user is chatting with admin
 
