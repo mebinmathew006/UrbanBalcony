@@ -12,8 +12,11 @@ const UserChat = () => {
 
   useEffect(() => {
     const baseurl = import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET;
+    const roomName = `user_${userId}_admin`;
+    const wsUrl = `${baseurl}/${roomName}/`;
+    console.log("WebSocket URL:", wsUrl);  // Debugging line
+    const ws = new WebSocket(wsUrl);
     const connectWebSocket = () => {
-      const roomName = `user_${userId}_admin`;
       const ws = new WebSocket(`${baseurl}/${roomName}/`);
 
       ws.onopen = () => {
@@ -40,7 +43,7 @@ const UserChat = () => {
             console.log("🔄 Attempting to reconnect...");
             connectWebSocket();
           }
-        }, 3000);
+        }, 7000);
       };
 
       ws.onerror = (error) => {
