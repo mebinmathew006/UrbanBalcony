@@ -49,6 +49,7 @@ import UserChat from './Pages/User/UserProfile/UserChat'
 import AdminChat from './Pages/Admin/AdminChat/AdminChat'
 import BannerManagement from './Pages/Admin/BannerManagement/BannerManagement'
 import ConfirmOtp from './Pages/User/SignupPage/ConfirmOtp'
+import UserReview from './Pages/User/UserProfile/UserReview'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,7 @@ function AppRoutes() {
       <Route path='/ProductManage' element={<ProtectedRoute><ProductManage/></ProtectedRoute>}/>
       <Route path='/ProductAdd' element={<ProductAdd/>}/>
       <Route path='/ProductEdit' element={<ProductEdit/>}/>
+      <Route path='/UserReview' element={<UserReview/>}/>
       <Route path='/couponManage' element={<CouponManage/>}/>
       <Route path='/couponAdd' element={<CouponAdd/>}/>
       <Route path='/couponEdit' element={<CouponEdit/>}/>

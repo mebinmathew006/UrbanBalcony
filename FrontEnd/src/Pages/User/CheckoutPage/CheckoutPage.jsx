@@ -6,7 +6,7 @@ import Header from "../../../Components/Header/Header";
 import Footer from "../../../Components/Footer/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
+import UserAddressCreate from "../UserProfile/UserAddressCreate";
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [finalTotal, setFinalTotal] = useState();
@@ -22,12 +22,41 @@ const CheckoutPage = () => {
   const [discount, setDiscount] = useState(0);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
   // Call calculateFinalTotal when dependencies change
   useEffect(() => {
     fetchUserAddress();
     fetchWallet();
     calculateFinalTotal();
   }, [totalAmount, appliedCoupon, discount]); // ✅ Proper dependencies
+
+
+  const handleUserCreation = async (newAddress) => {
+    const formData = new FormData();
+    formData.append("user_id", user_id);
+    formData.append("address_type", newAddress.address_type);
+    formData.append("city", newAddress.city);
+    formData.append("state", newAddress.state);
+    formData.append("pin_code", newAddress.pin_code);
+    formData.append("land_mark", newAddress.land_mark);
+    formData.append("alternate_number", newAddress.alternate_number);
+
+    try {
+      const response = await axiosInstance.post(`userAddress`, formData);
+      console.log(response);
+
+      if (response.status === 201) {
+        fetchUserAddress(); // Refresh the address list
+        toast.success('Address Added Successfullly',{position:'bottom-center'})
+        setIsCreateModalOpen(false); // Close the modal
+      }
+    } catch (error) {
+      toast.error('Unable to add Address !!',{position:'bottom-center'})
+
+      console.error(error);
+    }
+  };
 
   const fetchWallet = async () => {
     try {
@@ -329,277 +358,284 @@ const CheckoutPage = () => {
   };
   return (
     <div>
-      <Header />
-      <div className="min-h-screen bg-[#FCF4D2] py-8">
-        <div className="max-w-3xl mx-auto px-4">
-          <h1 className="text-2xl font-bold mb-8">Checkout</h1>
+  <UserAddressCreate
+    isOpen={isCreateModalOpen}
+    onClose={() => setIsCreateModalOpen(false)}
+    onSave={handleUserCreation}
+  />
+  <Header />
+  <div className="min-h-screen bg-[#FCF4D2] py-8">
+  <h1 className="text-2xl font-bold mb-8">Checkout</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Delivery Address Section */}
-            <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold mb-4 flex items-center">
-                  <Truck className="mr-2" size={20} />
-                  Choose Delivery Address
-                </h2>
-                <label
-                  class="bg-green-700 text-white px-4 py-2 rounded cursor-pointer hover:bg-green-900"
-                  onClick={() =>
-                    navigate("/userProfile", { state: { tab: "address" } })
-                  }
-                >
-                  New Address ?
-                </label>
-              </div>
+    <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Left Column - Form Sections */}
 
-              <div className="space-y-4">
-                {userAddress.map((address) => (
-                  <label
-                    key={address.id}
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                    ${
-                      selectedAddress == address.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <input
-                        type="radio"
-                        name="address"
-                        value={address.id}
-                        checked={selectedAddress == address.id}
-                        onChange={(e) => setSelectedAddress(e.target.value)}
-                        className="mt-1 mr-4"
-                      />
-                      <div>
-                        <p className="font-medium">{address.address_type}</p>
-                        <p className="text-gray-600 text-sm mt-1">
-                          {address.land_mark}, {address.city}
-                        </p>
-                        <p className="text-gray-600 text-sm">
-                          {address.state} - {address.pin_code}
-                        </p>
-                        <p className="text-gray-600 text-sm mt-1">
-                          Alternative Phone: {address.alternate_number}
-                        </p>
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {/* Coupon Section */}
-            <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+      <div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Delivery Address Section */}
+          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+            <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <div className="mr-2" size={20} />
-                Apply Coupon
+                <Truck className="mr-2" size={20} />
+                Choose Delivery Address
               </h2>
-              <div className="flex">
-                <input
-                  type="text"
-                  placeholder="Enter coupon code"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  className="flex-grow mr-2 p-2 border rounded-lg bg-white"
-                />
-                {appliedCoupon ? (
-                  <label
-                    onClick={removeCoupon}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                  >
-                    Remove
-                  </label>
-                ) : (
-                  <label
-                    onClick={applyCoupon}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                    disabled={!couponCode}
-                  >
-                    Apply
-                  </label>
-                )}
-              </div>
-              {appliedCoupon && (
-                <div className="mt-2 p-2 bg-green-50 border-l-4 border-green-500">
-                  <p className="text-green-700">
-                    Coupon "{appliedCoupon.code}" applied
-                    <span className="ml-2 font-bold">
-                      {appliedCoupon.type === "percentage"
-                        ? `${appliedCoupon.value}% off`
-                        : `₹${appliedCoupon.value} off`}
-                    </span>
-                  </p>
-                </div>
-              )}
+              <label
+                className="bg-green-700 text-white px-4 py-2 rounded cursor-pointer hover:bg-green-900"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                New Address ?
+              </label>
             </div>
-
-            {/* Payment Method Section */}
-            <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <CreditCard className="mr-2" size={20} />
-                Payment Method
-              </h2>
-
-              <div className="space-y-4">
-                {/* Credit/Debit Card */}
+            <div className="space-y-4">
+              {userAddress.map((address) => (
                 <label
+                  key={address.id}
                   className={`block p-4 border rounded-lg cursor-pointer transition-colors
                   ${
-                    paymentMethod === "card"
+                    selectedAddress == address.id
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-300"
                   }`}
+                >
+                  <div className="flex items-start">
+                    <input
+                      type="radio"
+                      name="address"
+                      value={address.id}
+                      checked={selectedAddress == address.id}
+                      onChange={(e) => setSelectedAddress(e.target.value)}
+                      className="mt-1 mr-4"
+                    />
+                    <div>
+                      <p className="font-medium">{address.address_type}</p>
+                      <p className="text-gray-600 text-sm mt-1">
+                        {address.land_mark}, {address.city}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {address.state} - {address.pin_code}
+                      </p>
+                      <p className="text-gray-600 text-sm mt-1">
+                        Alternative Phone: {address.alternate_number}
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Coupon Section */}
+          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <div className="mr-2" size={20} />
+              Apply Coupon
+            </h2>
+            <div className="flex">
+              <input
+                type="text"
+                placeholder="Enter coupon code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                className="flex-grow mr-2 p-2 border rounded-lg bg-white"
+              />
+              {appliedCoupon ? (
+                <label
+                  onClick={removeCoupon}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                >
+                  Remove
+                </label>
+              ) : (
+                <label
+                  onClick={applyCoupon}
+                  className="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-900"
+                  disabled={!couponCode}
+                >
+                  Apply
+                </label>
+              )}
+            </div>
+            {appliedCoupon && (
+              <div className="mt-2 p-2 bg-green-50 border-l-4 border-green-500">
+                <p className="text-green-700">
+                  Coupon "{appliedCoupon.code}" applied
+                  <span className="ml-2 font-bold">
+                    {appliedCoupon.type === "percentage"
+                      ? `${appliedCoupon.value}% off`
+                      : `₹${appliedCoupon.value} off`}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Method Section */}
+          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <CreditCard className="mr-2" size={20} />
+              Payment Method
+            </h2>
+            <div className="space-y-4">
+              {/* Credit/Debit Card */}
+              <label
+                className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                ${
+                  paymentMethod === "card"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="card"
+                    checked={paymentMethod === "card"}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="mr-4"
+                  />
+                  <div>
+                    <p className="font-medium">Pay Now</p>
+                    <p className="text-gray-600 text-sm mt-1">Pay securely</p>
+                  </div>
+                </div>
+              </label>
+
+              {/* Wallet */}
+              {Number(wallet) >= finalTotal ? (
+                <label
+                  className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                ${
+                  paymentMethod === "wallet"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
                 >
                   <div className="flex items-center">
                     <input
                       type="radio"
                       name="payment"
-                      value="card"
-                      checked={paymentMethod === "card"}
+                      value="wallet"
+                      checked={paymentMethod === "wallet"}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mr-4"
                     />
                     <div>
-                      <p className="font-medium">Pay Now</p>
-                      <p className="text-gray-600 text-sm mt-1">Pay securely</p>
+                      <p className="font-medium">
+                        Your Wallet balance is {wallet}
+                      </p>
+                      <p className="text-gray-600 text-sm mt-1">Wallet Pay</p>
                     </div>
                   </div>
                 </label>
+              ) : (
+                <label
+                  className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                ${
+                  paymentMethod === "wallet"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+                >
+                  <p className="font-medium">
+                    You Cant pay using Wallet, Your balance is {wallet}
+                  </p>
+                </label>
+              )}
 
-                {/* Wallet */}
-                {wallet >= finalTotal ? (
-                  <label
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${
-                    paymentMethod === "wallet"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  >
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="wallet"
-                        checked={paymentMethod === "wallet"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="mr-4"
-                      />
-                      <div>
-                        <p className="font-medium">
-                          Your Wallet balance is {wallet}
-                        </p>
-                        <p className="text-gray-600 text-sm mt-1">Wallet Pay</p>
-                      </div>
+              {/* Cash on Delivery */}
+              {finalTotal < 1000 ? (
+                <label
+                  className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                ${
+                  paymentMethod === "cod"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cod"
+                      checked={paymentMethod === "cod"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-4"
+                    />
+                    <div>
+                      <p className="font-medium">Cash on Delivery</p>
+                      <p className="text-gray-600 text-sm mt-1">
+                        Pay when you receive your order
+                      </p>
                     </div>
-                  </label>
-                ) : (
-                  <label
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${
-                    paymentMethod === "wallet"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  >
-                    <p className="font-medium">
-                      You Cant pay using Wallet, Your balance is {wallet}
-                    </p>
-                  </label>
-                )}
-
-                {/* Cash on Delivery */}
-
-                {finalTotal < 1000 ? (
-                  <label
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${
-                    paymentMethod === "cod"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  >
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="cod"
-                        checked={paymentMethod === "cod"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="mr-4"
-                      />
-                      <div>
-                        <p className="font-medium">Cash on Delivery</p>
-                        <p className="text-gray-600 text-sm mt-1">
-                          Pay when you receive your order
-                        </p>
-                      </div>
-                    </div>
-                  </label>
-                ) : (
-                  <label
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors
-                  ${
-                    paymentMethod === "wallet"
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-blue-300"
-                  }`}
-                  >
-                    <p className="font-medium">
-                      COD is Not Available for this order
-                    </p>
-                  </label>
-                )}
-              </div>
-            </div>
-
-            {/* Update Order Summary to reflect coupon discount */}
-            <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold mb-4 flex items-center">
-                <Wallet className="mr-2" size={20} />
-                Order Summary
-              </h2>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">₹{totalAmount}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Coupon Discount</span>
-                    <span>{discount}</span>
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">₹100</span>
-                </div>
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Total</span>
-                    <span className="font-semibold">
-                      ₹{finalTotal && finalTotal}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </label>
+              ) : (
+                <label
+                  className={`block p-4 border rounded-lg cursor-pointer transition-colors
+                ${
+                  paymentMethod === "wallet"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
+                }`}
+                >
+                  <p className="font-medium">
+                    COD is Not Available for this order
+                  </p>
+                </label>
+              )}
             </div>
-            {/* Place Order Button */}
-            <button
-              type="submit"
-              disabled={!selectedAddress || loading}
-              className="w-full bg-green-700 text-white py-3 rounded-lg font-medium
-              hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500
-              disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {loading ? "Processing..." : "Place Order"}
-            </button>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
-      <Footer />
+
+      {/* Right Column - Order Summary */}
+      <div className="sticky top-8 h-fit">
+        <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <Wallet className="mr-2" size={20} />
+            Order Summary
+          </h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="font-medium">₹{totalAmount}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Coupon Discount</span>
+                <span>{discount}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Shipping</span>
+              <span className="font-medium">₹100</span>
+            </div>
+            <div className="border-t pt-2 mt-2">
+              <div className="flex justify-between">
+                <span className="font-semibold">Total</span>
+                <span className="font-semibold">
+                  ₹{finalTotal && finalTotal}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Place Order Button */}
+        <button
+          type="submit"
+          disabled={!selectedAddress || loading}
+          className="w-full bg-green-700 text-white py-3 rounded-lg font-medium
+          hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500
+          disabled:bg-gray-400 disabled:cursor-not-allowed mt-8"
+        >
+          {loading ? "Processing..." : "Place Order"}
+        </button>
+      </div>
     </div>
+  </div>
+  <Footer />
+</div>
   );
 };
 

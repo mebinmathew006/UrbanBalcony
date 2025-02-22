@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import UserAddressEdit from "./UserAddressEdit";
 import UserAddressCreate from "./UserAddressCreate";
+import { toast } from "react-toastify";
 
 function UserAddress() {
   const user_id = useSelector((state) => state.userDetails.id);
@@ -19,8 +20,12 @@ function UserAddress() {
   const handleDelete = async (id) => {
     try {
       const response = await axiosInstance.patch(`userAddress/${id}`);
+      toast.success("Address Deleted Successfully",{position:'bottom-center'})
+
       fetchUserAddress();
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Unable to Delete the Address",{position:'bottom-center'})
+    }
   };
   const handleUserCreation = async (newAddress) => {
     const formData = new FormData();

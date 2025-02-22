@@ -3,6 +3,7 @@ import { Star, X, ChevronDown, ChevronUp } from "lucide-react";
 
 const Filters = ({ onFilterChange }) => {
   const [selectedSort, setSelectedSort] = useState("menu_order");
+  const [isOpen, setIsOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     sort: true,
     price: true,
@@ -30,21 +31,38 @@ const Filters = ({ onFilterChange }) => {
   );
 
   return (
-    <div className="w-64 bg-[#FCF4D2] rounded-lg p-6 h-screen">
+    <>
+    {/* Toggle Button for Mobile */}
+    <button
+      className="fixed top-25 left-4 z-50 p-2 bg-[#467927] text-white rounded-md lg:hidden"
+      onClick={() => setIsOpen(!isOpen)}
+    >
+      {isOpen ? "Close Filters" : "Open Filters"}
+    </button>
+
+    {/* Sidebar */}
+    <div
+      className={`fixed top-0 left-0 z-50 lg:z-auto w-64 bg-[#FCF4D2] rounded-lg p-6 h-screen transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Filters</h2>
-       
+        <button
+          className="lg:hidden bg-inherit text-red-800"
+          onClick={() => setIsOpen(false)}
+        >
+          ✖
+        </button>
       </div>
 
-      <FilterSection 
-        title="Sort By" 
-        expanded={expandedSections.sort}
-       
-      >
+      {/* Filter Section */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2">Sort By</label>
         <select
           value={selectedSort}
-          onChange={handleSortChange}
-          className="w-full p-2 border border-gray-300 rounded-md bg-white"
+          onChange={handleSortChange} // ✅ Keeps sidebar open on change
+          className="w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-[#467927]"
         >
           <option value="popularity">Most Popular</option>
           <option value="menu_order">Default sorting</option>
@@ -53,87 +71,17 @@ const Filters = ({ onFilterChange }) => {
           <option value="price">Price: Low to High</option>
           <option value="price-desc">Price: High to Low</option>
         </select>
-      </FilterSection>
-
-      {/* <FilterSection 
-        title="Price Range" 
-        expanded={expandedSections.price}
-        onToggle={() => toggleSection('price')}
-      >
-        <div className="px-2">
-          <input
-            type="range"
-            min="0"
-            max="1000"
-            value={priceRange[1]}
-            onChange={handlePriceChange}
-            className="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer"
-          />
-          <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>${priceRange[0]}</span>
-            <span>${priceRange[1]}</span>
-          </div>
-        </div>
-      </FilterSection> */}
-
-      {/* <FilterSection 
-        title="Categories" 
-        expanded={expandedSections.categories}
-        onToggle={() => toggleSection('categories')}
-      >
-        <div className="space-y-2">
-          {categories.map(category => (
-            <label key={category} className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(category)}
-                onChange={() => handleCategoryChange(category)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">{category}</span>
-            </label>
-          ))}
-        </div>
-      </FilterSection> */}
-
-      {/* <FilterSection 
-        title="Rating" 
-        expanded={expandedSections.rating}
-        onToggle={() => toggleSection('rating')}
-      >
-        <div className="space-y-2">
-          {[5, 4, 3, 2, 1].map(rating => (
-            <button
-              key={rating}
-              onClick={() => handleRatingChange(rating)}
-              className={`flex items-center w-full p-2 rounded-md transition-colors  bg-white ${
-                selectedRating === rating 
-                  ? 'bg-blue-50 text-blue-700' 
-                  : 'hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex">
-                {[...Array(rating)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={16}
-                    className="text-yellow-400 fill-current"
-                  />
-                ))}
-                {[...Array(5 - rating)].map((_, i) => (
-                  <Star
-                    key={i + rating}
-                    size={16}
-                    className="text-gray-300"
-                  />
-                ))}
-              </div>
-              <span className="ml-2 text-sm">& Up</span>
-            </button>
-          ))}
-        </div>
-      </FilterSection> */}
+      </div>
     </div>
+
+    {/* Overlay when sidebar is open on small screens */}
+    {isOpen && (
+      <div
+        className="fixed inset-0 bg-black opacity-50 lg:hidden"
+        onClick={() => setIsOpen(false)} // ✅ Close when clicking outside
+      ></div>
+    )}
+  </>
   );
 };
 

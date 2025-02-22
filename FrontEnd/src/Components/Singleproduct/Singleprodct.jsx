@@ -26,10 +26,12 @@ function Singleprodct() {
   const [quantity, setQuantity] = useState(1);
   const [reviewAndRating, setReviewAndRating] = useState();
   const [productVarientDetails, setProductVarientDetails] = useState("");
-  const rating = reviewAndRating
-    ? reviewAndRating.reduce((acc, obj) => acc + obj.rating) /
-      reviewAndRating.length
-    : 0;
+
+  const getAverageRating = (reviews) => {
+  if (!reviews) return 0;
+  const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+  return (total / reviews.length).toFixed(1); // Keeping one decimal place
+};
 
   useEffect(() => {
     fetchProductVarients();
@@ -42,6 +44,7 @@ function Singleprodct() {
       const response = await axiosInstance.get(
         `/reviewAndRating/${productDetails.id}`
       );
+      
       setReviewAndRating(response.data);
     } catch (error) {}
   }, [productDetails.id]);
@@ -241,7 +244,7 @@ function Singleprodct() {
           {/* Rating and Reviews */}
           <div className="flex items-center gap-4">
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              Rating: {rating}
+              Rating: {getAverageRating(reviewAndRating)}
             </span>
             <Link
               to={`/userReviews/${productDetails.id}`}

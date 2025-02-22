@@ -41,7 +41,7 @@ function UserWishlist() {
       formData.append("id", id);
       formData.append("user_id", user_id);
       await axiosInstance.post("/userCart", formData);
-      toast.error("Added to Cart!", {
+      toast.success("Added to Cart!", {
         position: "bottom-center", // Ensure this position is valid
       });
     } catch (error) {

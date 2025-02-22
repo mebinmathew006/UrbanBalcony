@@ -19,10 +19,10 @@ const UserAddressCreate = ({ isOpen, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6 relative">
+      <div className="bg-[#E8D7B4] rounded-lg w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 bg-white hover:text-black-700"
+          className="absolute right-4 top-4 bg-[#E8D7B4] hover:text-black-700"
         >
           <X size={20} />
         </button>
@@ -159,7 +159,7 @@ const UserAddressCreate = ({ isOpen, onClose, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 text-white bg-green-800 rounded-md hover:bg-green-900"
             >
               Create Address
             </button>

@@ -10,6 +10,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
   const [preview, setPreview] = useState(
     `${baseurl}${user.profile_picture}`
   );
+ 
 
 
   const handleFileChange = (e) => {

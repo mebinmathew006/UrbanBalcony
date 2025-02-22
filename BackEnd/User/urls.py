@@ -38,6 +38,7 @@ urlpatterns = [
     path('resetPassword',ResetPassword.as_view(),name='ResetPassword'),
     path('confirmOtp',ConfirmOtp.as_view(),name='confirmOtp'),
     path('reviewAndRating/<int:id>',ReviewAndRating.as_view(),name='ReviewAndRating'),
+    path('reviewAndRating',ReviewAndRating.as_view(),name='ReviewAndRatings'),
     path('userCart/<int:id>',UserCart.as_view(),name='userCart'),
     path('userCart',UserCart.as_view(),name='userCart'),
     path('userWishlist',UserWishlist.as_view(),name='userWishlist'),

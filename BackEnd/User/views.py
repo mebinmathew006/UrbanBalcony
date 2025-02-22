@@ -13,6 +13,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 import random
 import string
 from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min,Count
@@ -543,6 +544,18 @@ class ReviewAndRating(APIView):
             serializer=ReviewAndRatingSerializer(product,many=True)
             return Response(serializer.data,status=status.HTTP_200_OK)
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def post(self, request):
+        print(request.data)
+        serializer = ReviewAndRatingSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
 
         
     
@@ -583,18 +596,31 @@ class UserAddress(APIView):
     
     def patch(self, request, id):
         try:
-            orderitem = Address.objects.get(id=id)
-            
-            orderitem.delete()
-            data = {
-                'status': 'Deleted Successfully',
-            }
-            return Response(data, status=status.HTTP_200_OK)
-        except Address.DoesNotExist:
-            # Handle the case where the object does not exist
-            raise Http404("Address not found")
+            # Check if the address exists first
+            if not Address.objects.filter(id=id).exists():
+                raise Http404("Address not found")
+
+            # Check if there are pending or dispatched orders linked to the address
+            has_orders = Order.objects.filter(
+                address__id=id, 
+                order_items__status__in=['pending', 'Dispatched']
+            ).exists()
+
+            if has_orders:
+                return Response(
+                    {'status': 'Unable to delete the address'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Now safely delete the address
+            Address.objects.filter(id=id).delete()
+
+            return Response(
+                {'status': 'Deleted Successfully'},
+                status=status.HTTP_200_OK
+            )
+
         except Exception as e:
-            # Handle unexpected errors
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class ChangePaymentstatus(APIView):

@@ -34,34 +34,33 @@ function ConfirmOtp() {
 
   return (
     <div className="flex-1">
-       <Header/>
-    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom bg-[#FCF4D2]">
-      <div
-        className="card p-4 shadow"
-        style={{ width: "400px", borderRadius: "12px" ,backgroundColor: '#E8D7B4'
-        }}
-      >
-        <h2 className="text-center text-[#073801] mb-4 fw-bold">Confirm OTP</h2>
-        <form onSubmit={handleResetPassword}>
-          <div className="mb-3">
-            <input
-              type="number"
-              className="form-control input-custom"
-              placeholder="Enter OTP"
-              onChange={(event) => setOtp(event.target.value)}
-            />
-          </div>
-          
-          
-          <button type="submit" className="rounded text-white w-100 bg-[#467927]">
-            Confirm OTP
-          </button>
-        </form>
-      </div>
+  <Header />
+  <div className="flex min-h-screen items-center justify-center bg-[#FCF4D2] px-4 sm:px-6">
+    <div className="w-full max-w-md p-6 sm:p-8 bg-[#E8D7B4] shadow-lg rounded-xl">
+      <h2 className="text-center text-[#073801] text-xl sm:text-2xl font-bold mb-4">
+        Confirm OTP
+      </h2>
+      <form onSubmit={handleResetPassword} className="space-y-4">
+        <div>
+          <input
+            type="number"
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#467927]"
+            placeholder="Enter OTP"
+            onChange={(event) => setOtp(event.target.value)}
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-full py-3 text-white bg-[#467927] rounded-lg hover:bg-[#35661e] transition duration-300"
+        >
+          Confirm OTP
+        </button>
+      </form>
     </div>
-    <Footer/>
+  </div>
+  <Footer />
+</div>
 
-    </div>
   );
 }
 
