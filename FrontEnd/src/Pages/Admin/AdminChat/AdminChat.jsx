@@ -32,60 +32,69 @@ const AdminChat = () => {
   }, []); // Separate user fetching from WebSocket logic
 
   useEffect(() => {
-    fetchUsers();
     if (!selectedUser) return;
-
+  
     let ws = null;
     let reconnectTimeout = null;
-
+  
     const connectWebSocket = () => {
       const roomName = `user_${selectedUser.id}_admin`;
       ws = new WebSocket(
         `${import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET}/${roomName}/`
       );
-
+  
       ws.onopen = () => {
         console.log(`✅ Connected to chat with ${selectedUser.first_name}`);
         setSocket(ws);
         setIsConnecting(false);
         setConnectionError(null);
       };
-
+  
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("Received message:", data); // Debug log
+          console.log("Received message:", data);
+          
           if (data.type === "chat_history") {
             setMessages(data.messages);
           } else if (data.type === "chat_message") {
-            setMessages((prev) => [...prev, data]);
+            // Only append new messages
+            setMessages(prev => [...prev, {
+              sender__id: data.sender__id,
+              receiver__id: data.receiver__id,
+              sender__first_name: data.sender__first_name,
+              receiver__first_name: data.receiver__first_name,
+              message: data.message,
+              timestamp: data.timestamp
+            }]);
+          } else if (data.type === "error") {
+            toast.error(data.message);
           }
         } catch (error) {
           console.error("Error processing message:", error);
         }
       };
-
+  
       ws.onclose = (event) => {
         console.log("❌ WebSocket Disconnected:", event.code);
         setSocket(null);
-        // Attempt to reconnect if not a normal closure
         if (event.code !== 1000) {
           reconnectTimeout = setTimeout(connectWebSocket, 3000);
         }
       };
-
+  
       ws.onerror = (error) => {
         console.error("WebSocket Error:", error);
         setConnectionError("Failed to connect to chat");
         setIsConnecting(false);
       };
     };
-
+  
     connectWebSocket();
-
+  
     return () => {
       if (ws) {
-        ws.close(1000); // Normal closure
+        ws.close(1000);
       }
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
@@ -100,41 +109,31 @@ const AdminChat = () => {
       });
       return;
     }
-
+  
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       toast.error("Connection lost. Reconnecting...", {
         position: "bottom-center",
       });
       return;
     }
-
+  
     if (message.trim() === "") {
       return;
     }
-
+  
     try {
       const messageData = {
         sender: adminId,
         receiver: selectedUser.id,
         sender_name: "Admin",
         receiver_name: selectedUser.first_name,
-        message: message.trim(),
-        timestamp: new Date().toISOString(), // Add timestamp
+        message: message.trim()
       };
-
-      console.log("Sending message:", messageData); // Debug log
+  
+      console.log("Sending message:", messageData);
       socket.send(JSON.stringify(messageData));
-
-      // Optimistically update the UI
-      setMessages((prev) => [
-        ...prev,
-        {
-          ...messageData,
-          sender__first_name: "Admin",
-          receiver__first_name: selectedUser.first_name,
-        },
-      ]);
-
+  
+      // Remove optimistic update - wait for server confirmation
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -143,6 +142,7 @@ const AdminChat = () => {
       });
     }
   };
+  
 
   const filteredUsers = users.filter((user) =>
     user.first_name.toLowerCase().includes(searchQuery.toLowerCase())
