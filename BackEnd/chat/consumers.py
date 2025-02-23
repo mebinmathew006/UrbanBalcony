@@ -62,19 +62,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
         receiver_name = data['receiver_name']
         message = data['message']
 
-        print(f"Sender ID: {sender_id}, Receiver ID: {receiver_id}")  # Debugging line
-
         try:
             sender = await sync_to_async(CustomUser.objects.get)(id=sender_id)
-        except CustomUser.DoesNotExist:
-            print(f"Sender with ID {sender_id} does not exist.")
-            return
-
-        try:
             receiver = await sync_to_async(CustomUser.objects.get)(id=receiver_id)
-        except CustomUser.DoesNotExist:
-            print(f"Receiver with ID {receiver_id} does not exist.")  # Debugging output
-            return
+
+            # Save the message to database
+            chat_message = await sync_to_async(ChatMessage.objects.create)(
+                sender=sender,
+                receiver=receiver,
+                message=message
+            )
+
+            # Broadcast the message to the group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'sender__id': sender.id,
+                    'receiver__id': receiver.id,
+                    'sender__first_name': sender.first_name,
+                    'receiver__first_name': receiver.first_name,
+                }
+            )
+
+        except CustomUser.DoesNotExist as e:
+            print(f"User lookup error: {e}")
+        except Exception as e:
+            print(f"Error in receive: {e}")
 
 
 

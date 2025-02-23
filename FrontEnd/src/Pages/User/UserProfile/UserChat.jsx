@@ -17,95 +17,92 @@ const UserChat = () => {
     let reconnectTimeout = null;
 
     const connectWebSocket = () => {
-        console.log("🔄 Connecting to WebSocket...");
-        const ws = new WebSocket(wsUrl);
+      console.log("🔄 Connecting to WebSocket...");
+      const ws = new WebSocket(wsUrl);
 
-        ws.onopen = () => {
-            console.log(`✅ Connected to chat with ${roomName}`);
-            // Clear any pending reconnection attempts
-            if (reconnectTimeout) {
-                clearTimeout(reconnectTimeout);
-                reconnectTimeout = null;
-            }
-        };
+      ws.onopen = () => {
+        console.log(`✅ Connected to chat with ${roomName}`);
+        // Clear any pending reconnection attempts
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+      };
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === "chat_history") {
-                setMessages(data.messages);
-            } else if (data.type === "chat_message") {
-                setMessages((prev) => [
-                    ...prev,
-                    { ...data, sender__first_name: "admin" },
-                ]);
-            }
-        };
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "chat_history") {
+          setMessages(data.messages);
+        } else if (data.type === "chat_message") {
+          setMessages((prev) => [
+            ...prev,
+            { ...data, sender__first_name: "admin" },
+          ]);
+        }
+      };
 
-        ws.onclose = (event) => {
-            console.log("❌ WebSocket Disconnected");
-            // Clean up existing WebSocket reference
-            if (socketRef.current === ws) {
-                socketRef.current = null;
-            }
-            // Attempt to reconnect only if closed abnormally
-            if (event.code !== 1000) { // 1000 = Normal closure
-                reconnectTimeout = setTimeout(() => {
-                    console.log("🔄 Attempting to reconnect...");
-                    connectWebSocket();
-                }, 7000);
-            }
-        };
+      ws.onclose = (event) => {
+        console.log("❌ WebSocket Disconnected");
+        // Clean up existing WebSocket reference
+        if (socketRef.current === ws) {
+          socketRef.current = null;
+        }
+        // Attempt to reconnect only if closed abnormally
+        if (event.code !== 1000) {
+          // 1000 = Normal closure
+          reconnectTimeout = setTimeout(() => {
+            console.log("🔄 Attempting to reconnect...");
+            connectWebSocket();
+          }, 7000);
+        }
+      };
 
-        ws.onerror = (error) => {
-            console.error("WebSocket Error:", error);
-        };
+      ws.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+      };
 
-        socketRef.current = ws;
+      socketRef.current = ws;
     };
 
     connectWebSocket();
 
     return () => {
-        // Cleanup: Close WebSocket and clear timeout
-        if (socketRef.current) {
-            socketRef.current.close(1000); // Close with normal status code
-            socketRef.current = null;
-        }
-        if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
-        }
+      // Cleanup: Close WebSocket and clear timeout
+      if (socketRef.current) {
+        socketRef.current.close(1000); // Close with normal status code
+        socketRef.current = null;
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
     };
-}, [userId]);
+  }, [userId]);
 
   const sendMessage = () => {
-    if (!socketRef.current) {
-      // console.error("WebSocket reference is null.");
-      toast.error("Something Went Wrong. Please try again", {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      toast.error("Connection lost. Reconnecting...", {
         position: "bottom-center",
       });
-      return;
-    }
-
-    if (socketRef.current.readyState !== WebSocket.OPEN) {
-      toast.error("Something Went Wrong. Please try again", {
-        position: "bottom-center",
-      });
-
-      // toast.error("WebSocket is not ready yet.");
+      connectWebSocket(); // Try to reconnect
       return;
     }
 
     if (message.trim() !== "") {
-      socketRef.current.send(
-        JSON.stringify({
+      try {
+        const messageData = {
           sender: userId,
-          receiver: 12,
+          receiver: 1, // Make sure this matches your admin user ID
           sender_name: userName,
           receiver_name: "Admin",
-          message: message,
-        })
-      );
-      setMessage(""); // ✅ Clear input after sending
+          message: message.trim(),
+        };
+        console.log("Sending message:", messageData); // Debug log
+        socketRef.current.send(JSON.stringify(messageData));
+        setMessage("");
+      } catch (error) {
+        console.error("Error sending message:", error);
+        toast.error("Failed to send message. Please try again.");
+      }
     }
   };
 
