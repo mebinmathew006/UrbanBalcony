@@ -12,7 +12,7 @@ const AdminChat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const adminId = useSelector((state) => state.userDetails.id);
   const [users, setUsers] = useState([]);
-  onst[(isConnecting, setIsConnecting)] = useState(false);
+  const[isConnecting, setIsConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
 
   const socketRef = useRef(null); // Add a ref for persistent socket reference
