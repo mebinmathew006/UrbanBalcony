@@ -65,32 +65,43 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             print(f"Processing message: {data}")  # Debug log
 
-            # Get the users
-            sender = await sync_to_async(CustomUser.objects.get)(id=sender_id)
-            receiver = await sync_to_async(CustomUser.objects.get)(id=receiver_id)
+            # Wrap database operations in sync_to_async
+            @sync_to_async
+            def save_message():
+                try:
+                    sender = CustomUser.objects.get(id=sender_id)
+                    receiver = CustomUser.objects.get(id=receiver_id)
+                    chat_message = ChatMessage.objects.create(
+                        sender=sender,
+                        receiver=receiver,
+                        message=message
+                    )
+                    return chat_message
+                except Exception as e:
+                    print(f"Database operation error: {e}")
+                    return None
 
-            # Save the message
-            chat_message = await sync_to_async(ChatMessage.objects.create)(
-                sender=sender,
-                receiver=receiver,
-                message=message
-            )
+            # Save message and get the result
+            chat_message = await save_message()
             
-            print(f"Message saved with ID: {chat_message.id}")  # Debug log
+            if chat_message:
+                print(f"Message saved with ID: {chat_message.id}")  # Debug log
 
-            # Broadcast the message
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'chat_message',
-                    'message': message,
-                    'sender__id': sender.id,
-                    'receiver__id': receiver.id,
-                    'sender__first_name': sender_name,
-                    'receiver__first_name': receiver_name,
-                    'timestamp': chat_message.timestamp.isoformat()
-                }
-            )
+                # Broadcast the message
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat_message',
+                        'message': message,
+                        'sender__id': sender_id,
+                        'receiver__id': receiver_id,
+                        'sender__first_name': sender_name,
+                        'receiver__first_name': receiver_name,
+                        'timestamp': chat_message.timestamp.isoformat()
+                    }
+                )
+            else:
+                raise Exception("Failed to save message")
 
         except CustomUser.DoesNotExist as e:
             print(f"User lookup error: {e}")
