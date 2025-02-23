@@ -12,6 +12,8 @@ const AdminChat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const adminId = useSelector((state) => state.userDetails.id);
   const [users, setUsers] = useState([]);
+  onst[(isConnecting, setIsConnecting)] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
 
   const socketRef = useRef(null); // Add a ref for persistent socket reference
   let reconnectTimeout = null;
@@ -30,28 +32,29 @@ const AdminChat = () => {
   }, []); // Separate user fetching from WebSocket logic
 
   useEffect(() => {
+    fetchUsers();
     if (!selectedUser) return;
+
+    let ws = null;
+    let reconnectTimeout = null;
 
     const connectWebSocket = () => {
       const roomName = `user_${selectedUser.id}_admin`;
-      const wsUrl = `${
-        import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET
-      }/${roomName}/`;
-      console.log("Connecting to:", wsUrl);
-
-      const ws = new WebSocket(wsUrl);
+      ws = new WebSocket(
+        `${import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET}/${roomName}/`
+      );
 
       ws.onopen = () => {
         console.log(`✅ Connected to chat with ${selectedUser.first_name}`);
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-          reconnectTimeout = null;
-        }
+        setSocket(ws);
+        setIsConnecting(false);
+        setConnectionError(null);
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log("Received message:", data); // Debug log
           if (data.type === "chat_history") {
             setMessages(data.messages);
           } else if (data.type === "chat_message") {
@@ -63,52 +66,51 @@ const AdminChat = () => {
       };
 
       ws.onclose = (event) => {
-        console.log("❌ WebSocket Disconnected");
-        if (socketRef.current === ws) {
-          socketRef.current = null;
-          setSocket(null);
-        }
-
+        console.log("❌ WebSocket Disconnected:", event.code);
+        setSocket(null);
+        // Attempt to reconnect if not a normal closure
         if (event.code !== 1000) {
-          // If not normal closure
-          reconnectTimeout = setTimeout(() => {
-            console.log("🔄 Attempting to reconnect...");
-            connectWebSocket();
-          }, 3000);
+          reconnectTimeout = setTimeout(connectWebSocket, 3000);
         }
       };
 
       ws.onerror = (error) => {
         console.error("WebSocket Error:", error);
+        setConnectionError("Failed to connect to chat");
+        setIsConnecting(false);
       };
-
-      socketRef.current = ws;
-      setSocket(ws);
     };
 
     connectWebSocket();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close(1000); // Normal closure
-        socketRef.current = null;
-        setSocket(null);
+      if (ws) {
+        ws.close(1000); // Normal closure
       }
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [selectedUser]); // Only reconnect when selected user changes
+  }, [selectedUser]);
 
-  const sendMessage = () => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      toast.error("Connection lost. Please try again.", {
+  const sendMessage = async () => {
+    if (!selectedUser) {
+      toast.error("Please select a user to chat with", {
         position: "bottom-center",
       });
       return;
     }
 
-    if (message.trim() === "") return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      toast.error("Connection lost. Reconnecting...", {
+        position: "bottom-center",
+      });
+      return;
+    }
+
+    if (message.trim() === "") {
+      return;
+    }
 
     try {
       const messageData = {
@@ -117,13 +119,26 @@ const AdminChat = () => {
         sender_name: "Admin",
         receiver_name: selectedUser.first_name,
         message: message.trim(),
+        timestamp: new Date().toISOString(), // Add timestamp
       };
 
-      socketRef.current.send(JSON.stringify(messageData));
+      console.log("Sending message:", messageData); // Debug log
+      socket.send(JSON.stringify(messageData));
+
+      // Optimistically update the UI
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...messageData,
+          sender__first_name: "Admin",
+          receiver__first_name: selectedUser.first_name,
+        },
+      ]);
+
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message. Please try again.", {
+      toast.error("Failed to send message. Please try again", {
         position: "bottom-center",
       });
     }
