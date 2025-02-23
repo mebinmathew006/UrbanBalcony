@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Send, User, MessageSquare, Search } from "lucide-react";
 import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
@@ -13,66 +13,125 @@ const AdminChat = () => {
   const adminId = useSelector((state) => state.userDetails.id);
   const [users, setUsers] = useState([]);
 
+  const socketRef = useRef(null); // Add a ref for persistent socket reference
+  let reconnectTimeout = null;
+
   async function fetchUsers() {
     try {
       const response = await adminaxiosInstance.get("/chatUserDetails");
-      console.log(response.data);
-
       setUsers(response.data);
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Failed to fetch users");
+    }
   }
 
   useEffect(() => {
     fetchUsers();
+  }, []); // Separate user fetching from WebSocket logic
+
+  useEffect(() => {
     if (!selectedUser) return;
 
-    const roomName = `user_${selectedUser.id}_admin`;
-    const ws = new WebSocket(`${import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET}/${roomName}/`);
+    const connectWebSocket = () => {
+      const roomName = `user_${selectedUser.id}_admin`;
+      const wsUrl = `${
+        import.meta.env.VITE_BASE_URL_FOR_WEBSOCKET
+      }/${roomName}/`;
+      console.log("Connecting to:", wsUrl);
 
-    ws.onopen = () =>
-      console.log(`Connected to chat with ${selectedUser.name}`);
+      const ws = new WebSocket(wsUrl);
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "chat_history") {
-        setMessages(data.messages); // Set previous messages
-      } else if (data.type === "chat_message") {
-        setMessages((prev) => [...prev, data]); // Append new message
-      }
+      ws.onopen = () => {
+        console.log(`✅ Connected to chat with ${selectedUser.first_name}`);
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "chat_history") {
+            setMessages(data.messages);
+          } else if (data.type === "chat_message") {
+            setMessages((prev) => [...prev, data]);
+          }
+        } catch (error) {
+          console.error("Error processing message:", error);
+        }
+      };
+
+      ws.onclose = (event) => {
+        console.log("❌ WebSocket Disconnected");
+        if (socketRef.current === ws) {
+          socketRef.current = null;
+          setSocket(null);
+        }
+
+        if (event.code !== 1000) {
+          // If not normal closure
+          reconnectTimeout = setTimeout(() => {
+            console.log("🔄 Attempting to reconnect...");
+            connectWebSocket();
+          }, 3000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+      };
+
+      socketRef.current = ws;
+      setSocket(ws);
     };
 
-    ws.onclose = () => console.log("WebSocket Disconnected");
-    setSocket(ws);
+    connectWebSocket();
 
-    return () => ws.close();
-  }, [selectedUser]);
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close(1000); // Normal closure
+        socketRef.current = null;
+        setSocket(null);
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [selectedUser]); // Only reconnect when selected user changes
+
+  const sendMessage = () => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      toast.error("Connection lost. Please try again.", {
+        position: "bottom-center",
+      });
+      return;
+    }
+
+    if (message.trim() === "") return;
+
+    try {
+      const messageData = {
+        sender: adminId,
+        receiver: selectedUser.id,
+        sender_name: "Admin",
+        receiver_name: selectedUser.first_name,
+        message: message.trim(),
+      };
+
+      socketRef.current.send(JSON.stringify(messageData));
+      setMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.", {
+        position: "bottom-center",
+      });
+    }
+  };
 
   const filteredUsers = users.filter((user) =>
     user.first_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const sendMessage = () => {
-    if (
-      socket &&
-      socket.readyState === WebSocket.OPEN &&
-      message.trim() !== ""
-    ) {
-      socket.send(
-        JSON.stringify({
-          sender: adminId,
-          receiver: selectedUser.id,
-          sender_name: "Admin",
-          receiver_name: selectedUser.first_name,
-          message: message,
-        })
-      );
-      setMessage("");
-    } else {
-            toast.error("Something Went Wrong. Please try again", {position:"bottom-center"});
-      
-      // console.error("WebSocket is not ready yet.");
-    }
-  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -80,6 +139,7 @@ const AdminChat = () => {
     }
   };
 
+  // Rest of your component code...
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -144,14 +204,15 @@ const AdminChat = () => {
                 </div>
               </div>
 
-              
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                 {messages.map((msg, index) => (
                   <div
                     key={index}
                     className={`flex flex-col ${
-                      msg.sender__first_name === "Admin" ? "items-end" : "items-start"
+                      msg.sender__first_name === "Admin"
+                        ? "items-end"
+                        : "items-start"
                     }`}
                   >
                     {/* Sender Name */}
