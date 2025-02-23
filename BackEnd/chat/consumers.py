@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     {
                         'type': 'chat_message',
                         'message': data['message'],
-                        'sender__id': data['sender'],
+                        'sender__id': data['sender'],       
                         'receiver__id': data['receiver'],
                         'sender__first_name': data['sender_name'],
                         'receiver__first_name': data['receiver_name'],
