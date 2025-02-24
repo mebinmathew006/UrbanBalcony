@@ -76,15 +76,15 @@ function OrderManagement() {
                   </div>
 
                   {/* Shipping Address */}
-                  <div className="mt-2 text-sm text-gray-600">
-                    {/* <p>Shipping to: {order.address_details.address_type}</p> */}
+                  {/* <div className="mt-2 text-sm text-gray-600">
+                    <p>Shipping to: {order.address_details.address_type}</p>
                     <p>
                       {order.address_details.land_mark}, {order.address_details.city}
                     </p>
                     <p>
                       {order.address_details.state} - {order.address_details.pin_code}
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Order Items Table */}
