@@ -77,7 +77,7 @@ function OrderManagement() {
 
                   {/* Shipping Address */}
                   <div className="mt-2 text-sm text-gray-600">
-                    <p>Shipping to: {order.address_details.address_type}</p>
+                    {/* <p>Shipping to: {order.address_details.address_type}</p> */}
                     <p>
                       {order.address_details.land_mark}, {order.address_details.city}
                     </p>

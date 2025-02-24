@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function UserCart() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ function UserCart() {
       // API call to increase quantity
       await axiosInstance.patch(`userCart/${itemId}`, { action: "increase" });
       fetchUserCart(); // Refresh the cart
+      
     } catch (error) {
       console.error("Error increasing quantity:", error);
     }
@@ -44,6 +46,7 @@ function UserCart() {
     try {
       const response = await axiosInstance.delete(`userCart/${id}`);
       fetchUserCart();
+      toast.success('Deleted Sucessfully',{position:'bottom-center'})
     } catch (error) {}
   };
 

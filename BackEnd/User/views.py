@@ -753,13 +753,20 @@ class UserCart(APIView):
         try:
             # Get the cart item
             cart_item = CartItem.objects.get(id=id)
+            product_variant = cart_item.product_variant  # Assuming `CartItem` has a ForeignKey to `ProductVariant`
 
             # Get the action from the request
-            action =request.data.get('action')
+            action = request.data.get('action')
+
             if action == 'increase':
-                cart_item.quantity += 1
-            elif action == 'decrease' and int(cart_item.quantity) > 1:
+                if cart_item.quantity < product_variant.stock:  # Check if stock is available
+                    cart_item.quantity += 1
+                else:
+                    return Response({"error": "Not enough stock available"}, status=400)
+
+            elif action == 'decrease' and cart_item.quantity > 1:
                 cart_item.quantity -= 1
+
             else:
                 return Response({"error": "Invalid action or quantity cannot be less than 1"}, status=400)
 
@@ -770,9 +777,10 @@ class UserCart(APIView):
 
         except ObjectDoesNotExist:
             return Response({"error": "Cart item not found"}, status=404)
-        
+
         except Exception as e:
             return Response({"error": f"An error occurred: {str(e)}"}, status=500)
+
             
 
 class UserPlaceOrder(APIView):
