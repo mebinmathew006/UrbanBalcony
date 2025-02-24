@@ -76,6 +76,7 @@ function OrderManagement() {
                   </div>
 
                   {/* Shipping Address */}
+                  {order.address_details &&
                   <div className="mt-2 text-sm text-gray-600">
                     <p>Shipping to: {order.address_details.address_type}</p>
                     <p>
@@ -85,6 +86,7 @@ function OrderManagement() {
                       {order.address_details.state} - {order.address_details.pin_code}
                     </p>
                   </div>
+                  }
                 </div>
 
                 {/* Order Items Table */}
