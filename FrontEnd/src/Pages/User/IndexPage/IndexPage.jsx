@@ -91,7 +91,7 @@ function IndexPage() {
                   About Us
                 </h3>
                 <p className="text-gray-600 mb-3">
-                  Founded in 2024, Spice Lush is dedicated to revolutionizing
+                  Founded in 2025, Spice Lush is dedicated to revolutionizing
                   the spice industry by delivering premium-quality, sustainably
                   sourced spices that inspire culinary creativity. Our team of
                   seasoned experts brings decades of experience in agriculture,
@@ -158,16 +158,16 @@ function IndexPage() {
                 Stay Connected
               </h3>
               <div className="flex justify-center space-x-4 mb-6">
-                <a href="https://www.facebook.com/profile.php?id=61573502279442" className="p-2 bg-blue-500 text-white rounded-full">
+                <a href="https://www.facebook.com/profile.php?id=61573502279442" target="blank" className="p-2 bg-blue-500 text-white rounded-full">
                   Facebook
                 </a>
-                <a href="https://x.com/spice_lush" className="p-2 bg-blue-400 text-white rounded-full">
+                <a href="https://x.com/spice_lush" target="blank" className="p-2 bg-blue-400 text-white rounded-full">
                   Twitter
                 </a>
-                <a href="https://www.instagram.com/spice._.lush/" className="p-2 bg-pink-500 text-white rounded-full">
+                <a href="https://www.instagram.com/spice._.lush/" target="blank" className="p-2 bg-pink-500 text-white rounded-full">
                   Instagram
                 </a>
-                <a href="www.linkedin.com/in/spice-lush-565169353" className="p-2 bg-blue-700 text-white rounded-full">
+                <a href="www.linkedin.com/in/spice-lush-565169353" target="blank" className="p-2 bg-blue-700 text-white rounded-full">
                   LinkedIn
                 </a>
               </div>
