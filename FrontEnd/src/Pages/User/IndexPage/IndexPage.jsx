@@ -7,7 +7,7 @@ import Footer from "../../../Components/Footer/Footer";
 import ProductView from "../../../Components/ProductView/ProductView";
 import Filters from "../../../Components/Filters/Filters";
 import publicaxiosconfig from "../../../Publicaxiosconfig";
-import Banner from "../../../components/Banner/Banner";
+import Banner from "../../../Components/Banner/Banner";
 
 function IndexPage() {
   const location = useLocation();

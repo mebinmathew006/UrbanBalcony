@@ -7,7 +7,7 @@ import ProductView from "../../../Components/ProductView/ProductView";
 import Filters from "../../../Components/Filters/Filters";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
-import Banner from "../../../components/Banner/Banner";
+import Banner from "../../../Components/Banner/Banner";
 
 function HomePage() {
   const location = useLocation();
