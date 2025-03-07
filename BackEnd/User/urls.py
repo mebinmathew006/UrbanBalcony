@@ -53,7 +53,7 @@ urlpatterns = [
     path('getCategories', GetCategories.as_view(), name='getCategories'),
     path('changePaymentstatus', ChangePaymentstatus.as_view(), name='changePaymentstatus'),
     path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
-    path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
+    # path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
     path('userWallet/<int:id>', UserWallet.as_view(), name='userWallet'),
     
 ]

@@ -7,6 +7,7 @@ import ProductView from "../../../Components/ProductView/ProductView";
 import Filters from "../../../Components/Filters/Filters";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { debounce } from "lodash";
+import Banner from "../../../components/Banner/Banner";
 
 function HomePage() {
   const location = useLocation();
@@ -79,7 +80,9 @@ function HomePage() {
   return (
     <div>
       <Header page="home" handleSearch={handleSearch} searchValue={searchItem} />
-      <div className="flex  bg-[#FCF4D2]">
+      <Banner/>
+
+      <div className="flex ">
         <Filters onFilterChange={handleFilterChange} />
         <div className="flex-1">
           <ProductView data={productsData?.results || []} category="Products" />
