@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import { toast } from "react-toastify";
 const UserOrderDetails = () => {
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
-  const keyId = import.meta.env.RAZORPAY_KEY_ID;
+  const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState([]);

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
     initialState: {
       id: "",
       first_name: "",
-      last_name: "",
+      last_name: "",  
       is_admin: "",
       profile_picture: "",
       access_token:'',

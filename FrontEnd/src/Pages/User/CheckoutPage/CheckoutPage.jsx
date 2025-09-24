@@ -11,7 +11,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const [finalTotal, setFinalTotal] = useState();
   const location = useLocation();
-  const keyId = import.meta.env.RAZORPAY_KEY_ID;
+  const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
   const { quantity, productId, type, totalAmount } = location.state || {};
   const [userAddress, setUserAddress] = useState([]);
   const user_id = useSelector((state) => state.userDetails.id);

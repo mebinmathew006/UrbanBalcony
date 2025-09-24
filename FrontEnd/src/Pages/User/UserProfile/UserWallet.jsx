@@ -7,7 +7,7 @@ function UserWallet() {
   const user_id = useSelector((state) => state.userDetails.id);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(false);
-  const keyId = import.meta.env.RAZORPAY_KEY_ID;
+  const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   useEffect(() => {
     fetchWallet();

@@ -101,7 +101,6 @@ function Login() {
       const userDetails = response.data.user;
       const userEmail = response.data.user.email;
 
-      console.log(userDetails);
 
       if (response.data.user.is_verified) {
         dispatch(setUserDetails(userDetails));
