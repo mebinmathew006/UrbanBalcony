@@ -275,9 +275,9 @@ class WishlistProduct(models.Model):
     product_variant = models.ForeignKey('ProductVariant', on_delete=models.CASCADE, related_name='wishlist_entries')
 
 class Offer(models.Model):
-    id = models.AutoField(primary_key=True)  # Automatically increments ID
+    id = models.AutoField(primary_key=True)  
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="offers")
-    discount_percentage = models.PositiveIntegerField()  # Restricts to non-negative values
+    discount_percentage = models.PositiveIntegerField()  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active=models.BooleanField(default=True)
