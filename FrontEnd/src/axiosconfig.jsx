@@ -8,7 +8,7 @@ const baseurl=import.meta.env.VITE_BASE_URL
 
 const axiosInstance = axios.create({
   baseURL: `${baseurl}/user/`,
-  withCredentials: true, // Ensures cookies are sent with requests
+  
 });
 
 // Attach the access token from Redux to the headers of each request
@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
       try {
         // Attempt to refresh the access token using the refresh token stored in an HttpOnly cookie
         const response = await axios.post(`${baseurl}/user/refresh_token`, {}, {
-          withCredentials: true, // Send cookies with the request
+          withCredentials: true, 
         });
         const userDetails=response.data.user
         store.dispatch(setUserDetails(userDetails));

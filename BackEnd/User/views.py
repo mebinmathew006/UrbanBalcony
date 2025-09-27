@@ -5,7 +5,6 @@ from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,Produ
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError,InvalidToken
 from rest_framework import status
-from django.core.files.storage import default_storage
 from .serializer import LoginSerializer,CustomUserSerializer,ReviewAndRatingSerializer,AddressSerializer,OrderSerializer,CartSerializer,PaymentsSerializer,TransactionSerializer,OrderItemSerializer,WishlistSerilaizer
 from AdminPanel.serializer import ProductVariantSerializer
 from rest_framework.exceptions import ErrorDetail
@@ -24,7 +23,6 @@ from jwt import decode, ExpiredSignatureError, InvalidTokenError,DecodeError
 from jwt import encode as jwt_encode
 from datetime import datetime, timedelta
 from rest_framework.permissions import IsAuthenticated,AllowAny
-from rest_framework_simplejwt.authentication import JWTAuthentication
 import random
 import string
 from django.core.mail import send_mail
@@ -32,11 +30,13 @@ from django.core.exceptions import ObjectDoesNotExist
 import razorpay
 from rest_framework.pagination import PageNumberPagination
 import logging
-logger = logging.getLogger(__name__)
 from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
 from decimal import Decimal
-# Create your views here.
+
+logger = logging.getLogger(__name__)
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def getUserDetailsAgainWhenRefreshing(request):
@@ -71,7 +71,7 @@ def getUserDetailsAgainWhenRefreshing(request):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'is_admin': user.is_superuser,
-                'is_verified': user.is_staff,#uses this field to know whther the user is verified or not
+                'is_verified': user.is_staff,
                 'profile_picture': user.profile_picture.url if user.profile_picture else None
             }
         }, status=status.HTTP_200_OK)
@@ -79,11 +79,11 @@ def getUserDetailsAgainWhenRefreshing(request):
         # Keep refresh token in cookie
         response.set_cookie(
             key='refresh_token',
-            value=refresh_token,  # Keep existing refresh token
+            value=refresh_token, 
             httponly=True,
             secure=False,
             samesite=None,
-            max_age=60 * 60 * 24   # 1 days
+            max_age=60 * 60 * 24 
         )
         
         return response
@@ -285,7 +285,6 @@ class UserLogin(APIView):
                         samesite=None,  # Restrict cross-site cookie usage
                         max_age=60 * 60 * 24  # 7 days for refresh token
                     )
-                    print('sssssssssssssssssssssssssssssssssssssssss',response.headers)
                     return response
                 else:
                     return Response(
@@ -327,10 +326,10 @@ class UserLogin(APIView):
     
 class UserSignup(APIView):
     def post(self, request):
-        serializer = CustomUserSerializer(data=request.data)  # Correct instantiation
+        serializer = CustomUserSerializer(data=request.data)  
 
         if serializer.is_valid():
-            # Check for email uniqueness
+            
             if CustomUser.objects.filter(email=serializer.validated_data['email']).exists():
                 return Response({'error': 'Email is already in use.'}, status=status.HTTP_400_BAD_REQUEST)
             try:

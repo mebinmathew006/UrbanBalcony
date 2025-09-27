@@ -19,14 +19,14 @@ function HomePage() {
   // Handle Search
   const handleSearch = debounce((searchedString) => {
     setSearchItem(searchedString);
-    category_id=''
-    setFilterType('')
+    category_id = "";
+    setFilterType("");
   }, 500);
 
   // Handle filter change
   const handleFilterChange = (changedFilterDetails) => {
-    setSearchItem('')
-    category_id=''
+    setSearchItem("");
+    category_id = "";
     setFilterType(changedFilterDetails.type);
   };
   // Fetch products with React Query
@@ -46,16 +46,15 @@ function HomePage() {
         url = `/filterBasedProductData/${fiterType}?page=${currentPage}`;
       } else if (searchItem) {
         url = `/searchBasedProductData/${searchItem}?page=${currentPage}`;
-        console.log(searchItem,'is serched',url);
-        
+        console.log(searchItem, "is serched", url);
       } else {
-        url =`/?page=${currentPage}`;
+        url = `/?page=${currentPage}`;
       }
       const response = await axiosInstance.get(url);
-      
+
       return response.data;
     },
-    keepPreviousData: true, // Keep previous page's data while fetching next page
+    keepPreviousData: true, 
   });
 
   // Handle page change
@@ -79,8 +78,12 @@ function HomePage() {
 
   return (
     <div>
-      <Header page="home" handleSearch={handleSearch} searchValue={searchItem} />
-      <Banner/>
+      <Header
+        page="home"
+        handleSearch={handleSearch}
+        searchValue={searchItem}
+      />
+      <Banner />
 
       <div className="flex ">
         <Filters onFilterChange={handleFilterChange} />

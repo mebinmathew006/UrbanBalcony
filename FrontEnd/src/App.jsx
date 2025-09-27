@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import {  Route, Routes } from 'react-router-dom'
 import IndexPage from '../src/Pages/User/IndexPage/IndexPage'
 import Login from './Pages/User/Login/Login'
 import SignupPage from './Pages/User/SignupPage/SignupPage'
@@ -38,7 +38,6 @@ import SalesReport from './Pages/Admin/SalesReport/SalesReport'
 import UserWallet from './Pages/User/UserProfile/UserWallet'
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import history from './History'
-import publicaxiosconfig from './Publicaxiosconfig'
 import ProtectedRoute from './ProtectedRoute'
 import PublicRoute from './PublicRoute'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -57,27 +56,9 @@ const queryClient = new QueryClient({
   },
 })
 
-const fetchUserDetails = async (dispatch,navigate) => {
-  try {
-      const response = await publicaxiosconfig.get("/getUserDetailsForAuthentication", {
-          withCredentials: true, // Ensure cookies are included in the request
-      });
-      dispatch(setUserDetails(response.data.user));
-  } catch (error) {
-      dispatch(setUserDetails(null)); 
-      navigate('/login')
-  }
-};
 
-
-// Separate component for the routes
 function AppRoutes() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchUserDetails(dispatch, navigate);
-  }, [dispatch]);
+  
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -123,7 +104,6 @@ function AppRoutes() {
   );
 }
 
-// Main App component
 function App() {
   return (
     <HistoryRouter history={history}>
