@@ -30,7 +30,7 @@ function ProductDetails() {
       <Header page='home'/>
       <Breadcrumbs/>
       <Singleprodct/>
-      <ProductView data={relatedProducts || []} category="Related Products" />
+      <ProductView data={relatedProducts.results || []} category="Related Products" />
       <Footer/>
     </div>
   )

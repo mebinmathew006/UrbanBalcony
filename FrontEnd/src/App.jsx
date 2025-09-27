@@ -22,9 +22,6 @@ import ProductVarientEdit from './Pages/Admin/ProductVarientManage/ProductVarien
 import ProductVarientAdd from './Pages/Admin/ProductVarientManage/ProductVarientAdd'
 import Review from './Pages/User/Review/Review'
 import UserProfile from './Pages/User/UserProfile/UserProfile'
-import { useEffect } from 'react'
-import { setUserDetails } from './store/UserDetailsSlice'
-import { useDispatch } from 'react-redux'
 import CheckoutPage from './Pages/User/CheckoutPage/CheckoutPage'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

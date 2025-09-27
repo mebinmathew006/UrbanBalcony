@@ -13,10 +13,9 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
 import random
 import string
-from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min,Count
+from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -93,58 +92,108 @@ def getUserDetailsAgainWhenRefreshing(request):
         return Response({'error': 'Invalid or expired refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-
-
 class ProductPagination(PageNumberPagination):
-    page_size = 12  # Number of items per page
+    page_size = 12 
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+
 class UserHome(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
 
     def get(self, request):
-        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(
-            is_active=True,
-            category__is_active=True
-        ).order_by('id') 
-        
-        # Apply pagination
+        user = request.user
+
+        products = (
+            Product.objects.select_related('category')
+            .annotate(
+                starting_price=Min('variants__variant_price'),
+                total_stock=Sum('variants__stock'),
+                in_wishlist=Exists(
+                    WishlistProduct.objects.filter(
+                        wishlist__user_id=user.id,
+                        product_variant__product_id=OuterRef('id')
+                    )
+                )
+            )
+            .filter(
+                is_active=True,
+                category__is_active=True
+            )
+            .order_by('id')
+        )
+
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
-        
+
         return paginator.get_paginated_response(paginated_products)
+    
     
 class CategoryBasedProductData(APIView):
     permission_classes=[AllowAny]
     pagination_class = ProductPagination
+    
     def get(self, request,id):
-        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True,category__id=id)
+        user=request.user
+        products = Product.objects.select_related('category').annotate(
+        starting_price=Min('variants__variant_price'),
+        total_stock=Sum('variants__stock'),
+        in_wishlist=Exists(
+            Wishlist.objects.filter(
+                user_id=user.id,
+                wishlist_products__id=OuterRef('id') 
+            )
+        )
+    ).filter(is_active=True,category__is_active=True,category__id=id)
          # Apply pagination
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
-        
         return paginator.get_paginated_response(paginated_products)
     
+    
 class RelatedProductData(APIView):
+    permission_classes=[AllowAny]
+    pagination_class = ProductPagination
     def get(self, request,id):
+        user=request.user
         products = Product.objects.filter(is_active=True, category__is_active=True,category_id=Product.objects.filter(id=id)
-                                          .values("category_id")[:1]).select_related("category").annotate(starting_price=Min("variants__variant_price")
-                                                                                                          ,total_stock=Sum("variants__stock")).exclude(id=id)[:8]
-
-        return Response(products.values(),status.HTTP_200_OK)
+                                          .values("category_id")[:1]).select_related("category").annotate(
+        starting_price=Min('variants__variant_price'),
+        total_stock=Sum('variants__stock'),
+        in_wishlist=Exists(
+            Wishlist.objects.filter(
+                user_id=user.id,
+                wishlist_products__id=OuterRef('id') 
+            )
+        )
+    ).exclude(id=id)[:8]
+                                          
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(products.values(), request)
+        return paginator.get_paginated_response(paginated_products)
     
 class SearchBasedProductData(APIView):
     permission_classes=[AllowAny]
     pagination_class = ProductPagination
     def get(self, request,search):
-        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True,title__istartswith=search)
+        user = request.user
+        products = Product.objects.select_related('category').annotate(
+        starting_price=Min('variants__variant_price'),
+        total_stock=Sum('variants__stock'),
+        in_wishlist=Exists(
+            Wishlist.objects.filter(
+                user_id=user.id,
+                wishlist_products__id=OuterRef('id') 
+            )
+        )
+    ).filter(is_active=True,category__is_active=True,title__istartswith=search)
          # Apply pagination
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
         
         return paginator.get_paginated_response(paginated_products)
+    
     
 class FilterBasedProductData(APIView):
     permission_classes=[AllowAny]
@@ -185,6 +234,7 @@ class IndexPage(APIView):
         
         return paginator.get_paginated_response(paginated_products)
     
+    
 class GetCategories(APIView):
     # permission_classes=[AllowAny]
     def get(self, request):
@@ -194,9 +244,8 @@ class GetCategories(APIView):
 
 class UserLogin(APIView):
     permission_classes = [AllowAny]
+    
     def post(self, request):
-        print(request.data)
-        
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
@@ -1234,3 +1283,69 @@ class UserWallet(APIView):
         
         
         
+class UserWishlistFromHomePage(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, product_id):
+        
+        try:
+            user = request.user  # don’t take user_id from request.data, use authenticated user
+
+            # Validate product
+            product = get_object_or_404(Product, id=product_id, is_active=True)
+
+            # Get the cheapest variant
+            cheapest_variant = (
+                product.variants.order_by("variant_price").first()
+            )
+            if not cheapest_variant:
+                return Response({'error': 'No variants found for this product.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or create wishlist
+            wishlist, _ = Wishlist.objects.get_or_create(user=user)
+
+            # Add cheapest variant to wishlist
+            wishlist_product, created = WishlistProduct.objects.get_or_create(
+                wishlist=wishlist,
+                product_variant=cheapest_variant
+            )
+
+            if not created:
+                return Response({'error': 'Product is already in Wishlist.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(
+                {
+                    'message': f'Cheapest variant of "{product.title}" added to Wishlist successfully.',
+                    'variant_id': cheapest_variant.id,
+                    'variant_price': cheapest_variant.variant_price,
+                },
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            print (e)
+        
+    def delete(self, request, product_id):
+        user = request.user
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+
+        # Get all variants of the product
+        variants = product.variants.all()
+        if not variants.exists():
+            return Response({'error': 'No variants found for this product.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find wishlist entries for any of these variants
+        wishlist_entries = WishlistProduct.objects.filter(
+            wishlist__user_id=user.id,
+            product_variant__in=variants
+        )
+
+        if not wishlist_entries.exists():
+            return Response({'error': 'Product not found in wishlist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Delete all matching entries
+        deleted_count, _ = wishlist_entries.delete()
+        return Response(
+            {'status': f'{deleted_count} item(s) deleted successfully'},
+            status=status.HTTP_200_OK
+        )
+
