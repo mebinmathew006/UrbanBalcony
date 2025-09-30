@@ -51,12 +51,12 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="container-fluid sticky bg-[#FCF4D2]">
+    <div className="container-fluid sticky ">
       <div className="row ">
         <Header page="userprofile" />
         <div
           className="col-md-3 shadow "
-          style={{ backgroundColor: "#FCF4D2" }}
+          
         >
           <div className="profile-sidebar">
             <div className="profile-image">
@@ -150,12 +150,12 @@ const UserProfile = () => {
                 <li
                   className={`nav-item ${activeTab === "chat" ? "active" : ""}`}
                 >
-                  <button
+                  {/* <button
                     className="nav-link"
                     onClick={() => setActiveTab("chat")}
                   >
                     Customer Care
-                  </button>
+                  </button> */}
                 </li>
                 {/* Logout */}
                 <li className={`nav-item ${activeTab === " " ? "active" : ""}`}>

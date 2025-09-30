@@ -16,6 +16,7 @@ function HomePage() {
   const currentPage = Number(searchParams.get("page")) || 1;
   const [fiterType, setFilterType] = useState("");
   const [searchItem, setSearchItem] = useState("");
+  
   // Handle Search
   const handleSearch = debounce((searchedString) => {
     setSearchItem(searchedString);
@@ -29,6 +30,7 @@ function HomePage() {
     category_id = "";
     setFilterType(changedFilterDetails.type);
   };
+  
   // Fetch products with React Query
   const {
     data: productsData,
@@ -51,7 +53,6 @@ function HomePage() {
         url = `/?page=${currentPage}`;
       }
       const response = await axiosInstance.get(url);
-
       return response.data;
     },
     keepPreviousData: true, 
@@ -65,7 +66,7 @@ function HomePage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -77,7 +78,7 @@ function HomePage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Header
         page="home"
         handleSearch={handleSearch}
@@ -85,46 +86,74 @@ function HomePage() {
       />
       <Banner />
 
-      <div className="flex ">
-        <Filters onFilterChange={handleFilterChange} />
-        <div className="flex-1">
-          <ProductView data={productsData?.results || []} category="Products" />
-
-          {/* Pagination Controls */}
-          <div className="flex justify-center gap-2 my-4">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={!productsData?.previous || isFetching}
-              className={`px-4 py-2 rounded ${
-                !productsData?.previous || isFetching
-                  ? "bg-gray-400"
-                  : "bg-[#467927] hover:bg-green-500 text-white"
-              }`}
-            >
-              Previous
-            </button>
-
-            <span className="px-4 py-2">
-              Page {currentPage} of {Math.ceil(productsData?.count / 12)}
-            </span>
-
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={!productsData?.next || isFetching}
-              className={`px-4 py-2 rounded ${
-                !productsData?.next || isFetching
-                  ? "bg-gray-400"
-                  : "bg-[#467927] hover:bg-green-500 text-white"
-              }`}
-            >
-              Next
-            </button>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Filters Sidebar */}
+          <div className="hidden lg:block flex-shrink-0">
+            <Filters onFilterChange={handleFilterChange} />
           </div>
 
-          {/* Loading indicator for next page */}
-          {isFetching && (
-            <div className="text-center text-gray-500">Loading more...</div>
-          )}
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Product Grid */}
+            <ProductView 
+              data={productsData?.results || []} 
+              category="Products" 
+            />
+
+            {/* Pagination Controls */}
+            {productsData?.count > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 mb-4">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!productsData?.previous || isFetching}
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                    !productsData?.previous || isFetching
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <span className="text-sm text-gray-600">Page</span>
+                  <span className="font-bold text-green-600">{currentPage}</span>
+                  <span className="text-sm text-gray-600">of</span>
+                  <span className="font-bold text-gray-800">
+                    {Math.ceil(productsData?.count / 12)}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!productsData?.next || isFetching}
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                    !productsData?.next || isFetching
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+
+            {/* Loading indicator */}
+            {isFetching && (
+              <div className="text-center py-4">
+                <div className="inline-flex items-center gap-2 text-green-600">
+                  <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="font-medium">Loading...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Filters */}
+          <div className="lg:hidden">
+            <Filters onFilterChange={handleFilterChange} />
+          </div>
         </div>
       </div>
 

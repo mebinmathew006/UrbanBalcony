@@ -58,7 +58,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
                 required: "Address Type is required",
               })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.address_type && (
               <p className="text-red-500 text-sm mt-1">
@@ -75,7 +75,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
             <input
               {...register("city", { required: "City is required" })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.city && (
               <p className="text-red-500 text-sm mt-1">
@@ -92,7 +92,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
             <input
               {...register("state", { required: "State is required" })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.state && (
               <p className="text-red-500 text-sm mt-1">
@@ -115,7 +115,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
                 },
               })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.pincode && (
               <p className="text-red-500 text-sm mt-1">
@@ -134,7 +134,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
                 required: "Landmark is required",
               })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.land_mark && (
               <p className="text-red-500 text-sm mt-1">
@@ -157,7 +157,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
                 },
               })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.alternate_number && (
               <p className="text-red-500 text-sm mt-1">
@@ -177,7 +177,7 @@ const UserAddressEdit = ({ isOpen, onClose, userAddress, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700"
             >
               Save Changes
             </button>

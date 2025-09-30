@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./Login.css";
+// import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
@@ -139,13 +139,12 @@ function Login() {
     <div className="flex-1">
       <Header />
 
-      <div className="container-fluid d-flex justify-content-center align-items-center bg-[#FCF4D2] h-[70vh]">
+      <div className="container-fluid d-flex justify-content-center align-items-center bg-[#ffffff] h-[70vh]">
         <div
           className="card p-4 shadow"
           style={{
             width: "400px",
             borderRadius: "12px",
-            backgroundColor: "#E8D7B4",
           }}
         >
           <h2 className="text-center mb-4 fw-bold text-[#073801]">Sign In</h2>

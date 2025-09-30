@@ -51,11 +51,11 @@ const Sidebar = () => {
             Coupons
           </Link>
         </li>
-        <li className="nav-item">
-          <Link to="/adminChat" className="nav-link">
-          Chat
+        {/* <li className="nav-item">
+          <Link to="/bannerManagement" className="nav-link">
+          Banner
           </Link>
-        </li>
+        </li> */}
 
         <li className="nav-item">
           <button

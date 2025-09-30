@@ -4,7 +4,13 @@ import axiosInstance from "../../../axiosconfig";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import { toast } from "react-toastify";
+import Pagination from "../../../Components/Pagination/Pagination";
 const UserOrderDetails = () => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
   const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
@@ -192,11 +198,15 @@ const UserOrderDetails = () => {
     doc.save(`invoice_${order.id}.pdf`);
   };
 
-  const fetchUserOrders = async () => {
+  const fetchUserOrders = async (page=1) => {
     try {
       const response = await axiosInstance.get(`userOrders/${user_id}`);
       console.log(response.data);
-      setAllProducts(response.data);
+      // setAllProducts(response.data);
+      setAllProducts(response.data.results);
+      setTotalCount(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setCurrentPage(page);
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
@@ -205,13 +215,16 @@ const UserOrderDetails = () => {
   useEffect(() => {
     fetchUserOrders();
   }, []);
-
+  const handlePageChange = (page) => {
+    fetchUserOrders(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">My Orders</h1>
       <div className="grid gap-4">
-        {allProducts.map((order) => (
-          <div key={order.id} className="bg-[#E8D7B4] rounded-lg shadow-md">
+        {allProducts && allProducts.map((order) => (
+          <div key={order.id} className=" rounded-lg shadow-md">
             <div>
               <div className="p-4">
                 <h2 className="text-lg font-semibold">Order ID: {order.id}</h2>
@@ -270,7 +283,13 @@ const UserOrderDetails = () => {
                   ))}
                 </div>
               </div>
-              <div className={`flex pb-8 ${order.payment_details.status == "pending" ? 'justify-between' :'justify-center'}`}>
+              <div
+                className={`flex pb-8 ${
+                  order.payment_details.status == "pending"
+                    ? "justify-between"
+                    : "justify-center"
+                }`}
+              >
                 <div className="ms-5">
                   <button
                     onClick={() => generateInvoice(order)}
@@ -293,6 +312,18 @@ const UserOrderDetails = () => {
             </div>
           </div>
         ))}
+        {/* Pagination Component */}
+        <div className="px-4 pb-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            maxPageButtons={10 / 2}
+            size="md"
+          />
+        </div>
       </div>
     </div>
   );

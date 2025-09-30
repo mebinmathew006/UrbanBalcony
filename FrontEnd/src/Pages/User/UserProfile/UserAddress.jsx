@@ -4,6 +4,7 @@ import axiosInstance from "../../../axiosconfig";
 import UserAddressEdit from "./UserAddressEdit";
 import UserAddressCreate from "./UserAddressCreate";
 import { toast } from "react-toastify";
+import Pagination from "../../../Components/Pagination/Pagination";
 
 function UserAddress() {
   const user_id = useSelector((state) => state.userDetails.id);
@@ -12,6 +13,20 @@ function UserAddress() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
+
+  const fetchUserAddress = async (page=1) => {
+    const response = await axiosInstance.get(`userAddress/${user_id}`);
+    // setUserAddress(response.data);
+    setUserAddress(response.data.results);
+    setTotalCount(response.data.count);
+    setTotalPages(Math.ceil(response.data.count / pageSize));
+    setCurrentPage(page);
+  };
 
   const handleEditClick = (address) => {
     setSelectedAddress(address); // Set the selected address
@@ -20,11 +35,15 @@ function UserAddress() {
   const handleDelete = async (id) => {
     try {
       const response = await axiosInstance.patch(`userAddress/${id}`);
-      toast.success("Address Deleted Successfully",{position:'bottom-center'})
+      toast.success("Address Deleted Successfully", {
+        position: "bottom-center",
+      });
 
       fetchUserAddress();
     } catch (error) {
-      toast.error("Unable to Delete the Address",{position:'bottom-center'})
+      toast.error("Unable to Delete the Address", {
+        position: "bottom-center",
+      });
     }
   };
   const handleUserCreation = async (newAddress) => {
@@ -84,11 +103,10 @@ function UserAddress() {
     fetchUserAddress();
   }, []);
 
-  const fetchUserAddress = async () => {
-    const response = await axiosInstance.get(`userAddress/${user_id}`);
-    setUserAddress(response.data);
+  const handlePageChange = (page) => {
+    fetchUserAddress(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
   return (
     <div className="address-content  rounded-xl">
       <UserAddressCreate
@@ -134,11 +152,7 @@ function UserAddress() {
       {userAddress &&
         userAddress.map((address, index) => {
           return (
-            <div
-              className="card mb-3 "
-              key={index}
-              style={{ backgroundColor: "#E8D7B4" }}
-            >
+            <div className="card mb-3 " key={index}>
               <div className="card-body ">
                 <h5 className="card-title">{address.address_type} Address</h5>
                 <p className="card-text">
@@ -165,9 +179,21 @@ function UserAddress() {
               </div>
               <hr />
             </div>
-            
           );
         })}
+
+      {/* Pagination Component */}
+      <div className="px-4 pb-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          maxPageButtons={10 / 2}
+          size="md"
+        />
+      </div>
     </div>
   );
 }
