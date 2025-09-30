@@ -144,8 +144,8 @@ function UserWallet() {
 
         {wallet ? (
           <div
-            className="card mb-4 p-4 rounded-lg shadow "
-            style={{ backgroundColor: "#E8D7B4" }}
+            className="card mb-4 p-4 rounded-lg shadow-lg "
+            
           >
             <div className="flex items-center justify-between ">
               {/* Wallet Details */}
@@ -162,13 +162,13 @@ function UserWallet() {
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => handleAddFunds(100)} // Example: adding 100 units
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                  className="bg-green-800 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                 >
                   Add ₹100
                 </button>
                 <button
                   onClick={() => handleAddFunds(500)} // Example: adding 500 units
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                  className="bg-green-800 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
                 >
                   Add ₹500
                 </button>

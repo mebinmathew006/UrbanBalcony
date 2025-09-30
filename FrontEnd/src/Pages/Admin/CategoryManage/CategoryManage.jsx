@@ -2,8 +2,33 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../../../Components/Pagination/Pagination";
 function CategoryManage() {
+  // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [pageSize, setPageSize] = useState(10); // Items per page
+
+   const fetchCategory = async (page) => {
+    try {
+      const response = await adminaxiosInstance.get("/categorymanage");
+      // setCategory(response.data);
+      setCategory(response.data.results);
+      setTotalCount(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setCurrentPage(page);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const navigate = useNavigate();
+  
+    
+     const handlePageChange = (page) => {
+      fetchCategory(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
   const toggleCategoryStatus = async (id) => {
     try {
       await adminaxiosInstance.patch(`/categorymanage/${id}`);
@@ -13,14 +38,7 @@ function CategoryManage() {
     }
   };
   const [category, setCategory] = useState();
-  const fetchCategory = async () => {
-    try {
-      const response = await adminaxiosInstance.get("/categorymanage");
-      setCategory(response.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+ 
   useEffect(() => {
     fetchCategory();
   }, []);
@@ -82,6 +100,17 @@ function CategoryManage() {
             </table>
           </div>
         </main>
+        <div className="px-4 pb-4">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    maxPageButtons={10/2}
+                    size="md"
+                  />
+                </div>
       </div>
     </div>
   );

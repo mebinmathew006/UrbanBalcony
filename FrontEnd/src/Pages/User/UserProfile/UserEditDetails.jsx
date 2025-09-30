@@ -50,11 +50,11 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#FCF4D2] rounded-lg w-full max-w-md p-6 relative">
+    <div className="fixed inset-0 bg-green-950 bg-opacity-85 flex items-center justify-center z-50">
+      <div className=" rounded-lg w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 bg-white hover:text-black-700"
+          className="absolute right-4 top-4 bg-green-700 hover:bg-green-800  hover:text-black-700"
         >
           <X size={20} />
         </button>
@@ -72,7 +72,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
                 required: "First Name is required",
               })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.first_name && (
               <p className="text-red-500 text-sm mt-1">
@@ -88,7 +88,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             <input
               {...register("last_name", { required: "Last Name is required" })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.last_name && (
               <p className="text-red-500 text-sm mt-1">
@@ -104,7 +104,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             <input
               {...register("phone_number", { required: "Phone Number is required" })}
               type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.phone_number && (
               <p className="text-red-500 text-sm mt-1">
@@ -126,7 +126,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
                 },
               })}
               type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">
@@ -147,7 +147,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
               onChange={(e) => {
                 handleFileChange(e);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             />
 
             {/* Preview */}
@@ -169,7 +169,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className="px-4 py-2 text-white bg-green-700 rounded-md hover:bg-green-900"
             >
               Save Changes
             </button>

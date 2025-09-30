@@ -74,7 +74,7 @@ const UserSingleOrderDetailsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-[#E8D7B4] rounded-lg shadow-lg p-6" id="invoice">
+      <div className=" rounded-lg shadow-lg p-6" id="invoice">
         {/* Order Header */}
         <div className="border-b pb-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
@@ -92,7 +92,7 @@ const UserSingleOrderDetailsPage = () => {
           <h2 className="text-xl font-semibold mb-3 text-gray-800">
             Shipping Information
           </h2>
-          <div className="bg-[#E8D7B4] p-4 rounded-md">
+          <div className=" p-4 rounded-md">
             <p className="text-gray-700">
               {order.address_details?.address_type}
               <br />

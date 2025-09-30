@@ -12,6 +12,7 @@ function ProductDetails() {
   const product_id = location.state.spiceDetails.id;
   const [relatedProducts,setRelatedProducts]=useState([]);
   useEffect(()=>{
+    window.scrollTo(0, 0);
     fetchRelatedProducts();
   },[])
 
@@ -26,10 +27,11 @@ function ProductDetails() {
   }
   
   return (
-    <div className='bg-[#FCF4D2]'>
+    <div className=''>
       <Header page='home'/>
       <Breadcrumbs/>
       <Singleprodct/>
+      <hr/>
       <ProductView data={relatedProducts.results || []} category="Related Products" />
       <Footer/>
     </div>

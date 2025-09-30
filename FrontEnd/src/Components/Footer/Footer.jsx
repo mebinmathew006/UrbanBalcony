@@ -18,7 +18,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About Section */}
           <div>
-            <img src="/spice new.png" alt="Logo" className="h-12 w-auto mb-4" />
+            <img src="/logo2.jpg" alt="Logo" className="h-12 w-auto mb-4" />
             <p className="text-gray-300 mb-4">
               Premium quality spices sourced directly from farmers. We ensure the highest 
               standards of freshness and flavor in every package.

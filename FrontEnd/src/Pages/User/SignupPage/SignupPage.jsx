@@ -79,13 +79,13 @@ function SignupPage() {
   return (
     <div className="flex-1">
       <Header />
-      <div className="container-fluid d-flex justify-content-center align-items-center bg-[#FCF4D2]">
+      <div className="container-fluid d-flex justify-content-center align-items-center pt-12 pb-12">
         <div
           className="card p-4 shadow "
           style={{
             width: "400px",
             borderRadius: "12px",
-            backgroundColor: "#FCF4D2",
+           
           }}
         >
           <h2 className="text-center mb-4 fw-bold">Sign Up</h2>

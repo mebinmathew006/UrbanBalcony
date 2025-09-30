@@ -23,7 +23,7 @@ const Review = () => {
   return (
     <div>
   <Header page="home" />
-  <div className="min-h-screen bg-[#FCF4D2] py-8">
+  <div className="min-h-screen  py-8">
     <div className="max-w-3xl mx-auto px-4">
       <div className="flex justify-between">
       <h1 className="text-2xl font-bold mb-8">User Reviews</h1>
@@ -36,7 +36,7 @@ const Review = () => {
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm"
+              className=" p-6 rounded-lg shadow-sm"
             >
               <div className="flex items-center mb-4">
                 <div className="text-yellow-500 text-xl">

@@ -62,7 +62,7 @@ function UserReview({  }) {
   return (
     <div>
       <Header />
-      <div className="review-content rounded-xl bg-[#E8D7B4] w-full">
+      <div className="review-content rounded-xl  w-full">
         <div className="flex items-center justify-between px-6 py-4 rounded-lg mb-6">
           <h3 className="text-2xl font-semibold text-gray-800">
             Product Reviews

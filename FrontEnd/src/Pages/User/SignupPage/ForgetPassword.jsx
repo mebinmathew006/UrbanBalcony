@@ -24,10 +24,10 @@ function ForgetPassword() {
   return (
     <div className="flex-1 ">
        <Header/>
-    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom bg-[#FCF4D2] w-screen">
+    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom pt-24 pb-24 w-screen">
       <div
-        className="card p-5 shadow"
-        style={{ width: "400px", borderRadius: "12px" ,backgroundColor: '#E8D7B4'}}
+        className="card p-32 shadow"
+        style={{ width: "400px", borderRadius: "12px" }}
       >
         <h2 className="text-center mb-5 fw-bold">Forget Password</h2>
         <form onSubmit={ForgetPasswordHandler}>

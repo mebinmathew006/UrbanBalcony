@@ -3,9 +3,15 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../../axiosconfig";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import Pagination from "../../../Components/Pagination/Pagination";
 
 function UserCart() {
   const navigate = useNavigate();
+  // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [pageSize, setPageSize] = useState(10); // Items per page
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
   const user_id = useSelector((state) => state.userDetails.id);
@@ -50,13 +56,22 @@ function UserCart() {
     } catch (error) {}
   };
 
-  const fetchUserCart = async () => {
+  const fetchUserCart = async (page=1) => {
     try {
       const response = await axiosInstance.get(`userCart/${user_id}`);
-      setUserCart(response.data);
+      // setUserCart(response.data);
+      setUserCart(response.data.results);
+    setTotalCount(response.data.count);
+    setTotalPages(Math.ceil(response.data.count / pageSize));
+    setCurrentPage(page);
       console.log(response.data);
       // Calculate the total cart amount
     } catch (error) {}
+  };
+
+  const handlePageChange = (page) => {
+    fetchUserAddress(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const totalAmount = userCart
@@ -70,16 +85,16 @@ function UserCart() {
     : 0;
 
   return (
-    <div className="min-h-screen  py-8 bg-[#FCF4D2] }}">
+    <div className="min-h-screen  py-8  }}">
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">Cart Details</h1>
 
         {userCart ? (
           userCart.map((cart, index) => (
             <div
-              className="card mb-4 p-4  rounded-lg shadow bg-[#E8D7B4]"
+              className="card mb-4 p-4  rounded-lg shadow "
               key={index}
-              style={{ backgroundColor: "#E8D7B4" }}
+              
             >
               {cart.cart_items.map((item, itemIndex) => (
                 <div
@@ -103,14 +118,14 @@ function UserCart() {
                     <div className="flex items-center gap-4 mt-2">
                       <button
                         onClick={() => handleDecreaseQuantity(item.id)}
-                        className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                        className="bg-green-200 px-3 py-1 rounded hover:bg-gray-300"
                       >
                         -
                       </button>
                       <p className="font-medium">{item.quantity}</p>
                       <button
                         onClick={() => handleIncreaseQuantity(item.id)}
-                        className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                        className=" bg-green-200 px-3 py-1 rounded hover:bg-gray-300"
                       >
                         +
                       </button>
@@ -124,7 +139,7 @@ function UserCart() {
                   {/* Delete Button */}
                   <button
                     onClick={() => handleDelete(item.id)}
-                    className="bg-red-800 text-white px-4 py-2 rounded hover:bg-red-900"
+                    className="bg-green-900 text-white px-4 py-2 rounded hover:bg-green-800"
                   >
                     Delete
                   </button>
@@ -138,7 +153,7 @@ function UserCart() {
 
         {/* Total Amount & Checkout Button */}
         {userCart && (
-          <div className="mt-6 p-4 bg-[#E8D7B4] rounded-lg shadow">
+          <div className="mt-6 p-4  rounded-lg shadow">
             <h2 className="text-lg font-semibold mb-4">Cart Summary</h2>
             <p className="text-gray-600 text-lg font-medium">
               Total Amount: ₹{totalAmount}
@@ -154,6 +169,18 @@ function UserCart() {
             )}
           </div>
         )}
+      </div>
+      {/* Pagination Component */}
+      <div className="px-4 pb-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          maxPageButtons={10 / 2}
+          size="md"
+        />
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ const baseurl=import.meta.env.VITE_BASE_URL_FOR_IMAGE
   }, []);
 
   return (
-    <div className="p-6  rounded-md shadow-md">
+    <div className="p-6  rounded-md shadow-2xl">
       <UserEditDetails
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -63,7 +63,7 @@ const baseurl=import.meta.env.VITE_BASE_URL_FOR_IMAGE
       <h3 className="text-xl font-semibold mb-4 text-[#523e18]">
         Profile Information
       </h3>
-      <div className="p-4 rounded-lg bg-[#E8D7B4] ">
+      <div className="p-4 rounded-lg  ">
         <div className="flex justify-center items-center mb-4">
           <div className="flex flex-col items-center">
 

@@ -98,7 +98,7 @@ function AppRoutes() {
       <Route path='/userWallet' element={<UserWallet/>}/>
       <Route path='/userChat' element={<UserChat/>}/>
       <Route path='/adminChat' element={<AdminChat/>}/>
-      <Route path='/bannerManagement' element={<BannerManagement/>}/>
+      {/* <Route path='/bannerManagement' element={<BannerManagement/>}/> */}
     </Routes>
     </QueryClientProvider>
   );
