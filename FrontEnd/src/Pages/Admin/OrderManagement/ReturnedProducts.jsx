@@ -3,9 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { toast } from "react-toastify";
+import Pagination from "../../../Components/Pagination/Pagination";
 
 function ReturnedProducts() {
   const navigate = useNavigate();
+  // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [pageSize, setPageSize] = useState(10); // Items per page
   const [returnRequests, setReturnRequests] = useState([]);
 
   const handleReturnAction = async (
@@ -27,18 +33,25 @@ function ReturnedProducts() {
     }
   };
 
-  const fetchReturnRequests = async () => {
+  const fetchReturnRequests = async (page=1) => {
     try {
-      const response = await adminaxiosInstance.get(`/admingetuserOrders`, {
+      const response = await adminaxiosInstance.get(`/admingetuserOrders?page=${page}`, {
         params: { action: "return" },
       });
-      setReturnRequests(response.data);
+      // setReturnRequests(response.data.results);
+      setReturnRequests(response.data.results);
+      setTotalCount(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setCurrentPage(page);
       console.log(returnRequests);
     } catch (error) {
       console.error("Error fetching return requests:", error);
     }
   };
-
+ const handlePageChange = (page) => {
+    fetchReturnRequests(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   useEffect(() => {
     fetchReturnRequests();
   }, []);
@@ -66,7 +79,7 @@ function ReturnedProducts() {
             </div>
 
             {/* Return Requests */}
-            {returnRequests.map((order, index) => (
+            {returnRequests && returnRequests.map((order, index) => (
               <div
                 key={index}
                 className="mb-8 bg-white rounded-lg shadow-md overflow-hidden"
@@ -203,13 +216,24 @@ function ReturnedProducts() {
             ))}
 
             {/* No Returns Message */}
-            {returnRequests.length === 0 && (
+            {returnRequests && returnRequests.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-gray-500">No return requests found</p>
               </div>
             )}
           </div>
         </main>
+        <div className="px-4 pb-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            maxPageButtons={5}
+            size="md"
+          />
+        </div>
       </div>
     </div>
   );

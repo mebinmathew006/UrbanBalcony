@@ -28,10 +28,9 @@ function CouponManage() {
   const [coupons, setCoupons] = useState([]);
 
   // Fetch coupons from the backend
-  const fetchCoupons = async (page) => {
+  const fetchCoupons = async (page=1) => {
     try {
-      const response = await adminaxiosInstance.get("/couponManage");
-      // setCoupons(response.data);
+      const response = await adminaxiosInstance.get(`/couponManage?page=${page}`);
       setCoupons(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));

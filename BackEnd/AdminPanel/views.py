@@ -16,18 +16,29 @@ from django.db.models.signals import post_save, post_delete
 from django.db.models import Prefetch
 from django.db.models import F,Sum,Count,ExpressionWrapper, DecimalField,FloatField,Q
 from django.db import transaction
-
+from rest_framework.pagination import PageNumberPagination
 from django.dispatch import receiver
 from datetime import datetime
 from openpyxl import Workbook
 from rest_framework.permissions import AllowAny,IsAuthenticated
+from User.serializer import CustomUserSerializer
 # Create your views here.
 
+class PaginationClass(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class UserManage(APIView):
-    def get (self,request):
-        customuser = CustomUser.objects.filter(is_staff=True,is_superuser=False)
-        return Response(customuser.values(),status.HTTP_200_OK)
+    pagination_class = PaginationClass
+    def get(self, request):
+        users = CustomUser.objects.filter(is_staff=True, is_superuser=False)
+        paginator = self.pagination_class()
+        paginated_users = paginator.paginate_queryset(users, request)
+
+        serializer = CustomUserSerializer(paginated_users, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
     
     def patch(self,request,id):
         customuser = CustomUser.objects.get(id=id)
@@ -40,9 +51,14 @@ class UserManage(APIView):
         return Response(data,200) 
     
 class CategoryManage(APIView):
+    pagination_class = PaginationClass
+
     def get (self,request):
         category = Category.objects.all()
-        return Response(category.values(),200)
+        paginator = self.pagination_class()
+        paginated_categories = paginator.paginate_queryset(category, request)
+        serializer = CategorySerializer(paginated_categories, many=True)
+        return paginator.get_paginated_response(serializer.data)
     
     def patch(self,request,id):
         category = Category.objects.get(id=id)
@@ -55,10 +71,15 @@ class CategoryManage(APIView):
         return Response(data,200)   
     
 class ProductManage(APIView):
+    pagination_class = PaginationClass
     def get (self,request):
         product = Product.objects.select_related('category')
-        serializer=ProductSerializer(product,many=True)
-        return Response(serializer.data,status.HTTP_200_OK)
+        
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(product, request)
+        serializer = ProductSerializer(paginated_products, many=True)
+        return paginator.get_paginated_response(serializer.data)
+        
     
     def patch(self,request,id):
         product = Product.objects.get(id=id)
@@ -153,12 +174,14 @@ class AdminUpdateCategory(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 class Varientmanage(APIView):
-
+    pagination_class = PaginationClass
     def get(self, request, id):
-        product = ProductVariant.objects.select_related('product').filter(product_id=id)
-        if product.exists():
-            serializer = ProductVariantSerializer(product, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        varients = ProductVariant.objects.select_related('product').filter(product_id=id)
+        if varients.exists():
+            paginator = self.pagination_class()
+            paginated_varients = paginator.paginate_queryset(varients, request)
+            serializer = ProductVariantSerializer(paginated_varients, many=True)
+            return paginator.get_paginated_response(serializer.data)
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, **kwargs):
@@ -195,26 +218,35 @@ class Varientmanage(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class AdmingetuserOrders(APIView):
+    pagination_class = PaginationClass
+    
     def get(self, request):
         try:
-            if request.query_params.get('action')=='return':
-                orders = Order.objects.prefetch_related(
-                'order_items__product_variant',  
-                'order_items__product_variant__product',  
-                'payment',
-                'address'
-            ).filter(order_items__status='Requested for Return')
-            # Change prefetch_related to match your model relationship
-            else:
-                
+            if request.query_params.get('action') == 'return':
+                # Filter orders that have at least one return request
                 orders = Order.objects.prefetch_related(
                     'order_items__product_variant',  
                     'order_items__product_variant__product',  
                     'payment',
                     'address'
-                ).exclude(order_items__status='Requested for Return')
-            serializer = OrderSerializer(orders, many=True,partial=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                ).filter(
+                    order_items__status='Requested for Return'
+                ).distinct()  
+            else:
+                orders = Order.objects.prefetch_related(
+                    'order_items__product_variant',  
+                    'order_items__product_variant__product',  
+                    'payment',
+                    'address'
+                ).exclude(
+                    order_items__status='Requested for Return'
+                ).distinct()  # IMPORTANT: Remove duplicates
+            
+            paginator = self.pagination_class()
+            paginated_orders = paginator.paginate_queryset(orders, request)
+            serializer = OrderSerializer(paginated_orders, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
         except Order.DoesNotExist:
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -261,12 +293,16 @@ class AdmingetuserOrders(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class CouponManage(APIView):
+    pagination_class = PaginationClass
+    
     def get(self, request):
         """Fetch all coupons."""
         coupons = Coupon.objects.all()
-        serializer = CouponSerializer(coupons, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+        paginator = self.pagination_class()
+        paginated_coupons = paginator.paginate_queryset(coupons, request)
+        serializer = CouponSerializer(paginated_coupons, many=True)
+        return paginator.get_paginated_response(serializer.data)
+        
     def post(self, request):
         """Add or edit a coupon."""
         coupon_id = request.data.get('id')  # Check if this is an update
@@ -310,11 +346,17 @@ class CouponManage(APIView):
         return Response(data, status=status.HTTP_200_OK)
         
 class OfferManage(APIView):
+    pagination_class = PaginationClass
+    
     def get(self, request):
-        """Fetch all offers."""
+        
         offers = Offer.objects.select_related("product").all()
-        serializer = OfferSerializer(offers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        paginator = self.pagination_class()
+        paginated_offers = paginator.paginate_queryset(offers, request)
+        serializer = OfferSerializer(paginated_offers, many=True)
+        return paginator.get_paginated_response(serializer.data)
+       
 
     def post(self, request):
         """Add or edit an offer."""

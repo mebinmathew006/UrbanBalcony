@@ -586,12 +586,17 @@ class GoogleAuth(APIView):
 
 class ReviewAndRating(APIView):
     permission_classes = [AllowAny]
+    pagination_class = ProductPagination
     def get(self, request, id):
         # Fetch the product
-        product = Review.objects.filter(product_id=id)
-        if product.exists():
-            serializer=ReviewAndRatingSerializer(product,many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+        reviews = Review.objects.filter(product_id=id)
+        if reviews.exists():
+            paginator = self.pagination_class()
+            paginated_reviews = paginator.paginate_queryset(reviews, request)
+            serializer = ReviewAndRatingSerializer(paginated_reviews, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
+
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
     def post(self, request):
@@ -609,11 +614,15 @@ class ReviewAndRating(APIView):
         
     
 class UserAddress(APIView):
+    pagination_class = ProductPagination
     def get(self,request,id):
         try:
             address=Address.objects.filter(user_id=id)
-            serializer=AddressSerializer(address,many=True)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            paginator = self.pagination_class()
+            paginated_address= paginator.paginate_queryset(address, request)
+            serializer = AddressSerializer(paginated_address, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
         except CustomUser.DoesNotExist:
             print("no data")
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -692,6 +701,8 @@ class ChangePaymentstatus(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserOrder(APIView):
+    pagination_class = ProductPagination
+    
     def patch(self, request, id):
         try:
             # Retrieve the order item
@@ -732,21 +743,28 @@ class UserOrder(APIView):
                 'payment',
                 'address'
             ).order_by('created_at')  
-            serializer = OrderSerializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            paginator = self.pagination_class()
+            paginated_orders = paginator.paginate_queryset(orders, request)
+            serializer = OrderSerializer(paginated_orders, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
         except Order.DoesNotExist:
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
     
 class UserCart(APIView):
+    pagination_class = ProductPagination
     def get(self, request, id):
         try:
-            # Change to cart_items__product_variant
-            orders = Cart.objects.filter(user_id=id).prefetch_related(
+            
+            cart_items = Cart.objects.filter(user_id=id).prefetch_related(
                 'cart_items__product_variant',
-                'cart_items__product_variant__product'  # To get product details
+                'cart_items__product_variant__product'  
             )
-            serializer = CartSerializer(orders, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            paginator = self.pagination_class()
+            paginated_cart_items = paginator.paginate_queryset(cart_items, request)
+            serializer = CartSerializer(paginated_cart_items, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
         except Cart.DoesNotExist:
             return Response({'error': 'Cart not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -1155,6 +1173,7 @@ class SingleOrderDetails(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
             
 class UserWishlist(APIView):
+    pagination_class = ProductPagination
     def post(self, request):
         user = request.data.get('user_id')
         product_variant_id = request.data.get('id')
@@ -1181,16 +1200,19 @@ class UserWishlist(APIView):
     
     def get(self, request, id):
         try:
-            # Change to cart_items__product_variant
             wishlist = Wishlist.objects.filter(user_id=id).prefetch_related(
                 'wishlist_products__product_variant',
                 'wishlist_products__product_variant__product'
             )
-            serializer = WishlistSerilaizer(wishlist, many=True)
-            print(serializer.data)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            paginator = self.pagination_class()
+            paginated_wishlist = paginator.paginate_queryset(wishlist, request)
+            serializer = WishlistSerilaizer(paginated_wishlist, many=True)
+            return paginator.get_paginated_response(serializer.data)
+            
         except Wishlist.DoesNotExist:
             return Response({'error': 'wishlist not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     def delete(self, request, id):
         try:
@@ -1201,10 +1223,10 @@ class UserWishlist(APIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         except WishlistProduct.DoesNotExist:
-            # Handle the case where the object does not exist
+            
             raise Http404("WishlistProduct not found")
         except Exception as e:
-            # Handle unexpected errors
+           
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class VarientForUser(APIView):
