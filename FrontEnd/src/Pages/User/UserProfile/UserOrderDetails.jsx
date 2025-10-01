@@ -200,9 +200,8 @@ const UserOrderDetails = () => {
 
   const fetchUserOrders = async (page=1) => {
     try {
-      const response = await axiosInstance.get(`userOrders/${user_id}`);
+      const response = await axiosInstance.get(`userOrders/${user_id}?page=${page}`);
       console.log(response.data);
-      // setAllProducts(response.data);
       setAllProducts(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));

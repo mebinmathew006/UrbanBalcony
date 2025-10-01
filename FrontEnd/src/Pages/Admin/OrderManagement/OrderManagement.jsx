@@ -8,10 +8,17 @@ import Pagination from "../../../Components/Pagination/Pagination";
 
 function OrderManagement() {
   const navigate = useNavigate();
-  const fetchUserOrders = async (page) => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
+  const fetchUserOrders = async (page=1) => {
     try {
-      const response = await adminaxiosInstance.get(`/admingetuserOrders`);
+      const response = await adminaxiosInstance.get(`/admingetuserOrders?page=${page}`);
       // setUserOrders(response.data);
+      console.log(response.data);
+
       setUserOrders(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));
@@ -20,11 +27,7 @@ function OrderManagement() {
       console.log(error);
     }
   };
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [pageSize, setPageSize] = useState(10); // Items per page
+  
   const handlePageChange = (page) => {
     fetchUserOrders(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -204,7 +207,7 @@ function OrderManagement() {
             totalCount={totalCount}
             pageSize={pageSize}
             onPageChange={handlePageChange}
-            maxPageButtons={10 / 2}
+            maxPageButtons={5}
             size="md"
           />
         </div>

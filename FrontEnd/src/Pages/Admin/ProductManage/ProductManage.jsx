@@ -10,10 +10,10 @@ function ProductManage() {
 
   const [product, setProduct] = useState();
   const [loading, setLoading] = useState(true);
-  const fetchProduct = async (page) => {
+  const fetchProduct = async (page=1) => {
     try {
       setLoading(true);
-      const response = await adminaxiosInstance.get("/productmanage");
+      const response = await adminaxiosInstance.get(`/productmanage?page=${page}`);
       setProduct(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));

@@ -20,7 +20,7 @@ function UserAddress() {
   const [pageSize, setPageSize] = useState(10); // Items per page
 
   const fetchUserAddress = async (page=1) => {
-    const response = await axiosInstance.get(`userAddress/${user_id}`);
+    const response = await axiosInstance.get(`userAddress/${user_id}?page=${page}`);
     // setUserAddress(response.data);
     setUserAddress(response.data.results);
     setTotalCount(response.data.count);

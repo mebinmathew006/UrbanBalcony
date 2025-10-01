@@ -20,7 +20,7 @@ function UserWishlist() {
 
   const fetchWishlist = async (page=1) => {
     try {
-      const response = await axiosInstance.get(`userWishlist/${user_id}`);
+      const response = await axiosInstance.get(`userWishlist/${user_id}?page=${page}`);
       // setWishlist(response.data);
       setWishlist(response.data.results);
     setTotalCount(response.data.count);

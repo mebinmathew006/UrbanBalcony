@@ -5,30 +5,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Pagination from "../../../Components/Pagination/Pagination";
 
 function ProductVarientManage() {
-  const location =useLocation()
-  const product_id=location.state
-  const fetchProduct = async () => {
+  const location = useLocation();
+  const product_id = location.state;
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const fetchProduct = async (page = 1) => {
     try {
-      const response = await adminaxiosInstance.get(`/productVarientmanage/${product_id}`);
+      const response = await adminaxiosInstance.get(
+        `/productVarientmanage/${product_id}?page=${page}`
+      );
       // setProductVarients(response.data);
       setProductVarients(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));
       setCurrentPage(page);
-      console.log(productVarients);
-      
+      console.log(response.data);
     } catch (error) {}
   };
   const navigate = useNavigate();
-  // Pagination state
-      const [currentPage, setCurrentPage] = useState(1);
-      const [totalPages, setTotalPages] = useState(1);
-      const [totalCount, setTotalCount] = useState(0);
-      const [pageSize, setPageSize] = useState(10); // Items per page
-       const handlePageChange = (page) => {
-        fetchProduct(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
+  
+
+  const handlePageChange = (page) => {
+    fetchProduct(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const toggleProductStatus = async (id) => {
     try {
       await adminaxiosInstance.patch(`/productVarientmanage/${id}`);
@@ -38,7 +41,6 @@ function ProductVarientManage() {
     }
   };
   const [productVarients, setProductVarients] = useState();
-  
 
   useEffect(() => {
     fetchProduct();
@@ -54,7 +56,9 @@ function ProductVarientManage() {
               <h3>Varient Details</h3>
               <button
                 className="btn btn-info"
-                onClick={() => navigate("/ProductVarientAdd", { state: product_id })}
+                onClick={() =>
+                  navigate("/ProductVarientAdd", { state: product_id })
+                }
               >
                 ADD
               </button>
@@ -81,7 +85,9 @@ function ProductVarientManage() {
                       <td>
                         <button
                           className={`btn ${
-                            productVarient.is_active ? "btn-primary" : "btn-danger"
+                            productVarient.is_active
+                              ? "btn-primary"
+                              : "btn-danger"
                           }`}
                           onClick={() => toggleProductStatus(productVarient.id)}
                         >
@@ -92,7 +98,9 @@ function ProductVarientManage() {
                         <button
                           className="btn btn-success"
                           onClick={() =>
-                            navigate("/ProductVarientEdit", { state: productVarient })
+                            navigate("/ProductVarientEdit", {
+                              state: productVarient,
+                            })
                           }
                         >
                           Edit
@@ -104,17 +112,17 @@ function ProductVarientManage() {
             </table>
           </div>
         </main>
-         <div className="px-4 pb-4">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalCount={totalCount}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    maxPageButtons={10/2}
-                    size="md"
-                  />
-                </div>
+        <div className="px-4 pb-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            maxPageButtons={5}
+            size="md"
+          />
+        </div>
       </div>
     </div>
   );

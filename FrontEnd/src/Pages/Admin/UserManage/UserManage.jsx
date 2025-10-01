@@ -4,9 +4,15 @@ import adminaxiosInstance from "../../../adminaxiosconfig";
 import Pagination from "../../../Components/Pagination/Pagination";
 
 function UserManage() {
-   const fetchUsers = async (page) => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
+  const fetchUsers = async (page = 1) => {
     try {
-      const response = await adminaxiosInstance.get("/usermanage");
+      const response = await adminaxiosInstance.get(`/usermanage?page=${page}`);
+      console.log(response.data)
       setUsers(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));
@@ -15,27 +21,20 @@ function UserManage() {
       console.log(error);
     }
   };
-  // Pagination state
-      const [currentPage, setCurrentPage] = useState(1);
-      const [totalPages, setTotalPages] = useState(1);
-      const [totalCount, setTotalCount] = useState(0);
-      const [pageSize, setPageSize] = useState(10); // Items per page
-       const handlePageChange = (page) => {
-        fetchUsers(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
+
+  const handlePageChange = (page) => {
+    fetchUsers(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const toggleUserStatus = async (id) => {
-   
-    
     try {
-      await adminaxiosInstance.patch(`/usermanage/${id}`); 
+      await adminaxiosInstance.patch(`/usermanage/${id}`);
       fetchUsers();
     } catch (error) {
       console.log(error);
-  }
-}
+    }
+  };
   const [users, setUsers] = useState();
-  
 
   useEffect(() => {
     fetchUsers();
@@ -84,17 +83,17 @@ function UserManage() {
             </table>
           </div>
         </main>
-         <div className="px-4 pb-4">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalCount={totalCount}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    maxPageButtons={10/2}
-                    size="md"
-                  />
-                </div>
+        <div className="px-4 pb-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            maxPageButtons={5}
+            size="md"
+          />
+        </div>
       </div>
     </div>
   );

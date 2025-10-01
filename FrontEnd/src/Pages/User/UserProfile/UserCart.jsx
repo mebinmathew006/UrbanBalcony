@@ -58,8 +58,7 @@ function UserCart() {
 
   const fetchUserCart = async (page=1) => {
     try {
-      const response = await axiosInstance.get(`userCart/${user_id}`);
-      // setUserCart(response.data);
+      const response = await axiosInstance.get(`userCart/${user_id}?page=${page}`);
       setUserCart(response.data.results);
     setTotalCount(response.data.count);
     setTotalPages(Math.ceil(response.data.count / pageSize));

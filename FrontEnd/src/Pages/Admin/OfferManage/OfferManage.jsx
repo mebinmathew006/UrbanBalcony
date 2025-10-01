@@ -7,20 +7,19 @@ import Pagination from "../../../Components/Pagination/Pagination";
 function OfferManage() {
   const navigate = useNavigate();
   const [offers, setOffers] = useState([]);
-// Pagination state
-      const [currentPage, setCurrentPage] = useState(1);
-      const [totalPages, setTotalPages] = useState(1);
-      const [totalCount, setTotalCount] = useState(0);
-      const [pageSize, setPageSize] = useState(10); // Items per page
-       const handlePageChange = (page) => {
-        fetchOffers(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
+  const handlePageChange = (page) => {
+    fetchOffers(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   // Fetch offers from the backend
-  const fetchOffers = async (page) => {
+  const fetchOffers = async (page=1) => {
     try {
-      const response = await adminaxiosInstance.get("/offerManage");
-      // setOffers(response.data);
+      const response = await adminaxiosInstance.get(`/offerManage?page=${page}`);
       setOffers(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));
@@ -66,7 +65,7 @@ function OfferManage() {
                   <th scope="col">Product</th>
                   <th scope="col">Discount Percentage</th>
                   <th scope="col">Status</th>
-                  
+
                   <th scope="col">Block/Unblock</th>
                   <th scope="col">Edit</th>
                 </tr>
@@ -79,7 +78,7 @@ function OfferManage() {
                       <td>{offer.product_name}</td>
                       <td>{offer.discount_percentage}%</td>
                       <td>{offer.is_active ? "Active" : "Inactive"}</td>
-                     
+
                       <td>
                         <button
                           className={`btn ${
@@ -106,17 +105,17 @@ function OfferManage() {
             </table>
           </div>
         </main>
-         <div className="px-4 pb-4">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalCount={totalCount}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    maxPageButtons={10/2}
-                    size="md"
-                  />
-                </div>
+        <div className="px-4 pb-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            maxPageButtons={10 / 2}
+            size="md"
+          />
+        </div>
       </div>
     </div>
   );
