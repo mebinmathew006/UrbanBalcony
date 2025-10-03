@@ -18,20 +18,22 @@ function UserWishlist() {
     fetchWishlist();
   }, []);
 
-  const fetchWishlist = async (page=1) => {
+  const fetchWishlist = async (page = 1) => {
     try {
-      const response = await axiosInstance.get(`userWishlist/${user_id}?page=${page}`);
+      const response = await axiosInstance.get(
+        `userWishlist/${user_id}?page=${page}`
+      );
       // setWishlist(response.data);
       setWishlist(response.data.results);
-    setTotalCount(response.data.count);
-    setTotalPages(Math.ceil(response.data.count / pageSize));
-    setCurrentPage(page);
+      setTotalCount(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setCurrentPage(page);
       console.log(response.data);
     } catch (error) {
       console.error("Error fetching wishlist:", error);
     }
   };
-const handlePageChange = (page) => {
+  const handlePageChange = (page) => {
     fetchWishlist(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -45,8 +47,6 @@ const handlePageChange = (page) => {
   };
 
   const handleAddToCart = async (id) => {
-    
-
     try {
       const formData = new FormData();
       formData.append("quantitiy", 1);
@@ -68,11 +68,7 @@ const handlePageChange = (page) => {
 
         {wishlist && wishlist[0]?.wishlist_products.length > 0 ? (
           wishlist[0].wishlist_products.map((item, index) => (
-            <div
-              key={index}
-              className="card mb-4 p-4  rounded-lg shadow-lg  "
-              
-            >
+            <div key={index} className="card mb-4 p-4  rounded-lg shadow-lg  ">
               <div className="flex items-center justify-between gap-8">
                 {/* Product Image */}
                 <img
@@ -106,7 +102,9 @@ const handlePageChange = (page) => {
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                     disabled={!item.product_variant.stock}
                   >
-                    {item.product_variant.stock ? 'Add to Cart' : 'Out of Stock'}
+                    {item.product_variant.stock
+                      ? "Add to Cart"
+                      : "Out of Stock"}
                   </button>
                   <button
                     onClick={() => handleRemoveFromWishlist(item.id)}

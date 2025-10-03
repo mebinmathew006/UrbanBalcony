@@ -20,6 +20,7 @@ function ProductView(props) {
   }, [props.data]);
 
   const navigationToProductDetailsPage = (spiceDetails) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     navigate("/productDetails", { state: { spiceDetails } });
   };
 

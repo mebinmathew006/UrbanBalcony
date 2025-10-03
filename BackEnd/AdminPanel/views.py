@@ -1,37 +1,38 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from User.models import CustomUser,Category,Product,ProductVariant,Cart,Order,OrderItem,Wallet,WalletTransaction,Coupon,Offer,Banner
-from django.utils.timezone import now
-from django.contrib.auth.hashers import make_password
+from User.models import (CustomUser,Category,Product,ProductVariant,Order,
+                         OrderItem,Wallet,WalletTransaction,Coupon,Offer,Banner)
 from rest_framework import status
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
-from .serializer import CategorySerializer,ProductSerializer,ProductVariantSerializer,CouponSerializer,OfferSerializer,BannerSerializer
-from User.serializer import CartSerializer,OrderSerializer
-from rest_framework.exceptions import ErrorDetail,ValidationError
-from django.http import HttpResponse
-from django.db.models.signals import post_save, post_delete
-from django.db.models import Prefetch
+from .serializer import (CategorySerializer,ProductSerializer,ProductVariantSerializer,
+                         CouponSerializer,OfferSerializer,BannerSerializer)
+from User.serializer import OrderSerializer
+from rest_framework.exceptions import ValidationError
 from django.db.models import F,Sum,Count,ExpressionWrapper, DecimalField,FloatField,Q
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
-from django.dispatch import receiver
 from datetime import datetime
-from openpyxl import Workbook
-from rest_framework.permissions import AllowAny,IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from User.serializer import CustomUserSerializer
-# Create your views here.
+from django.shortcuts import get_object_or_404
+import logging
+
+logger = logging.getLogger(__name__)
 
 class PaginationClass(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 100
 
+
 class UserManage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
     def get(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         users = CustomUser.objects.filter(is_staff=True, is_superuser=False)
         paginator = self.pagination_class()
         paginated_users = paginator.paginate_queryset(users, request)
@@ -41,6 +42,11 @@ class UserManage(APIView):
         return paginator.get_paginated_response(serializer.data)
     
     def patch(self,request,id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         customuser = CustomUser.objects.get(id=id)
         customuser.is_active = not customuser.is_active
         customuser.save()
@@ -51,9 +57,15 @@ class UserManage(APIView):
         return Response(data,200) 
     
 class CategoryManage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
 
     def get (self,request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         category = Category.objects.all()
         paginator = self.pagination_class()
         paginated_categories = paginator.paginate_queryset(category, request)
@@ -61,6 +73,11 @@ class CategoryManage(APIView):
         return paginator.get_paginated_response(serializer.data)
     
     def patch(self,request,id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         category = Category.objects.get(id=id)
         category.is_active = not category.is_active
         category.save()
@@ -71,8 +88,14 @@ class CategoryManage(APIView):
         return Response(data,200)   
     
 class ProductManage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
     def get (self,request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         product = Product.objects.select_related('category')
         
         paginator = self.pagination_class()
@@ -80,8 +103,12 @@ class ProductManage(APIView):
         serializer = ProductSerializer(paginated_products, many=True)
         return paginator.get_paginated_response(serializer.data)
         
-    
     def patch(self,request,id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         product = Product.objects.get(id=id)
         product.is_active = not product.is_active
         product.save()
@@ -92,9 +119,15 @@ class ProductManage(APIView):
         return Response(data,200)
     
 class AdmineditProduct(APIView):
+    permission_classes =[IsAuthenticated]
     def post(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         product_id = request.data.get('id')
-        print(request.data.get('category'))
+        logger.info(request.data.get('category'))
         if not product_id:
             return Response(
                 {"error": "Product ID is required."},
@@ -104,7 +137,6 @@ class AdmineditProduct(APIView):
         product = get_object_or_404(Product, id=int(product_id))
         
         serializer = ProductSerializer(product, data=request.data)
-        print("Initial Data:", serializer.initial_data)  # For debugging (remove in production)
 
         if serializer.is_valid():
             product = serializer.save()
@@ -115,7 +147,7 @@ class AdmineditProduct(APIView):
             return Response(data, status=status.HTTP_200_OK)
 
         # Log errors for debugging
-        print("Validation Errors:", serializer.errors)
+        logger.info(f"Validation Errors: {serializer.errors}")
         return Response(
             {"error": serializer.errors}, 
             status=status.HTTP_400_BAD_REQUEST
@@ -123,8 +155,14 @@ class AdmineditProduct(APIView):
     
     
 class AdminaddProduct(APIView):
+    permission_classes =[IsAuthenticated]
     def post(self, request):
-        print(request.data)
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        logger.info(request.data)
         serializer=ProductSerializer(data=request.data)
         if serializer.is_valid():
             product=serializer.save()
@@ -137,8 +175,15 @@ class AdminaddProduct(APIView):
         return Response({'error': serializer.error_messages}, 
                             status=status.HTTP_400_BAD_REQUEST)
     
+    
 class AdminaddCategory(APIView):
+    permission_classes =[IsAuthenticated]
     def post(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
             category=serializer.save()
@@ -149,12 +194,18 @@ class AdminaddCategory(APIView):
                 'status': "success"
             }
             return Response(data, status=status.HTTP_201_CREATED)
-        
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     
 class AdminUpdateCategory(APIView):
+    permission_classes =[IsAuthenticated]
+    
     def post(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         id = request.data.get('id')
         try:
             category = Category.objects.get(id=id)
@@ -174,8 +225,15 @@ class AdminUpdateCategory(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 class Varientmanage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
+    
     def get(self, request, id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         varients = ProductVariant.objects.select_related('product').filter(product_id=id)
         if varients.exists():
             paginator = self.pagination_class()
@@ -185,6 +243,11 @@ class Varientmanage(APIView):
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, **kwargs):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         serializer = ProductVariantSerializer(data=request.data)
         if serializer.is_valid():
             product = serializer.save()
@@ -196,6 +259,8 @@ class Varientmanage(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, id):
+        if not (request.user.is_superuser):
+                return Response({"error": "You are not authorized"},status=status.HTTP_403_FORBIDDEN)
         product_variant = ProductVariant.objects.get(id=id)
         product_variant.is_active = not product_variant.is_active
         product_variant.save()
@@ -206,6 +271,11 @@ class Varientmanage(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def put(self, request, **kwargs):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         variant = get_object_or_404(ProductVariant, id=request.data.get('id'))
         serializer = ProductVariantSerializer(variant, data=request.data)
         if serializer.is_valid():
@@ -218,9 +288,15 @@ class Varientmanage(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class AdmingetuserOrders(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
     
     def get(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         try:
             if request.query_params.get('action') == 'return':
                 # Filter orders that have at least one return request
@@ -251,6 +327,11 @@ class AdmingetuserOrders(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
         
     def patch(self, request, id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         try:
             action = request.data.get('action')
             user_id = request.data.get('userId')
@@ -293,9 +374,15 @@ class AdmingetuserOrders(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class CouponManage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
     
     def get(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         """Fetch all coupons."""
         coupons = Coupon.objects.all()
         paginator = self.pagination_class()
@@ -304,6 +391,11 @@ class CouponManage(APIView):
         return paginator.get_paginated_response(serializer.data)
         
     def post(self, request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         """Add or edit a coupon."""
         coupon_id = request.data.get('id')  # Check if this is an update
         if coupon_id:
@@ -335,6 +427,11 @@ class CouponManage(APIView):
             )
 
     def patch(self, request, id):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         """Toggle the active status of a coupon."""
         coupon = get_object_or_404(Coupon, id=id)
         coupon.is_active = not coupon.is_active
@@ -346,10 +443,15 @@ class CouponManage(APIView):
         return Response(data, status=status.HTTP_200_OK)
         
 class OfferManage(APIView):
+    permission_classes =[IsAuthenticated]
     pagination_class = PaginationClass
     
     def get(self, request):
-        
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         offers = Offer.objects.select_related("product").all()
 
         paginator = self.pagination_class()
@@ -359,7 +461,13 @@ class OfferManage(APIView):
        
 
     def post(self, request):
+        
         """Add or edit an offer."""
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         offer_id = request.data.get('id')  # Check if this is an update
         if offer_id:
             # Update existing offer
@@ -371,7 +479,7 @@ class OfferManage(APIView):
                     {"id": offer.id, "status": "success"},
                     status=status.HTTP_200_OK
                 )
-            print(serializer.errors)
+            logger.info(serializer.errors)
             return Response(
                 {"error": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
@@ -385,7 +493,7 @@ class OfferManage(APIView):
                     {"id": offer.id, "status": "success"},
                     status=status.HTTP_201_CREATED
                 )
-            print(serializer.errors)
+            logger.info(serializer.errors)
             return Response(
                 {"error": serializer.errors},
                 
@@ -394,6 +502,11 @@ class OfferManage(APIView):
 
     def patch(self, request, id):
         try:
+            if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             offer = get_object_or_404(Offer, id=id)
             offer.is_active = not offer.is_active  # Ensure the 'is_active' field exists in the model
             offer.save()
@@ -412,6 +525,11 @@ class OfferManage(APIView):
 
     def delete(self, request, id):
         """Delete an offer."""
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         offer = get_object_or_404(Offer, id=id)
         offer.delete()
         return Response(
@@ -424,6 +542,11 @@ class SalesReportView(APIView):
 
     def get(self, request):
         try:
+            if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             # Get date range from request query parameters
             start_date = request.query_params.get('startDate')
             end_date = request.query_params.get('endDate')
@@ -459,7 +582,8 @@ class SalesReportView(APIView):
             )
             # sales report
            
-            sales_details=OrderItem.objects.filter(Q(status='Delivered') | Q(status='Delivered Return not Approved'),order__in=orders).values() 
+            sales_details=OrderItem.objects.filter(Q(status='Delivered') | Q(status='Delivered Return not Approved'
+                                                                             ),order__in=orders).values() 
            # Get top-selling categories
            
             top_categories = (
@@ -518,20 +642,28 @@ class SalesReportView(APIView):
         except ValidationError as ve:
             return Response({'error': str(ve)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(e)
-            return Response({'error': 'An error occurred while processing the request.' }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.info(e)
+            return Response({'error': 'An error occurred while processing the request.' 
+                             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ChatUserDetails(APIView):
     def get (self,request):
+        
         customuser = CustomUser.objects.select_related  ('user_chatroom').exclude(id=12)
         return Response(customuser.values(),200)
     
 class BannerManagementView(APIView):
+    permission_classes =[IsAuthenticated]
     """
     API view for managing banners: fetching, adding, and updating.
     """
 
     def get(self, request, banner_id=None):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         """Retrieve all banners or a single banner by ID."""
         if banner_id:
             try:
@@ -547,6 +679,11 @@ class BannerManagementView(APIView):
 
     def post(self, request):
         """Create a new banner."""
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         serializer = BannerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -556,6 +693,11 @@ class BannerManagementView(APIView):
     def put(self, request, banner_id):
         """Update an existing banner."""
         try:
+            if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             banner = Banner.objects.get(id=banner_id)
         except Banner.DoesNotExist:
             return Response({"error": "Banner not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -569,6 +711,11 @@ class BannerManagementView(APIView):
     def patch(self, request, banner_id):
         """Partially update an existing banner."""
         try:
+            if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             banner = Banner.objects.get(id=banner_id)
         except Banner.DoesNotExist:
             return Response({"error": "Banner not found"}, status=status.HTTP_404_NOT_FOUND)

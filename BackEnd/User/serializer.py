@@ -63,6 +63,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 class ReviewAndRatingSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer()
     class Meta:
         model=Review
         fields=['rating','description','product','user']
@@ -81,7 +82,7 @@ class AddressSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(write_only=True)
     class Meta:
         model=Address
-        fields=['id','address_type','city','state','pin_code','land_mark','alternate_number','user_id']
+        fields=['id','address_type','city','state','pin_code','land_mark','alternate_number']
         
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:

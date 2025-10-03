@@ -12,7 +12,6 @@ function ProductDetails() {
   const product_id = location.state.spiceDetails.id;
   const [relatedProducts,setRelatedProducts]=useState([]);
   useEffect(()=>{
-    window.scrollTo(0, 0);
     fetchRelatedProducts();
   },[])
 
