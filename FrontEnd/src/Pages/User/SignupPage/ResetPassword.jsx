@@ -40,13 +40,13 @@ function ResetPassword() {
   return (
     <div className="flex-1">
        <Header/>
-    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom bg-[#FCF4D2]">
+    <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom p-24">
       <div
         className="card p-4 shadow"
-        style={{ width: "400px", borderRadius: "12px" ,backgroundColor: '#E8D7B4'
-        }}
+        
+        
       >
-        <h2 className="text-center text-[#073801] mb-4 fw-bold">Reset Password</h2>
+        <h2 className="text-center text-[#073801] mb-4 ms-24 fw-bold">Reset Password</h2>
         <form onSubmit={handleResetPassword}>
           <div className="mb-3">
             <input
