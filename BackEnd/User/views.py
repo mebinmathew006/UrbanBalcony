@@ -1,11 +1,14 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import CustomUser,Product,Review,Address,Order,OrderItem,Cart,ProductVariant,CartItem,Payment,OTP,Transaction,Razorpay,Wishlist,WishlistProduct,Coupon,Wallet,Category
-from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
-from rest_framework_simplejwt.exceptions import TokenError,InvalidToken
+from .models import (CustomUser,Product,Review,Address,Order,OrderItem,Cart,
+                     ProductVariant,CartItem,Payment,OTP,Razorpay,Wishlist,
+                     WishlistProduct,Coupon,Wallet,Category)
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import status
-from .serializer import LoginSerializer,CustomUserSerializer,ReviewAndRatingSerializer,AddressSerializer,OrderSerializer,CartSerializer,PaymentsSerializer,TransactionSerializer,OrderItemSerializer,WishlistSerilaizer
+from .serializer import (LoginSerializer,CustomUserSerializer,ReviewAndRatingSerializer,
+                         AddressSerializer,OrderSerializer,CartSerializer,PaymentsSerializer,
+                         TransactionSerializer,OrderItemSerializer,WishlistSerilaizer)
 from AdminPanel.serializer import ProductVariantSerializer
 from rest_framework.exceptions import ErrorDetail
 from google.oauth2 import id_token
@@ -37,6 +40,12 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 
 
+class ProductPagination(PageNumberPagination):
+    page_size = 12 
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def getUserDetailsAgainWhenRefreshing(request):
@@ -91,13 +100,6 @@ def getUserDetailsAgainWhenRefreshing(request):
     except (ExpiredSignatureError, InvalidTokenError, DecodeError):
         return Response({'error': 'Invalid or expired refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
-
-class ProductPagination(PageNumberPagination):
-    page_size = 12 
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
 class UserHome(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
@@ -123,10 +125,8 @@ class UserHome(APIView):
             )
             .order_by('id')
         )
-
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
-
         return paginator.get_paginated_response(paginated_products)
     
     
@@ -200,17 +200,39 @@ class FilterBasedProductData(APIView):
     pagination_class = ProductPagination
     def get(self, request,types):
         if types == 'rating':
-            products=Product.objects.select_related('category').filter(is_active=True,category__is_active=True).annotate(average_rating=Avg('reviews__rating'),starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).order_by('average_rating')
+            products=Product.objects.select_related('category'
+                        ).filter(is_active=True,category__is_active=True
+                        ).annotate(average_rating=Avg('reviews__rating'
+                        ),starting_price=Min('variants__variant_price'
+                        ),total_stock=Sum('variants__stock')
+                        ).order_by('average_rating')
         elif types == 'price-desc':
-            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('-price')
+            products=Product.objects.select_related('category'
+                                                    ).annotate(starting_price=Min('variants__variant_price'
+                                                    ),total_stock=Sum('variants__stock')
+                                                    ).filter(is_active=True,category__is_active=True).order_by('-price')
         elif types == 'price':
-            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('price')
+            products=Product.objects.select_related('category'
+                                                    ).annotate(starting_price=Min('variants__variant_price'
+                                                    ),total_stock=Sum('variants__stock')
+                                                    ).filter(is_active=True,category__is_active=True).order_by('price')
         elif types == 'date':
-            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).order_by('-created_at')
+            products=Product.objects.select_related('category'
+                                                    ).annotate(starting_price=Min('variants__variant_price'
+                                                    ),total_stock=Sum('variants__stock')
+                                                    ).filter(is_active=True,category__is_active=True).order_by('-created_at')
         elif types == 'popularity':
-            products=Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True).annotate(total_order=Coalesce(Sum('variants__productvariants__quantity'), 0) ).order_by('-total_order')
+            products=Product.objects.select_related('category'
+                                                    ).annotate(starting_price=Min('variants__variant_price'
+                                                    ),total_stock=Sum('variants__stock')
+                                                    ).filter(is_active=True,category__is_active=True
+                                                    ).annotate(total_order=Coalesce(Sum('variants__productvariants__quantity'
+                                                                                        ), 0) ).order_by('-total_order')
         else:
-            products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(is_active=True,category__is_active=True)
+            products = Product.objects.select_related('category'
+                                                    ).annotate(starting_price=Min('variants__variant_price'
+                                                    ),total_stock=Sum('variants__stock')
+                                                               ).filter(is_active=True,category__is_active=True)
          # Apply pagination
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
@@ -223,10 +245,10 @@ class IndexPage(APIView):
     pagination_class = ProductPagination
 
     def get(self, request):
-        products = Product.objects.select_related('category').annotate(starting_price=Min('variants__variant_price'),total_stock=Sum('variants__stock')).filter(
-            is_active=True,
-            category__is_active=True
-        ).order_by('id') 
+        products = Product.objects.select_related('category'
+                                                  ).annotate(starting_price=Min('variants__variant_price'
+                                                  ),total_stock=Sum('variants__stock')
+                                                  ).filter(is_active=True,category__is_active=True).order_by('id') 
         
         # Apply pagination
         paginator = self.pagination_class()
@@ -299,26 +321,37 @@ class UserLogin(APIView):
                 )
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
    
-    
-    # user details
-    def get(self,request,id):
+class UserDetails(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id):
         try:
-            user=CustomUser.objects.get(id=id)
-            serializer=CustomUserSerializer(user)
-            return Response(serializer.data,status=status.HTTP_200_OK)
+            if request.user.id != id:
+                return Response(
+                    {"error": "You are not authorized to view this user."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            user = CustomUser.objects.get(id=id)
+            serializer = CustomUserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         except CustomUser.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        # user update
+        except Exception as e:
+            return Response({'error': 'An Unexpected error occurred'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     def put(self,request,id):
         try:
+            if request.user.id != id:
+                return Response(
+                    {"error": "You are not authorized to edit this user."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             user=CustomUser.objects.get(id=id)
-            print(request.data)
             serializer=CustomUserSerializer(user,data=request.data,partial=True)
             if serializer.is_valid():
                 serializer.save()
-                print(serializer.data)
-                
                 return Response(serializer.data,status=status.HTTP_200_OK)
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         except CustomUser.DoesNotExist:
@@ -368,7 +401,7 @@ class ForgetPassword(APIView):
     
     def post(self, request):
         email = request.data.get('email')
-        print(email)
+        logger.info(email)
         if not email:
             return Response({'error': 'Email is required'}, 
                           status=status.HTTP_400_BAD_REQUEST)
@@ -378,7 +411,7 @@ class ForgetPassword(APIView):
             
             # Generate OTP only if user exists
             otp = ''.join(random.choices(string.digits, k=6))
-            print(otp)
+            logger.info(otp)
             # Save OTP to database
             OTP.objects.filter(email=email).delete()  # Delete existing OTPs
             otp_obj = OTP.objects.create(email=email, otp=otp)
@@ -410,7 +443,7 @@ class ConfirmOtp(APIView):
     def post(self,request):
         otp = request.data.get('otp')
         email = request.data.get('email')
-        print(otp,email)
+        logger.info(otp,email)
         
         try:
             otp_obj = OTP.objects.get(email=email, otp=otp)
@@ -527,7 +560,7 @@ class GoogleAuth(APIView):
                                     save=True
                                 )
                         except Exception as e:
-                            print(f"Profile picture error: {str(e)}")
+                            logger.info(f"Profile picture error: {str(e)}")
                             # Continue without profile picture
                     
                     user.save()
@@ -576,8 +609,8 @@ class GoogleAuth(APIView):
             )
         except Exception as e:
             import traceback 
-            print("Detailed error:", str(e))
-            print("Full traceback:", traceback.format_exc())
+            logger.info(f"Detailed error: {str(e)}",)
+            logger.info(f"Full traceback: {traceback.format_exc()}",)
             # Handle other exceptions
             return Response(
                 {'error': {'commonError': str(e)}},
@@ -599,23 +632,29 @@ class ReviewAndRating(APIView):
 
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
     
+    
+class AddReviewAndRating(APIView):
+    permission_classes=[IsAuthenticated]
     def post(self, request):
-        print(request.data)
+        logger.info(request.data)
         serializer = ReviewAndRatingSerializer(data=request.data)
         
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        print(serializer.errors)
+        logger.info(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         
-
-        
-    
 class UserAddress(APIView):
     pagination_class = ProductPagination
+    permission_classes=[IsAuthenticated]
     def get(self,request,id):
+        if request.user.id != id:
+                return Response(
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
         try:
             address=Address.objects.filter(user_id=id)
             paginator = self.pagination_class()
@@ -624,60 +663,59 @@ class UserAddress(APIView):
             return paginator.get_paginated_response(serializer.data)
             
         except CustomUser.DoesNotExist:
-            print("no data")
+            
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         
     def put(self,request,id):
+        
         try:
-            user=Address.objects.get(id=id)
-            serializer=AddressSerializer(user,data=request.data,partial=True)
+            address=Address.objects.get(id=id)
+            if request.user.id != address.user_id:
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            serializer=AddressSerializer(address,data=request.data,partial=True)
             if serializer.is_valid():
                 serializer.save()
-                print(serializer.data)
-                
                 return Response(serializer.data,status=status.HTTP_200_OK)
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         except Address.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         
     def post(self, request):
-        serializer = AddressSerializer(data=request.data)  # Correct instantiation
+        serializer = AddressSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                serializer.save()  # Save the validated data to the database
-                return Response({'message': 'Address registered successfully.'}, status=status.HTTP_201_CREATED)
+                serializer.save(user=request.user)
+                return Response(
+                    {'message': 'Address registered successfully.'},
+                    status=status.HTTP_201_CREATED
+                )
             except Exception as e:
-                print(e)
-                return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(
+                    {'error': f'Failed to create address: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
     
     def patch(self, request, id):
         try:
-            # Check if the address exists first
-            if not Address.objects.filter(id=id).exists():
+            try:
+                address = Address.objects.get(id=id, is_active=True)
+            except Address.DoesNotExist:
                 raise Http404("Address not found")
-
-            # Check if there are pending or dispatched orders linked to the address
-            has_orders = Order.objects.filter(
-                address__id=id, 
-                order_items__status__in=['pending', 'Dispatched']
-            ).exists()
-
-            if has_orders:
+            if request.user.id != address.user_id:
                 return Response(
-                    {'status': 'Unable to delete the address'},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
-
-            # Now safely delete the address
-            Address.objects.filter(id=id).delete()
-
-            return Response(
+            address.is_active = False
+            address.save()
+            return Response(    
                 {'status': 'Deleted Successfully'},
                 status=status.HTTP_200_OK
             )
-
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -687,6 +725,11 @@ class ChangePaymentstatus(APIView):
         try:
             payment_id =request.data.get('payment_id')
             orderitem = Payment.objects.get(id=payment_id)
+            if not (request.user.id==orderitem.user.id):
+                return Response(
+                    {"error": "You are not authorized "},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             orderitem.status='paid'
             orderitem.save()
             data = {
@@ -694,10 +737,8 @@ class ChangePaymentstatus(APIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         except Payment.DoesNotExist:
-            # Handle the case where the object does not exist
             raise Http404("Payment not found")
         except Exception as e:
-            # Handle unexpected errors
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserOrder(APIView):
@@ -707,13 +748,20 @@ class UserOrder(APIView):
         try:
             # Retrieve the order item
             orderItem = OrderItem.objects.get(id=id)
+            
+            if request.user.id != orderItem.order.user.id:
+                return Response(
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+                
             orderItem.status = request.data.get('action')
             orderItem.save()
 
             # Check if the order was cancelled and handle refund
             with transaction.atomic():
                 if request.data.get('action') == 'Cancelled':
-                    payment_status = orderItem.order.payment.status  # Access related field
+                    payment_status = orderItem.order.payment.status  
                     if payment_status == 'success':
                         wallet = Wallet.objects.get(user=orderItem.order.user)
                         wallet.balance = F('balance') + orderItem.shipping_price_per_order + orderItem.total_amount
@@ -731,11 +779,12 @@ class UserOrder(APIView):
             return Response({'error': 'Wallet not found'}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
-            print(e)
+            logger.info(e)
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
     def get(self, request, id):
         try:
+            
             # Change prefetch_related to match your model relationship
             orders = Order.objects.filter(user_id=id).prefetch_related(
                 'order_items__product_variant', 
@@ -743,6 +792,13 @@ class UserOrder(APIView):
                 'payment',
                 'address'
             ).order_by('created_at')  
+            
+            if request.user.id != orders.user.id:
+                return Response(
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+                
             paginator = self.pagination_class()
             paginated_orders = paginator.paginate_queryset(orders, request)
             serializer = OrderSerializer(paginated_orders, many=True)
@@ -755,11 +811,17 @@ class UserCart(APIView):
     pagination_class = ProductPagination
     def get(self, request, id):
         try:
+            if request.user.id != id:
+                return Response(
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             
             cart_items = Cart.objects.filter(user_id=id).prefetch_related(
                 'cart_items__product_variant',
                 'cart_items__product_variant__product'  
             )
+            
             paginator = self.pagination_class()
             paginated_cart_items = paginator.paginate_queryset(cart_items, request)
             serializer = CartSerializer(paginated_cart_items, many=True)
@@ -769,38 +831,53 @@ class UserCart(APIView):
             return Response({'error': 'Cart not found'}, status=status.HTTP_404_NOT_FOUND)
         
     def post(self, request):
-        user = request.data.get('user_id')
-        product_variant_id = request.data.get('id')
-        quantity = int(request.data.get('quantitiy'))  
+        try:
+            user = request.data.get('user_id')
+            
+            if request.user.id != user:
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            product_variant_id = request.data.get('id')
+            quantity = int(request.data.get('quantitiy'))  
 
-        # Validate product variant
-        product_variant = get_object_or_404(ProductVariant, id=product_variant_id)
+            # Validate product variant
+            product_variant = get_object_or_404(ProductVariant, id=product_variant_id)
 
-        # Validate quantity
-        if int(quantity) < 1 or int(quantity) > int(product_variant.stock):
-            return Response({'error': 'Invalid quantity. Check stock availability.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Validate quantity
+            if int(quantity) < 1 or int(quantity) > int(product_variant.stock):
+                return Response({'error': 'Invalid quantity. Check stock availability.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get or create a cart for the user
-        cart, created = Cart.objects.get_or_create(user_id=user)
+            # Get or create a cart for the user
+            cart, created = Cart.objects.get_or_create(user_id=user)
 
-        # Check if the item already exists in the cart
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, product_variant=product_variant)
-        if not created:
-            # Update the quantity if the item already exists
-            new_quantity = cart_item.quantity + quantity
-            if int(new_quantity) > int(product_variant.stock):
-                return Response({'error': 'Quantity exceeds available stock.'}, status=status.HTTP_400_BAD_REQUEST)
-            cart_item.quantity = new_quantity
-        else:
-            cart_item.quantity = quantity
+            # Check if the item already exists in the cart
+            cart_item, created = CartItem.objects.get_or_create(cart=cart, product_variant=product_variant)
+            if not created:
+                # Update the quantity if the item already exists
+                new_quantity = cart_item.quantity + quantity
+                if int(new_quantity) > int(product_variant.stock):
+                    return Response({'error': 'Quantity exceeds available stock.'}, status=status.HTTP_400_BAD_REQUEST)
+                cart_item.quantity = new_quantity
+            else:
+                cart_item.quantity = quantity
 
-        cart_item.save()
+            cart_item.save()
 
-        return Response({'message': 'Item added to cart successfully.'}, status=status.HTTP_201_CREATED)
+            return Response({'message': 'Item added to cart successfully.'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            # Handle unexpected errors
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def delete(self, request, id):
         try:
             cartitem = CartItem.objects.get(id=id)
+            if request.user.id != cartitem.cart.user.id:
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
             cartitem.delete()
             data = {
                 'status': 'Deleted Successfully',
@@ -812,14 +889,19 @@ class UserCart(APIView):
         except Exception as e:
             # Handle unexpected errors
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        # for updating cart quantitiy
+        
         
 
     def patch(self, request, id):
         try:
             # Get the cart item
             cart_item = CartItem.objects.get(id=id)
-            product_variant = cart_item.product_variant  # Assuming `CartItem` has a ForeignKey to `ProductVariant`
+            if request.user.id != cart_item.cart.user.id:
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            product_variant = cart_item.product_variant  
 
             # Get the action from the request
             action = request.data.get('action')
@@ -995,7 +1077,11 @@ class UserPlaceOrder(APIView):
 
     def post(self, request):
         try:
-            print(request.data)
+            if request.user.id != request.data.get('user_id'):
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
             self.validate_input(request.data)
             
             with transaction.atomic():
@@ -1070,7 +1156,6 @@ class TokenRefreshFromCookieView(APIView):
     def post(self, request):
         # Extract the refresh token from cookies
         refresh_token = request.COOKIES.get('refresh_token')
-        
         if not refresh_token:
             return Response(
                 {"detail": "Refresh token not provided."},
@@ -1106,7 +1191,7 @@ class TokenRefreshFromCookieView(APIView):
             return response
         except TokenError as e:
             return Response(
-                {"detail": "Invalid or expired refresh token."},
+                {"detail": f"Invalid or expired refresh token.{e}"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
             
@@ -1115,13 +1200,18 @@ class CreateRazorpayOrder(APIView):
     def post(self, request):
 
         try:
+            user_id = request.data.get("user_id")
+            if request.user.id != user_id:
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
             razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
             
-            # Extract user details and payment amount from the request
-            user_id = request.data.get("user_id")
+            
+            
             total_amount = request.data.get("totalAmount")
-            currency = request.data.get("currency", "INR")  # Default to INR if not provided
-            print(user_id,total_amount)
+            currency = request.data.get("currency", "INR")  # Default to INR 
             if not user_id or not total_amount:
                 return Response({"error": "user_id and totalAmount are required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1152,7 +1242,7 @@ class CreateRazorpayOrder(APIView):
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            print(f"Error creating Razorpay order: {str(e)}")
+            logger.info(f"Error creating Razorpay order: {str(e)}")
             return Response({"error": "Failed to create Razorpay order"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SingleOrderDetails(APIView):
@@ -1165,7 +1255,12 @@ class SingleOrderDetails(APIView):
                 'product_variant__product',
                 'order__address'
             ).get(id=id)
-            # print(order_item_details.query)
+            
+            if request.user.id != order_item_details.order.user.id:
+                    return Response(
+                        {"error": "You are not authorized."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
             
             serializer=OrderItemSerializer(order_item_details, context={'include_address_details': True})
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -1177,6 +1272,12 @@ class UserWishlist(APIView):
     def post(self, request):
         user = request.data.get('user_id')
         product_variant_id = request.data.get('id')
+        if request.user.id != user:
+            return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        
         # Validate user ID
         if not user:
             return Response({'error': 'User ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1200,6 +1301,12 @@ class UserWishlist(APIView):
     
     def get(self, request, id):
         try:
+            if request.user.id != id:
+                return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+                )
+                
             wishlist = Wishlist.objects.filter(user_id=id).prefetch_related(
                 'wishlist_products__product_variant',
                 'wishlist_products__product_variant__product'
@@ -1217,6 +1324,12 @@ class UserWishlist(APIView):
     def delete(self, request, id):
         try:
             wishlist = WishlistProduct.objects.get(id=id)
+            if request.user.id != wishlist.wishlist.user.id:
+                return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+                )
+            
             wishlist.delete()
             data = {
                 'status': 'Deleted Successfully',
@@ -1231,23 +1344,31 @@ class UserWishlist(APIView):
         
 class VarientForUser(APIView):
     def get(self, request, id):
-        product_variants = ProductVariant.objects.select_related('product').prefetch_related('product__offers').filter(product_id=id).annotate(
-    price_after_offer=ExpressionWrapper(
-        F('variant_price') - (F('variant_price') * Coalesce(F('product__offers__discount_percentage'), Value(0)) / 100),
-        output_field=FloatField()
+        try:
+            product_variants = ProductVariant.objects.select_related(
+                'product').prefetch_related('product__offers').filter(product_id=id).annotate(
+                price_after_offer=ExpressionWrapper(F('variant_price') - (F('variant_price'
+                ) * Coalesce(F('product__offers__discount_percentage'), Value(0)) / 100),
+                output_field=FloatField()
+        )
     )
-)
+            if product_variants.exists():
+                serializer = ProductVariantSerializer(product_variants, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        if product_variants.exists():
-            serializer = ProductVariantSerializer(product_variants, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-    
 class ValidateCoupon(APIView):
     def post(self, request):
         try:
             coupon_code = request.data.get('code')
             user_id = request.data.get('user_id')
+            if request.user.id != user_id:
+                return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+                )
             
             # Fetch the coupon object
             coupon = get_object_or_404(Coupon, code=coupon_code)
@@ -1273,6 +1394,11 @@ class ValidateCoupon(APIView):
 class UserWallet(APIView):
     def get(self,request, id):
         try:
+            if request.user.id != id:
+                return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+                )
             # Fetch wallet for the given user_id
             wallet,created = Wallet.objects.get_or_create(user_id=id)
             data = {
@@ -1288,7 +1414,11 @@ class UserWallet(APIView):
     def patch(self,request,id):
         try:
             wallet = Wallet.objects.get(id=id)
-            
+            if request.user.id != wallet.user.id:
+                return Response(
+                {"error": "You are not authorized."},
+                status=status.HTTP_403_FORBIDDEN,
+                )
             wallet.balance += request.data.get('totalAmount')
             wallet.save()
             data = {
@@ -1302,37 +1432,24 @@ class UserWallet(APIView):
             return Response(data,status.HTTP_400_BAD_REQUEST)
         
         
-        
-        
 class UserWishlistFromHomePage(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, product_id):
-        
         try:
-            user = request.user  # don’t take user_id from request.data, use authenticated user
-
-            # Validate product
+            user = request.user  
             product = get_object_or_404(Product, id=product_id, is_active=True)
-
-            # Get the cheapest variant
             cheapest_variant = (
                 product.variants.order_by("variant_price").first()
             )
             if not cheapest_variant:
                 return Response({'error': 'No variants found for this product.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Get or create wishlist
             wishlist, _ = Wishlist.objects.get_or_create(user=user)
-
-            # Add cheapest variant to wishlist
             wishlist_product, created = WishlistProduct.objects.get_or_create(
                 wishlist=wishlist,
                 product_variant=cheapest_variant
             )
-
             if not created:
                 return Response({'error': 'Product is already in Wishlist.'}, status=status.HTTP_400_BAD_REQUEST)
-
             return Response(
                 {
                     'message': f'Cheapest variant of "{product.title}" added to Wishlist successfully.',
@@ -1341,32 +1458,30 @@ class UserWishlistFromHomePage(APIView):
                 },
                 status=status.HTTP_201_CREATED
             )
-            
         except Exception as e:
-            print (e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     def delete(self, request, product_id):
-        user = request.user
-        product = get_object_or_404(Product, id=product_id, is_active=True)
+        try:
+            user = request.user
+            product = get_object_or_404(Product, id=product_id, is_active=True)
 
-        # Get all variants of the product
-        variants = product.variants.all()
-        if not variants.exists():
-            return Response({'error': 'No variants found for this product.'}, status=status.HTTP_400_BAD_REQUEST)
+            variants = product.variants.all()
+            if not variants.exists():
+                return Response({'error': 'No variants found for this product.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Find wishlist entries for any of these variants
-        wishlist_entries = WishlistProduct.objects.filter(
-            wishlist__user_id=user.id,
-            product_variant__in=variants
-        )
+            wishlist_entries = WishlistProduct.objects.filter(
+                wishlist__user_id=user.id,
+                product_variant__in=variants
+            )
 
-        if not wishlist_entries.exists():
-            return Response({'error': 'Product not found in wishlist.'}, status=status.HTTP_404_NOT_FOUND)
+            if not wishlist_entries.exists():
+                return Response({'error': 'Product not found in wishlist.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Delete all matching entries
-        deleted_count, _ = wishlist_entries.delete()
-        return Response(
-            {'status': f'{deleted_count} item(s) deleted successfully'},
-            status=status.HTTP_200_OK
-        )
-
+            deleted_count, _ = wishlist_entries.delete()
+            return Response(
+                {'status': f'{deleted_count} item(s) deleted successfully'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
