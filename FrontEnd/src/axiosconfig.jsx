@@ -1,28 +1,32 @@
-import axios from 'axios';
-import store from './store/store';
-import { destroyDetails,setUserDetails } from './store/UserDetailsSlice'; // Adjust the path as needed
-import history from './History';
+import axios from "axios";
+import store from "./store/store";
+import { destroyDetails, setUserDetails } from "./store/UserDetailsSlice"; // Adjust the path as needed
+import history from "./History";
 import { toast } from "react-toastify";
 
-const baseurl=import.meta.env.VITE_BASE_URL
+const baseurl = import.meta.env.VITE_BASE_URL;
 
 const axiosInstance = axios.create({
   baseURL: `${baseurl}/user/`,
-  
 });
+const refreshAxios = axios.create({
+  baseURL: `${baseurl}/user/`,
+  withCredentials: true,
+});
+
 
 // Attach the access token from Redux to the headers of each request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const state = store.getState(); 
+    const state = store.getState();
     const accessToken = state.userDetails?.access_token; // Adjust the path based on your Redux state structure
 
     if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
     }
     return config;
   },
-  (error) => Promise.reject(error) 
+  (error) => Promise.reject(error)
 );
 
 // Handle responses and refresh token logic
@@ -35,24 +39,33 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Attempt to refresh the access token using the refresh token stored in an HttpOnly cookie
-        const response = await axios.post(`${baseurl}/user/refresh_token`, {}, {
-          withCredentials: true, 
-        });
-        const userDetails=response.data.user
+        const response = await refreshAxios.post(
+          `refresh_token`,
+          {},
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const userDetails = response.data.user;
         store.dispatch(setUserDetails(userDetails));
         // Update the original request's Authorization header with the new token
-        originalRequest.headers['Authorization'] = `Bearer ${userDetails.access_token}`;  
+        originalRequest.headers[
+          "Authorization"
+        ] = `Bearer ${userDetails.access_token}`;
 
         // Retry the original request with the refreshed token
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         toast.error("Session expired. Please log in again", {
-                position: "bottom-center",
-              });
+          position: "bottom-center",
+        });
         // If refresh fails, clear Redux state and redirect to login
         store.dispatch(destroyDetails());
         const response = await axios.post(`${baseurl}/user/userLogout`);
-        history.push('/login');
+        history.push("/login");
         return Promise.reject(refreshError);
       }
     }

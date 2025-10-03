@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 def getUserDetailsAgainWhenRefreshing(request):
     # We only need refresh_token from cookies since access_token is in response body
     refresh_token = request.COOKIES.get('refresh_token')
-    print(refresh_token)
+    
     if not refresh_token:
         return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -81,7 +81,7 @@ def getUserDetailsAgainWhenRefreshing(request):
             key='refresh_token',
             value=refresh_token, 
             httponly=True,
-            secure=False,
+            secure=True,
             samesite=None,
             max_age=60 * 60 * 24 
         )
@@ -280,10 +280,10 @@ class UserLogin(APIView):
                     response.set_cookie(
                         key='refresh_token',
                         value=refresh_token,
-                        httponly=False, # Prevent access via JavaScript
-                        secure=False,  # Use HTTPS only in production
-                        samesite=None,  # Restrict cross-site cookie usage
-                        max_age=60 * 60 * 24  # 7 days for refresh token
+                        httponly=False, 
+                        secure=True,  
+                        samesite=None,  
+                        max_age=60 * 60 * 24  
                     )
                     return response
                 else:
@@ -560,10 +560,10 @@ class GoogleAuth(APIView):
             response.set_cookie(
                     key='refresh_token',
                     value=refresh_token,
-                    httponly=True, # Prevent access via JavaScript
-                    secure=False,  # Use HTTPS only in production
-                    samesite=None,  # Restrict cross-site cookie usage
-                    max_age=60 * 60 * 24 * 7  # 7 days for refresh token
+                    httponly=True, 
+                    secure=True,  
+                    samesite=None,  
+                    max_age=60 * 60 * 24 * 7  
                 )
 
             return response
