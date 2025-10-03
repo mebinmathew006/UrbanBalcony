@@ -45,7 +45,7 @@ function Singleprodct() {
         `/reviewAndRating/${productDetails.id}`
       );
       
-      setReviewAndRating(response.data);
+      setReviewAndRating(response.data.results);
     } catch (error) {}
   }, [productDetails.id]);
 

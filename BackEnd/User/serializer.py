@@ -63,6 +63,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 class ReviewAndRatingSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer()
     class Meta:
         model=Review
         fields=['rating','description','product','user']

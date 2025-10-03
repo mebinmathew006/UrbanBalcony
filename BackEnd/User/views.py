@@ -622,7 +622,7 @@ class ReviewAndRating(APIView):
     pagination_class = ProductPagination
     def get(self, request, id):
         # Fetch the product
-        reviews = Review.objects.filter(product_id=id)
+        reviews = Review.objects.filter(product_id=id).select_related('user')
         if reviews.exists():
             paginator = self.pagination_class()
             paginated_reviews = paginator.paginate_queryset(reviews, request)
@@ -630,7 +630,7 @@ class ReviewAndRating(APIView):
 
             return paginator.get_paginated_response(serializer.data)
 
-        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'reviews not found'}, status=status.HTTP_404_NOT_FOUND)
     
     
 class AddReviewAndRating(APIView):
