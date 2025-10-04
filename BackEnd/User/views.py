@@ -36,6 +36,7 @@ import logging
 from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
 from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 logger = logging.getLogger(__name__)
 
@@ -806,10 +807,12 @@ class UserOrder(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
     
 class UserCart(APIView):
+    permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
     def get(self, request, id):
         try:
-            if request.user.id != id:
+            print(request.user.id,id)
+            if int(request.user.id) != int(id):
                 return Response(
                     {"error": "You are not authorized."},
                     status=status.HTTP_403_FORBIDDEN,
@@ -832,7 +835,7 @@ class UserCart(APIView):
         try:
             user = request.data.get('user_id')
             
-            if request.user.id != user:
+            if int(request.user.id) != int(user):
                     return Response(
                         {"error": "You are not authorized."},
                         status=status.HTTP_403_FORBIDDEN,
@@ -871,7 +874,7 @@ class UserCart(APIView):
     def delete(self, request, id):
         try:
             cartitem = CartItem.objects.get(id=id)
-            if request.user.id != cartitem.cart.user.id:
+            if int(request.user.id) != int(cartitem.cart.user.id):
                     return Response(
                         {"error": "You are not authorized."},
                         status=status.HTTP_403_FORBIDDEN,
@@ -894,7 +897,7 @@ class UserCart(APIView):
         try:
             # Get the cart item
             cart_item = CartItem.objects.get(id=id)
-            if request.user.id != cart_item.cart.user.id:
+            if int(request.user.id) != int(cart_item.cart.user.id):
                     return Response(
                         {"error": "You are not authorized."},
                         status=status.HTTP_403_FORBIDDEN,
@@ -998,7 +1001,8 @@ class UserPlaceOrder(APIView):
         order_serializer.is_valid(raise_exception=True)
         return order_serializer.save()
 
-    def process_cart_order(self, user_id, order_id,shipping_charge):
+
+    def process_cart_order(self, user_id, order_id, shipping_charge):
         cart_items = CartItem.objects.filter(
             cart__user_id=user_id
         ).select_related('product_variant')
@@ -1013,12 +1017,18 @@ class UserPlaceOrder(APIView):
             if variant.stock < item.quantity:
                 raise ValueError(f"Insufficient stock for product variant {variant.id}")
 
-            price = self.calculate_price_with_offer(variant)*item.quantity
+            price = self.calculate_price_with_offer(variant) * item.quantity
             
-            product_image=Product.objects.values_list('product_img1',flat=True).get(variants__id=variant.id)
-            
-            shipping_price_per_order=(int(shipping_charge)*(int(item.quantity)/int(total_quantity)))
-            
+            product_image = Product.objects.values_list('product_img1', flat=True).get(
+                variants__id=variant.id
+            )
+
+            # 🧮 Safe Decimal computation for shipping charge per item
+            shipping_price_per_order = (
+                Decimal(str(shipping_charge))
+                * (Decimal(item.quantity) / Decimal(total_quantity))
+            ).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
             # Update stock
             ProductVariant.objects.filter(id=variant.id).update(
                 stock=F('stock') - item.quantity
@@ -1029,7 +1039,7 @@ class UserPlaceOrder(APIView):
                 'product_variant': variant.id,
                 'quantity': item.quantity,
                 'image_url': product_image,
-                'total_amount': price,
+                'total_amount': Decimal(str(price)).quantize(Decimal('0.01')),
                 'shipping_price_per_order': shipping_price_per_order,
             })
 
@@ -1040,6 +1050,7 @@ class UserPlaceOrder(APIView):
 
         # Clear cart
         cart_items.delete()
+
 
     def process_direct_order(self, order_id, product_id, quantity,shipping_charge):
         variant = ProductVariant.objects.get(id=product_id)
@@ -1075,7 +1086,7 @@ class UserPlaceOrder(APIView):
 
     def post(self, request):
         try:
-            if request.user.id != request.data.get('user_id'):
+            if int(request.user.id) != int(request.data.get('user_id')):
                     return Response(
                         {"error": "You are not authorized."},
                         status=status.HTTP_403_FORBIDDEN,
@@ -1083,14 +1094,12 @@ class UserPlaceOrder(APIView):
             self.validate_input(request.data)
             
             with transaction.atomic():
-                # Process payment
                 payment_status =request.data.get('status')
                 paymentMethod =request.data.get('paymentMethod')       
                 
                 if paymentMethod=='wallet':
                     self.process_wallet_payment(request.data.get('totalAmount'),request.data.get('user_id'))
                 
-                # Create payment record
                 payment = self.create_payment(
                     request.data.get('user_id'),
                     payment_status,
@@ -1196,20 +1205,16 @@ class TokenRefreshFromCookieView(APIView):
             
 class CreateRazorpayOrder(APIView):
     def post(self, request):
-
         try:
             user_id = request.data.get("user_id")
-            if request.user.id != user_id:
+            if int(request.user.id) != int(user_id):
                     return Response(
                         {"error": "You are not authorized."},
                         status=status.HTTP_403_FORBIDDEN,
                     )
             razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-            
-            
-            
             total_amount = request.data.get("totalAmount")
-            currency = request.data.get("currency", "INR")  # Default to INR 
+            currency = request.data.get("currency", "INR")  
             if not user_id or not total_amount:
                 return Response({"error": "user_id and totalAmount are required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1266,11 +1271,13 @@ class SingleOrderDetails(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
             
 class UserWishlist(APIView):
+    permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
     def post(self, request):
         user = request.data.get('user_id')
         product_variant_id = request.data.get('id')
-        if request.user.id != user:
+        print(user,request.user.id)
+        if int(request.user.id) != int(user):
             return Response(
                 {"error": "You are not authorized."},
                 status=status.HTTP_403_FORBIDDEN,

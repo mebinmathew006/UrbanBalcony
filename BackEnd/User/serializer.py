@@ -103,9 +103,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
             data.pop('address_details', None)  # Remove address if not needed
         return data
 
-
-        
-
         
 class OrderSerializer(serializers.ModelSerializer):
     address_details = AddressSerializer(source='address', read_only=True)
