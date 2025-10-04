@@ -64,6 +64,7 @@ function UserAddress() {
         fetchUserAddress(); // Refresh the address list
         setIsCreateModalOpen(false); // Close the modal
       }
+      toast.success('Address Added Successfully',{position:'bottom-center'})
     } catch (error) {
       console.error(error);
     }

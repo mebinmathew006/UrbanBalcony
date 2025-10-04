@@ -656,7 +656,7 @@ class UserAddress(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
         try:
-            address=Address.objects.filter(user_id=id)
+            address=Address.objects.filter(user_id=id,is_active= True)
             paginator = self.pagination_class()
             paginated_address= paginator.paginate_queryset(address, request)
             serializer = AddressSerializer(paginated_address, many=True)

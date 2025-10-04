@@ -79,7 +79,7 @@ class ReviewAndRatingSerializer(serializers.ModelSerializer):
         return value
     
 class AddressSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(write_only=True)
+    # user_id = serializers.IntegerField(write_only=True)
     class Meta:
         model=Address
         fields=['id','address_type','city','state','pin_code','land_mark','alternate_number']
