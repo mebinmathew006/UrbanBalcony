@@ -784,7 +784,11 @@ class UserOrder(APIView):
             
     def get(self, request, id):
         try:
-            
+            if request.user.id !=id:
+                return Response(
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
             # Change prefetch_related to match your model relationship
             orders = Order.objects.filter(user_id=id).prefetch_related(
                 'order_items__product_variant', 
@@ -792,13 +796,7 @@ class UserOrder(APIView):
                 'payment',
                 'address'
             ).order_by('created_at')  
-            
-            if request.user.id != orders.user.id:
-                return Response(
-                    {"error": "You are not authorized."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-                
+        
             paginator = self.pagination_class()
             paginated_orders = paginator.paginate_queryset(orders, request)
             serializer = OrderSerializer(paginated_orders, many=True)
