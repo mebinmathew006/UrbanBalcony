@@ -9,6 +9,7 @@ function Header(props) {
   const [search, setSearch] = useState(props.searchValue);
   const navigate = useNavigate();
   
+  
   async function fetchCategories() {
     try {
       const response = await publicaxiosconfig.get("/getCategories");

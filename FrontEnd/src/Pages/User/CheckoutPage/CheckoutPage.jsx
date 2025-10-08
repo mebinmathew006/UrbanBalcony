@@ -44,7 +44,7 @@ const CheckoutPage = () => {
 
     try {
       const response = await axiosInstance.post(`userAddress`, formData);
-      console.log(response);
+      
 
       if (response.status === 201) {
         fetchUserAddress(); // Refresh the address list
@@ -73,13 +73,12 @@ const CheckoutPage = () => {
         code: couponCode,
         user_id: user_id,
       });
-
       setAppliedCoupon(response.data);
       setDiscount(
         (parseFloat(totalAmount) * parseFloat(response.data.value)) / 100
       );
     } catch (error) {
-      toast.error("Error applying coupon");
+      toast.error("The Coupon is already used else try again later",{position:'bottom-center'});
     }
   };
 
@@ -105,7 +104,7 @@ const CheckoutPage = () => {
   const fetchUserAddress = async () => {
     try {
       const response = await axiosInstance.get(`userAddress/${user_id}`);
-      setUserAddress(response.data);
+      setUserAddress(response.data.results);
     } catch (error) {
       console.log(error);
     }
@@ -130,7 +129,6 @@ const CheckoutPage = () => {
 
           const { razorpay_order_id, amount, currency } =
             razorpayOrderResponse.data;
-
           const options = {
             key: keyId,
             amount: amount * 100,
@@ -262,11 +260,9 @@ const CheckoutPage = () => {
                 navigate(-1);
               }
             }
-
             rzp.close();
             setLoading(false);
           });
-
           rzp.open();
         } catch (error) {
           setLoading(false);
@@ -283,9 +279,6 @@ const CheckoutPage = () => {
       } else if (paymentMethod === "wallet") {
         try {
           const orderResponse = await axiosInstance.post("/userPlaceOrder", {
-            // razorpay_payment_id: response.error.metadata.payment_id || "",
-            // razorpay_order_id: response.error.metadata.order_id || "",
-            // razorpay_signature: "",
             user_id,
             addressId: selectedAddress,
             paymentMethod: paymentMethod,
@@ -315,9 +308,6 @@ const CheckoutPage = () => {
       } else {
         try {
           const orderResponse = await axiosInstance.post("/userPlaceOrder", {
-            // razorpay_payment_id: response.error.metadata.payment_id || "",
-            // razorpay_order_id: response.error.metadata.order_id || "",
-            // razorpay_signature: "",
             user_id,
             addressId: selectedAddress,
             paymentMethod: paymentMethod,
@@ -334,8 +324,7 @@ const CheckoutPage = () => {
             toast.success("Order created successfully.", {
               position: "bottom-center",
             });
-            // Navigate to orders page instead of going back
-            navigate("/userProfile", { state: { tab: "orders" } });
+             navigate("/userProfile", { state: { tab: "orders" } });
           }
         } catch (error) {
           setLoading(false);
@@ -368,13 +357,12 @@ const CheckoutPage = () => {
   <Header />
   <form onSubmit={handleSubmit} className="space-y-8">
 
-  <div className="min-h-screen bg-[#FCF4D2] py-8">
+  <div className="min-h-screen  py-8">
     <h1 className="text-2xl font-bold mb-8">Checkout</h1>
     <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
-      {/* Left Column - Form Sections */}
       <div>
           {/* Delivery Address Section */}
-          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+          <div className=" p-6 rounded-lg shadow-lg">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <Truck className="mr-2" size={20} />
@@ -387,7 +375,7 @@ const CheckoutPage = () => {
                 New Address ?
               </label>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-auto">
               {userAddress.map((address) => (
                 <label
                   key={address.id}
@@ -426,7 +414,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* Coupon Section */}
-          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+          <div className=" p-6 rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-4 flex items-center">
               <div className="mr-2" size={20} />
               Apply Coupon
@@ -471,7 +459,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* Payment Method Section */}
-          <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+          <div className=" p-6 rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-4 flex items-center">
               <CreditCard className="mr-2" size={20} />
               Payment Method
@@ -595,7 +583,7 @@ const CheckoutPage = () => {
 
       {/* Right Column - Order Summary */}
       <div className="sticky top-8 h-fit">
-        <div className="bg-[#E8D7B4] p-6 rounded-lg shadow-sm">
+        <div className=" p-6 rounded-lg shadow-lg">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Wallet className="mr-2" size={20} />
             Order Summary

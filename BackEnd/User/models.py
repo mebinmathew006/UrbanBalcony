@@ -155,6 +155,7 @@ class OrderItem(models.Model):
     status = models.CharField(max_length=50, default='pending')
     image_url = models.CharField(max_length=500, null=True, blank=True)
     shipping_price_per_order=models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
     def save(self, *args, **kwargs):
         # Calculate the total amount
         if self.product_variant:

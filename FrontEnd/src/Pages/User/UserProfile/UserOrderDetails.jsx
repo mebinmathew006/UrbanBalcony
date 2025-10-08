@@ -228,10 +228,10 @@ const UserOrderDetails = () => {
               <div className="p-4">
                 <h2 className="text-lg font-semibold">Order ID: {order.id}</h2>
                 <p className="text-sm text-gray-500">
-                  Order Date: {order.order_date}
+                  Order Date: {order.order_date }
                 </p>
                 <p className="text-sm text-gray-500">
-                  Total Amount: ₹{order.net_amount}
+                  Total Amount: ₹{order.net_amount -(order.net_amount/100 *order.discout_percentage)}
                 </p>
                 {/* <p className="text-sm text-gray-500">
                   Shipping Charge: ₹{order.shipping_charge}
@@ -255,7 +255,7 @@ const UserOrderDetails = () => {
                         </h3>
                         <p>Quantity: {item.quantity}</p>
                         <p>Weight: {item.variant?.weight}</p>
-                        <p>Total Amount: ₹{item.total_amount}</p>
+                        <p>Total Amount: ₹{item.total_amount-(item.total_amount/100 *order.discout_percentage)}</p>
                         <p
                           className={`font-medium ${
                             item.status === "Delivered"

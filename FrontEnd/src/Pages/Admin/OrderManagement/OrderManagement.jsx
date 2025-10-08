@@ -33,17 +33,16 @@ function OrderManagement() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const [userOrders, setUserOrders] = useState([]);
-  const user_id = useSelector((state) => state.userDetails.id);
 
   const orderChangeStatus = async (status, id) => {
     if (!status) {
       return;
     }
     try {
-      const response = await axiosInstance.patch(`userOrders/${id}`, {
+      const response = await adminaxiosInstance.patch(`admingetuserOrders/${id}`, {
         action: status,
       });
-      fetchUserOrders();
+      fetchUserOrders(currentPage);
     } catch (error) {}
   };
 

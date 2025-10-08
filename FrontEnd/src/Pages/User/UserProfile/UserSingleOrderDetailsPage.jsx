@@ -57,6 +57,7 @@ const UserSingleOrderDetailsPage = () => {
   const fetchOrderDetails = async () => {
     try {
       const response = await axiosInstance.get(`singleOrderDetails/${orderId}`);
+      console.log(response.data)
       setProductId(response.data.variant.product.id);
       setOrder(response.data);
     } catch (error) {
@@ -131,12 +132,12 @@ const UserSingleOrderDetailsPage = () => {
                 <div className="mt-2 space-y-1 text-sm text-gray-600">
                   <p>Weight: {order.variant.weight}</p>
                   <p>Quantity: {order.quantity}</p>
-                  <p>Price: ₹{order.total_amount}</p>
+                  <p>Price: ₹{order.item_amount}</p>
                   <p>Shipping: ₹{order.shipping_price_per_order}</p>
                   <p>
                     Total: ₹
                     {parseInt(order.shipping_price_per_order) +
-                      parseInt(order.total_amount)}
+                      parseInt(order.item_amount)}
                   </p>
 
                   <p>

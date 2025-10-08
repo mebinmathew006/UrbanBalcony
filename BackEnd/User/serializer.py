@@ -93,14 +93,22 @@ class OrderItemSerializer(serializers.ModelSerializer):
     variant=ProductVariantSerializer(source='product_variant',read_only=True)
     address_details = AddressSerializer(source='order.address', read_only=True)
     payment_details = PaymentSerializer(source='order.payment', read_only=True) 
+    item_amount = serializers.SerializerMethodField(read_only=True)
+    
+    
     class Meta:
         model = OrderItem
-        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details','payment_details','image_url','shipping_price_per_order']  
-        
+        fields = ['id', 'quantity', 'total_amount', 'status','product_variant','order','variant','address_details','payment_details','image_url','shipping_price_per_order','item_amount']  
+    
+    def get_item_amount(self, obj):
+        discount = getattr(obj.order, 'discout_percentage', 0) or 0
+        discounted_amount = obj.total_amount - (obj.total_amount * discount / 100)
+        return round(discounted_amount, 2)  
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not self.context.get('include_address_details', False):
-            data.pop('address_details', None)  # Remove address if not needed
+            data.pop('address_details', None)  
         return data
 
         

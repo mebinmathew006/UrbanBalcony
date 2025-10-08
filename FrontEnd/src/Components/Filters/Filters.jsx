@@ -1,7 +1,19 @@
-import React, { useState } from "react";
-import { SlidersHorizontal, X, ChevronDown, TrendingUp, DollarSign, Grid, Star, RotateCcw, Check } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  TrendingUp,
+  DollarSign,
+  Grid,
+  Star,
+  RotateCcw,
+  Check,
+  IndianRupee,
+} from "lucide-react";
 
 const Filters = ({ onFilterChange }) => {
+  const DEBOUNCE_DELAY = 1500;
   const [selectedSort, setSelectedSort] = useState("menu_order");
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
@@ -9,54 +21,77 @@ const Filters = ({ onFilterChange }) => {
     price: true,
     categories: true,
   });
-  
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(1000);
+  const [maxPrice, setMaxPrice] = useState(10000);
 
   // Track if there are pending changes
   const [hasChanges, setHasChanges] = useState(false);
 
   // Store applied filters to compare against
   const [appliedFilters, setAppliedFilters] = useState({
-    sort: "menu_order",
-    priceRange: [0, 1000],
-    categories: []
+    type: "menu_order",
+    priceRange: [0, 10000],
+    categories: [],
   });
 
+  // Debounce effect for price input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      // Ensure numeric and valid range
+      let min = parseInt(minPrice || 0);
+      let max = parseInt(maxPrice || 10000);
+
+      if (min > max) {
+        [min, max] = [max, min]; // swap if reversed
+      }
+
+      setPriceRange([min, max]);
+      setHasChanges(true);
+    }, DEBOUNCE_DELAY);
+
+    // cleanup timeout on change
+    return () => clearTimeout(handler);
+  }, [minPrice, maxPrice]);
+
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
   const handlePriceInput = (type, value) => {
-    const numValue = parseInt(value) || 0;
-    
-    if (type === 'min') {
-      setMinPrice(numValue);
-    } else {
-      setMaxPrice(numValue);
+  if (value === "" || /^\d+$/.test(value)) {
+    let newMin = type === "min" ? value === "" ? 0 : parseInt(value) : minPrice;
+    let newMax = type === "max" ? value === "" ? 10000 : parseInt(value) : maxPrice;
+
+    if (newMin > newMax) {
+      [newMin, newMax] = [newMax, newMin];
     }
-    setHasChanges(true);
-  };
 
-  const handlePriceBlur = () => {
-    const newRange = [minPrice, maxPrice];
-    setPriceRange(newRange);
+    setMinPrice(newMin);
+    setMaxPrice(newMax);
+    setPriceRange([newMin, newMax]);
     setHasChanges(true);
-  };
+  }
+};
 
-  const handleCategoryChange = (category) => {
-    const newCategories = selectedCategories.includes(category)
-      ? selectedCategories.filter(cat => cat !== category)
-      : [...selectedCategories, category];
-    
-    setSelectedCategories(newCategories);
-    setHasChanges(true);
-  };
+
+  // const handlePriceBlur = () => {
+  //   // Ensure min is not greater than max
+  //   if (minPrice > maxPrice) {
+  //     const temp = minPrice;
+  //     setMinPrice(maxPrice);
+  //     setMaxPrice(temp);
+  //     setPriceRange([maxPrice, temp]);
+  //   } else {
+  //     setPriceRange([minPrice, maxPrice]);
+  //   }
+  //   setHasChanges(true);
+  // };
 
   const handleSortChange = (sortOption) => {
     setSelectedSort(sortOption);
@@ -66,10 +101,11 @@ const Filters = ({ onFilterChange }) => {
   const applyFilters = () => {
     const filters = {
       type: selectedSort,
-      priceRange,
-      categories: selectedCategories
+      priceRange: [minPrice, maxPrice],
+      categories: selectedCategories,
     };
-    
+
+    console.log("Applying filters:", filters); // Debug log
     setAppliedFilters(filters);
     onFilterChange(filters);
     setHasChanges(false);
@@ -78,61 +114,89 @@ const Filters = ({ onFilterChange }) => {
 
   const resetFilters = () => {
     setSelectedSort("menu_order");
-    setPriceRange([0, 1000]);
+    setPriceRange([0, 10000]);
     setMinPrice(0);
-    setMaxPrice(1000);
+    setMaxPrice(10000);
     setSelectedCategories([]);
     setHasChanges(false);
-    
+
     const resetFiltersData = {
       type: "menu_order",
-      priceRange: [0, 1000],
-      categories: []
+      priceRange: [0, 10000],
+      categories: [],
     };
-    
     setAppliedFilters(resetFiltersData);
     onFilterChange(resetFiltersData);
   };
 
-  const categories = [
-    { name: 'Whole Spices', icon: '🌿' },
-    { name: 'Ground Spices', icon: '🥄' },
-    { name: 'Blends', icon: '🎨' },
-    { name: 'Organic', icon: '🌱' },
-    { name: 'Premium', icon: '⭐' }
-  ];
-
   const sortOptions = [
-    { value: 'menu_order', label: 'Default sorting', icon: <Grid className="w-4 h-4" /> },
-    { value: 'popularity', label: 'Most Popular', icon: <TrendingUp className="w-4 h-4" /> },
-    { value: 'rating', label: 'Highest Rated', icon: <Star className="w-4 h-4" /> },
-    { value: 'date', label: 'Newest First', icon: <span className="text-base">🆕</span> },
-    { value: 'price', label: 'Price: Low to High', icon: <DollarSign className="w-4 h-4" /> },
-    { value: 'price-desc', label: 'Price: High to Low', icon: <DollarSign className="w-4 h-4" /> },
+    {
+      value: "menu_order",
+      label: "Default sorting",
+      icon: <Grid className="w-4 h-4" />,
+    },
+    {
+      value: "popularity",
+      label: "Most Popular",
+      icon: <TrendingUp className="w-4 h-4" />,
+    },
+    {
+      value: "rating",
+      label: "Highest Rated",
+      icon: <Star className="w-4 h-4" />,
+    },
+    {
+      value: "date",
+      label: "Newest First",
+      icon: <span className="text-base">🆕</span>,
+    },
+    {
+      value: "price",
+      label: "Price: Low to High",
+      icon: <IndianRupee className="w-4 h-4" />,
+    },
+    {
+      value: "price-desc",
+      label: "Price: High to Low",
+      icon: <DollarSign className="w-4 h-4" />,
+    },
   ];
 
   const FilterSection = ({ title, icon, expanded, section, children }) => (
-    <div className="mb-6 ">
-      <button 
-        className="w-full flex items-center justify-between py-3 text-left  group bg-gradient-to-r from-green-700 to-green-900 rounded-lg"
+    <div className="mb-6">
+      <button
+        className="w-full flex items-center justify-between py-3 px-4 text-left group bg-gradient-to-r from-green-700 to-green-900 rounded-lg"
         onClick={() => toggleSection(section)}
       >
         <div className="flex items-center gap-2">
-          <div className="text-green-900">{icon}</div>
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide">{title}</h3>
+          <div className="text-white">{icon}</div>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wide">
+            {title}
+          </h3>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-4 h-4 text-white transition-transform duration-300 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
       </button>
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-        expanded ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'
-      }`}>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          expanded ? "max-h-[500px] opacity-100 mt-3" : "max-h-0 opacity-0"
+        }`}
+      >
         {children}
       </div>
     </div>
   );
 
-  const activeFiltersCount = appliedFilters.categories.length + 
-    (appliedFilters.priceRange[0] !== 0 || appliedFilters.priceRange[1] !== 1000 ? 1 : 0);
+  const activeFiltersCount =
+    appliedFilters.categories.length +
+    (appliedFilters.priceRange[0] !== 0 ||
+    appliedFilters.priceRange[1] !== 10000
+      ? 1
+      : 0) +
+    (appliedFilters.type !== "menu_order" ? 1 : 0);
 
   return (
     <>
@@ -177,11 +241,12 @@ const Filters = ({ onFilterChange }) => {
               <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
-          
+
           {activeFiltersCount > 0 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
               <span className="text-sm text-gray-600">
-                {activeFiltersCount} active filter{activeFiltersCount > 1 ? 's' : ''}
+                {activeFiltersCount} active filter
+                {activeFiltersCount > 1 ? "s" : ""}
               </span>
               <button
                 onClick={resetFilters}
@@ -196,8 +261,8 @@ const Filters = ({ onFilterChange }) => {
 
         <div className="p-6 pb-32 lg:pb-6">
           {/* Sort By Section */}
-          <FilterSection 
-            title="Sort By" 
+          <FilterSection
+            title="Sort By"
             icon={<TrendingUp className="w-4 h-4" />}
             expanded={expandedSections.sort}
             section="sort"
@@ -209,18 +274,36 @@ const Filters = ({ onFilterChange }) => {
                   onClick={() => handleSortChange(option.value)}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left border ${
                     selectedSort === option.value
-                      ? 'bg-green-50 border-green-500 text-green-700'
-                      : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+                      ? "bg-green-50 border-green-500 text-green-700"
+                      : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
                   }`}
                 >
-                  <div className={`${selectedSort === option.value ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div
+                    className={`${
+                      selectedSort === option.value
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }`}
+                  >
                     {option.icon}
                   </div>
-                  <span className="text-sm font-medium flex-1">{option.label}</span>
+                  <span className="text-sm font-medium flex-1">
+                    {option.label}
+                  </span>
                   {selectedSort === option.value && (
                     <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center">
-                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
                   )}
@@ -230,8 +313,8 @@ const Filters = ({ onFilterChange }) => {
           </FilterSection>
 
           {/* Price Range Section */}
-          <FilterSection 
-            title="Price Range" 
+          <FilterSection
+            title="Price Range"
             icon={<DollarSign className="w-4 h-4" />}
             expanded={expandedSections.price}
             section="price"
@@ -248,9 +331,9 @@ const Filters = ({ onFilterChange }) => {
                     </span>
                     <input
                       type="number"
-                      value={minPrice}
-                      onChange={(e) => handlePriceInput('min', e.target.value)}
-                      onBlur={handlePriceBlur}
+                      // value={minPrice}
+                      onBlur={(e) => handlePriceInput("min", e.target.value)}
+                      // onBlur={handlePriceBlur}
                       className="w-full pl-7 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       min="0"
                       max={maxPrice}
@@ -267,16 +350,16 @@ const Filters = ({ onFilterChange }) => {
                     </span>
                     <input
                       type="number"
-                      value={maxPrice}
-                      onChange={(e) => handlePriceInput('max', e.target.value)}
-                      onBlur={handlePriceBlur}
+                      // value={maxPrice}
+                      onBlur={(e) => handlePriceInput("max", e.target.value)}
+                      // onBlur={handlePriceBlur}
                       className="w-full pl-7 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       min={minPrice}
                     />
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                 <div className="flex items-center justify-center gap-2 text-sm font-semibold text-green-700">
                   <span>₹{minPrice}</span>
@@ -286,51 +369,17 @@ const Filters = ({ onFilterChange }) => {
               </div>
             </div>
           </FilterSection>
-
-          {/* Categories Section */}
-          <FilterSection 
-            title="Categories" 
-            icon={<Grid className="w-4 h-4" />}
-            expanded={expandedSections.categories}
-            section="categories"
-          >
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <label
-                  key={category.name}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 border ${
-                    selectedCategories.includes(category.name)
-                      ? 'bg-green-50 border-green-500'
-                      : 'bg-white hover:bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(category.name)}
-                    onChange={() => handleCategoryChange(category.name)}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 cursor-pointer"
-                  />
-                  <span className="text-lg">{category.icon}</span>
-                  <span className={`text-sm font-medium flex-1 ${
-                    selectedCategories.includes(category.name) ? 'text-green-700' : 'text-gray-700'
-                  }`}>
-                    {category.name}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </FilterSection>
         </div>
 
         {/* Apply Button - Fixed at bottom */}
         <div className="fixed bottom-0 left-0 right-0 lg:sticky bg-white border-t border-gray-200 p-4 lg:w-72 xl:w-80 z-20">
-          <button 
+          <button
             onClick={applyFilters}
             disabled={!hasChanges}
             className={`w-full py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-              hasChanges 
-                ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]' 
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              hasChanges
+                ? "bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
           >
             <Check className="w-5 h-5" />

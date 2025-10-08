@@ -339,10 +339,11 @@ class AdmingetuserOrders(APIView):
             order_id = request.data.get('orderId')
 
             orderitem = OrderItem.objects.get(id=id)
+            old_status = orderitem.status
         except OrderItem.DoesNotExist:
             return Response({'error': 'OrderItem not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if action not in ['Delivered', 'Returned']:
+        if action not in ['Delivered', 'Returned','Cancelled','Dispatched']:
             return Response({'error': 'Invalid action'}, status=status.HTTP_400_BAD_REQUEST)
 
         if action == 'Returned' and (not user_id or not amount or not order_id):
@@ -350,7 +351,7 @@ class AdmingetuserOrders(APIView):
 
         try:
             with transaction.atomic():
-                if action == 'Delivered':
+                if action == 'Delivered' and old_status =='Requested for Return':
                     orderitem.status = 'Delivered Return not Approved'
                 elif action == 'Returned':
                     orderitem.status = 'Returned'
@@ -365,9 +366,15 @@ class AdmingetuserOrders(APIView):
                     # Update product variant stock
                     orderitem.product_variant.stock = F('stock') + orderitem.quantity
                     orderitem.product_variant.save()
-
+                
+                elif  action == 'Delivered':
+                    orderitem.status = 'Delivered'
+                elif  action == 'Cancelled':
+                    orderitem.status = 'Cancelled'
+                elif  action == 'Dispatched':
+                    orderitem.status = 'Dispatched'
+                    
                 orderitem.save()
-
             return Response({'status': 'success', 'updated_status': orderitem.status}, status=status.HTTP_200_OK)
 
         except Exception as e:

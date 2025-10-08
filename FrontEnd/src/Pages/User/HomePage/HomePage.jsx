@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "../../../Components/Header/Header";
 import Footer from "../../../Components/Footer/Footer";
@@ -11,27 +11,33 @@ import Banner from "../../../Components/Banner/Banner";
 
 function HomePage() {
   const location = useLocation();
-  let { category_id } = location.state || {};
+  const initialCategoryId = location.state?.category_id || "";
+
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = Number(searchParams.get("page")) || 1;
-  const [fiterType, setFilterType] = useState("");
+  const [filterType, setFilterType] = useState("menu_order");
   const [searchItem, setSearchItem] = useState("");
-  
+  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [filterDetails, setFilterDetails] = useState({
+    type: "menu_order",
+    priceRange: [0, 1000],
+    categories: [],
+  });
   // Handle Search
   const handleSearch = debounce((searchedString) => {
     setSearchItem(searchedString);
-    category_id = "";
     setFilterType("");
   }, 500);
 
   // Handle filter change
   const handleFilterChange = (changedFilterDetails) => {
+    console.log("Filter changed:", changedFilterDetails);
     setSearchItem("");
-    category_id = "";
+    setCategoryId("");
     setFilterType(changedFilterDetails.type);
+    setFilterDetails(changedFilterDetails);
+    setSearchParams({ page: "1" });
   };
-  
-  // Fetch products with React Query
   const {
     data: productsData,
     isLoading,
@@ -39,23 +45,44 @@ function HomePage() {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ["products", category_id, currentPage, fiterType, searchItem],
+    queryKey: [
+      "products",
+      categoryId,
+      currentPage,
+      filterType,
+      searchItem,
+      JSON.stringify(filterDetails), // Stringify to properly track changes
+    ],
     queryFn: async () => {
       let url = "";
-      if (category_id) {
-        url = `/categoryBasedProductData/${category_id}?page=${currentPage}`;
-      } else if (fiterType) {
-        url = `/filterBasedProductData/${fiterType}?page=${currentPage}`;
-      } else if (searchItem) {
+      let method = "get";
+      let requestData = null;
+
+      // Priority: search > category > filter > default
+      if (searchItem) {
         url = `/searchBasedProductData/${searchItem}?page=${currentPage}`;
-        console.log(searchItem, "is serched", url);
+      } else if (initialCategoryId) {
+        url = `/categoryBasedProductData/${initialCategoryId}?page=${currentPage}`;
+      } else if (
+        filterType !== "menu_order" ||
+        filterDetails.categories.length > 0 ||
+        filterDetails.priceRange[0] !== 0 ||
+        filterDetails.priceRange[1] !== 1000
+      ) {
+        // Use filter endpoint when any filter is applied
+        url = `/filterBasedProductData?page=${currentPage}`;
+        method = "post";
+        requestData = filterDetails;
       } else {
-        url = `/?page=${currentPage}`;
+        url = `indexPage?page=${currentPage}`;
       }
-      const response = await axiosInstance.get(url);
+      const response =
+        method === "post"
+          ? await axiosInstance.post(url, requestData)
+          : await axiosInstance.get(url);
       return response.data;
     },
-    keepPreviousData: true, 
+    keepPreviousData: true,
   });
 
   // Handle page change
@@ -96,9 +123,9 @@ function HomePage() {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Product Grid */}
-            <ProductView 
-              data={productsData?.results || []} 
-              category="Products" 
+            <ProductView
+              data={productsData?.results || []}
+              category="Products"
             />
 
             {/* Pagination Controls */}
@@ -118,7 +145,9 @@ function HomePage() {
 
                 <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
                   <span className="text-sm text-gray-600">Page</span>
-                  <span className="font-bold text-green-600">{currentPage}</span>
+                  <span className="font-bold text-green-600">
+                    {currentPage}
+                  </span>
                   <span className="text-sm text-gray-600">of</span>
                   <span className="font-bold text-gray-800">
                     {Math.ceil(productsData?.count / 12)}

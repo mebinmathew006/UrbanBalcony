@@ -10,14 +10,14 @@ from .serializer import (LoginSerializer,CustomUserSerializer,ReviewAndRatingSer
                          AddressSerializer,OrderSerializer,CartSerializer,PaymentsSerializer,
                          TransactionSerializer,OrderItemSerializer,WishlistSerilaizer)
 from AdminPanel.serializer import ProductVariantSerializer
-from rest_framework.exceptions import ErrorDetail
+from rest_framework.exceptions import ErrorDetail,ValidationError
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from django.conf import settings
 from django.db import transaction
 import random
 import string
-from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min, Exists, OuterRef
+from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min, Exists, OuterRef,Q,Value, BooleanField
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -101,6 +101,7 @@ def getUserDetailsAgainWhenRefreshing(request):
     except (ExpiredSignatureError, InvalidTokenError, DecodeError):
         return Response({'error': 'Invalid or expired refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 class UserHome(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = ProductPagination
@@ -131,28 +132,6 @@ class UserHome(APIView):
         return paginator.get_paginated_response(paginated_products)
     
     
-class CategoryBasedProductData(APIView):
-    permission_classes=[AllowAny]
-    pagination_class = ProductPagination
-    
-    def get(self, request,id):
-        user=request.user
-        products = Product.objects.select_related('category').annotate(
-        starting_price=Min('variants__variant_price'),
-        total_stock=Sum('variants__stock'),
-        in_wishlist=Exists(
-            Wishlist.objects.filter(
-                user_id=user.id,
-                wishlist_products__id=OuterRef('id') 
-            )
-        )
-    ).filter(is_active=True,category__is_active=True,category__id=id)
-         # Apply pagination
-        paginator = self.pagination_class()
-        paginated_products = paginator.paginate_queryset(products.values(), request)
-        return paginator.get_paginated_response(paginated_products)
-    
-    
 class RelatedProductData(APIView):
     permission_classes=[AllowAny]
     pagination_class = ProductPagination
@@ -172,72 +151,6 @@ class RelatedProductData(APIView):
                                           
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
-        return paginator.get_paginated_response(paginated_products)
-    
-class SearchBasedProductData(APIView):
-    permission_classes=[AllowAny]
-    pagination_class = ProductPagination
-    def get(self, request,search):
-        user = request.user
-        products = Product.objects.select_related('category').annotate(
-        starting_price=Min('variants__variant_price'),
-        total_stock=Sum('variants__stock'),
-        in_wishlist=Exists(
-            Wishlist.objects.filter(
-                user_id=user.id,
-                wishlist_products__id=OuterRef('id') 
-            )
-        )
-    ).filter(is_active=True,category__is_active=True,title__istartswith=search)
-         # Apply pagination
-        paginator = self.pagination_class()
-        paginated_products = paginator.paginate_queryset(products.values(), request)
-        
-        return paginator.get_paginated_response(paginated_products)
-    
-    
-class FilterBasedProductData(APIView):
-    permission_classes=[AllowAny]
-    pagination_class = ProductPagination
-    def get(self, request,types):
-        if types == 'rating':
-            products=Product.objects.select_related('category'
-                        ).filter(is_active=True,category__is_active=True
-                        ).annotate(average_rating=Avg('reviews__rating'
-                        ),starting_price=Min('variants__variant_price'
-                        ),total_stock=Sum('variants__stock')
-                        ).order_by('average_rating')
-        elif types == 'price-desc':
-            products=Product.objects.select_related('category'
-                                                    ).annotate(starting_price=Min('variants__variant_price'
-                                                    ),total_stock=Sum('variants__stock')
-                                                    ).filter(is_active=True,category__is_active=True).order_by('-price')
-        elif types == 'price':
-            products=Product.objects.select_related('category'
-                                                    ).annotate(starting_price=Min('variants__variant_price'
-                                                    ),total_stock=Sum('variants__stock')
-                                                    ).filter(is_active=True,category__is_active=True).order_by('price')
-        elif types == 'date':
-            products=Product.objects.select_related('category'
-                                                    ).annotate(starting_price=Min('variants__variant_price'
-                                                    ),total_stock=Sum('variants__stock')
-                                                    ).filter(is_active=True,category__is_active=True).order_by('-created_at')
-        elif types == 'popularity':
-            products=Product.objects.select_related('category'
-                                                    ).annotate(starting_price=Min('variants__variant_price'
-                                                    ),total_stock=Sum('variants__stock')
-                                                    ).filter(is_active=True,category__is_active=True
-                                                    ).annotate(total_order=Coalesce(Sum('variants__productvariants__quantity'
-                                                                                        ), 0) ).order_by('-total_order')
-        else:
-            products = Product.objects.select_related('category'
-                                                    ).annotate(starting_price=Min('variants__variant_price'
-                                                    ),total_stock=Sum('variants__stock')
-                                                               ).filter(is_active=True,category__is_active=True)
-         # Apply pagination
-        paginator = self.pagination_class()
-        paginated_products = paginator.paginate_queryset(products.values(), request)
-        
         return paginator.get_paginated_response(paginated_products)
 
     
@@ -747,30 +660,25 @@ class UserOrder(APIView):
     
     def patch(self, request, id):
         try:
-            # Retrieve the order item
             orderItem = OrderItem.objects.get(id=id)
-            
-            if request.user.id != orderItem.order.user.id:
+            if int(request.user.id) != int(orderItem.order.user.id):
                 return Response(
                     {"error": "You are not authorized."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-                
-            orderItem.status = request.data.get('action')
-            orderItem.save()
-
-            # Check if the order was cancelled and handle refund
+            
             with transaction.atomic():
-                if request.data.get('action') == 'Cancelled':
+                
+                if request.data.get('action') == 'Cancelled' and (orderItem.status =='pending' or orderItem.status =='Dispatched'):
                     payment_status = orderItem.order.payment.status  
                     if payment_status == 'success':
                         wallet = Wallet.objects.get(user=orderItem.order.user)
-                        wallet.balance = F('balance') + orderItem.shipping_price_per_order + orderItem.total_amount
+                        wallet.balance = F('balance') + orderItem.shipping_price_per_order + (orderItem.total_amount-(orderItem.total_amount/100*orderItem.order.discout_percentage))
                         wallet.save()
-                    # Update product variant stock
                     orderItem.product_variant.stock = F('stock') + orderItem.quantity
                     orderItem.product_variant.save()
-                # Successful response
+                orderItem.status = request.data.get('action')
+                orderItem.save()
                 return Response({'id': orderItem.id}, status=status.HTTP_200_OK)
 
         except OrderItem.DoesNotExist:
@@ -965,6 +873,13 @@ class UserPlaceOrder(APIView):
             raise ValueError("Invalid Razorpay order ID")
 
     def create_payment(self, user_id, payment_status, payment_method, coupon_id=None):
+        if coupon_id:
+            try:
+                discoutPercentage = Coupon.objects.get(id=coupon_id)
+            except Coupon.DoesNotExist:
+                raise ValidationError("The coupon is not found")  
+            if Payment.objects.filter(user=user_id, coupon=discoutPercentage).exists():
+                raise ValidationError("The coupon is already used")  
         payment_data = {
             'user': user_id,
             'status': payment_status,
@@ -987,14 +902,17 @@ class UserPlaceOrder(APIView):
         transaction_serializer.is_valid(raise_exception=True)
         return transaction_serializer.save()
 
-    def create_order(self, user_id, payment_id, address_id, total_amount,discoutPercentage):
+    def create_order(self, user_id, payment_id, address_id, total_amount, coupon_id=None):
+        discoutPercentage = None
+        if coupon_id:
+              discoutPercentage = Coupon.objects.get(id=coupon_id)
         order_data = {
             'user': user_id,
             'payment': payment_id,
             'address': address_id,
-            'shipping_charge': 100,  # Consider making this configurable
+            'shipping_charge': 100,
             'net_amount': total_amount,
-            'discout_percentage': discoutPercentage,
+            'discout_percentage': discoutPercentage.coupon_percent if discoutPercentage else 0,
             'delivery_date': (datetime.now() + timedelta(days=10)).date(),
         }
         order_serializer = OrderSerializer(data=order_data)
@@ -1023,13 +941,11 @@ class UserPlaceOrder(APIView):
                 variants__id=variant.id
             )
 
-            # 🧮 Safe Decimal computation for shipping charge per item
             shipping_price_per_order = (
                 Decimal(str(shipping_charge))
                 * (Decimal(item.quantity) / Decimal(total_quantity))
             ).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-            # Update stock
             ProductVariant.objects.filter(id=variant.id).update(
                 stock=F('stock') - item.quantity
             )
@@ -1043,12 +959,10 @@ class UserPlaceOrder(APIView):
                 'shipping_price_per_order': shipping_price_per_order,
             })
 
-        # Create order items
         order_item_serializer = OrderItemSerializer(data=order_items, many=True)
         order_item_serializer.is_valid(raise_exception=True)
         order_item_serializer.save()
 
-        # Clear cart
         cart_items.delete()
 
 
@@ -1120,7 +1034,8 @@ class UserPlaceOrder(APIView):
                     payment.id,
                     request.data.get('addressId'),
                     request.data.get('totalAmount'),
-                    request.data.get('discoutPercentage')
+                    
+                    request.data.get('coupon_id')
                 )
                 # Process order items based on type
                 if request.data.get('type') == 'cart':
@@ -1137,7 +1052,11 @@ class UserPlaceOrder(APIView):
                     {"message": "Order placed successfully", "order_id": order.id},
                     status=status.HTTP_201_CREATED
                 )
-
+        except ValidationError as ve:
+            return Response(
+                {"error": str(ve.detail if hasattr(ve, 'detail') else ve)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except ValueError as e:
             logger.error(f"Validation error in order creation: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -1374,24 +1293,17 @@ class ValidateCoupon(APIView):
                 {"error": "You are not authorized."},
                 status=status.HTTP_403_FORBIDDEN,
                 )
-            
-            # Fetch the coupon object
             coupon = get_object_or_404(Coupon, code=coupon_code)
-            
-            # Check if a payment exists for the user and coupon
             try:
-                payment = Payment.objects.get(user=user_id, coupon=coupon)
-                # If a payment exists, the coupon is already used
+                pay = Payment.objects.get(user=user_id, coupon=coupon)
                 return Response({'error': 'Coupon is already used'}, status=status.HTTP_400_BAD_REQUEST)
             except Payment.DoesNotExist:
-                # If no payment exists, return coupon details
                 return Response({
                     'code': coupon_code,
                     'value': coupon.coupon_percent,
                     'type': "percentage",
                     'id': coupon.id
                 }, status=status.HTTP_200_OK)
-
         except Coupon.DoesNotExist:
             return Response({'error': 'Coupon not found'}, status=status.HTTP_404_NOT_FOUND)
             
@@ -1490,3 +1402,263 @@ class UserWishlistFromHomePage(APIView):
             )
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+        
+class CategoryBasedProductData(APIView):
+    """
+    Category-based filtering - GET /categoryBasedProductData/<id>?page=1
+    """
+    permission_classes = [AllowAny]
+    pagination_class = ProductPagination
+    
+    def get(self, request, id):
+        user = request.user
+        
+        products = Product.objects.select_related('category').annotate(
+            starting_price=Min('variants__variant_price'),
+            total_stock=Sum('variants__stock'),
+            in_wishlist=Exists(
+                Wishlist.objects.filter(
+                    user_id=user.id if user.is_authenticated else None,
+                    wishlist_products__id=OuterRef('id')
+                )
+            ) if user.is_authenticated else False
+        ).filter(
+            is_active=True,
+            category__is_active=True,
+            category__id=id
+        ).order_by('id')
+        
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(
+            products.values(
+                'id',
+                'title',
+                'category__name',
+                'price',
+                'starting_price',
+                'total_stock',
+                'description',
+                'shelf_life',
+                'available_quantity',
+                'product_img1',
+                'product_img2',
+                'product_img3',
+                'created_at',
+                'in_wishlist'
+            ),
+            request
+        )
+        
+        return paginator.get_paginated_response(paginated_products)
+
+
+class SearchBasedProductData(APIView):
+    """
+    Search-based filtering - GET /searchBasedProductData/<search_term>?page=1
+    """
+    permission_classes = [AllowAny]
+    pagination_class = ProductPagination
+    
+    def get(self, request, search_term):
+        user = request.user
+        
+        products = Product.objects.select_related('category').annotate(
+            starting_price=Min('variants__variant_price'),
+            total_stock=Sum('variants__stock'),
+            in_wishlist=Exists(
+                Wishlist.objects.filter(
+                    user_id=user.id if user.is_authenticated else None,
+                    wishlist_products__id=OuterRef('id')
+                )
+            ) if user.is_authenticated else False
+        ).filter(
+            is_active=True,
+            category__is_active=True,
+            title__icontains=search_term
+        ).order_by('id')
+        
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(
+            products.values(
+                'id',
+                'title',
+                'category__name',
+                'price',
+                'starting_price',
+                'total_stock',
+                'description',
+                'shelf_life',
+                'available_quantity',
+                'product_img1',
+                'product_img2',
+                'product_img3',
+                'created_at',
+                'in_wishlist'
+            ),
+            request
+        )
+        
+        return paginator.get_paginated_response(paginated_products)
+
+
+class FilterBasedProductData(APIView):
+    """
+    Filter-based product listing - POST /filterBasedProductData?page=1
+    Request body: {
+        "type": "menu_order|popularity|rating|date|price|price-desc",
+        "priceRange": [min, max],
+        "categories": ["Category1", "Category2"]
+    }
+    """
+    permission_classes = [AllowAny]
+    pagination_class = ProductPagination
+    
+    def post(self, request):
+        user = request.user
+        data = request.data
+        
+        # Get filter parameters
+        sort_type = data.get('type', 'menu_order')
+        price_range = data.get('priceRange', [0, 1000])
+        min_price = price_range[0]
+        max_price = price_range[1]
+        categories = data.get('categories', [])
+        
+        # Build base queryset
+        products = Product.objects.select_related('category').annotate(
+            starting_price=Min('variants__variant_price'),
+            total_stock=Sum('variants__stock'),
+            in_wishlist=Exists(
+                Wishlist.objects.filter(
+                    user_id=user.id if user.is_authenticated else None,
+                    wishlist_products__id=OuterRef('id')
+                )
+            ) if user.is_authenticated else Value(False, output_field=BooleanField())
+        ).filter(
+            is_active=True,
+            category__is_active=True
+        )
+        
+        # Apply category filter
+        if categories:
+            products = products.filter(category__name__in=categories)
+        
+        # Apply price range filter
+        products = products.filter(
+            starting_price__gte=min_price,
+            starting_price__lte=max_price
+        )
+        
+        # Apply sorting
+        sort_mapping = {
+            'menu_order': 'id',
+            'popularity': '-created_at',  # Change to popularity field when added
+            'rating': 'title',  # Change to rating field when added
+            'date': '-created_at',
+            'price': 'starting_price',
+            'price-desc': '-starting_price'
+        }
+        
+        order_by = sort_mapping.get(sort_type, 'id')
+        products = products.order_by(order_by)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(
+            products.values(
+                'id',
+                'title',
+                'category__name',
+                'price',
+                'starting_price',
+                'total_stock',
+                'description',
+                'shelf_life',
+                'available_quantity',
+                'product_img1',
+                'product_img2',
+                'product_img3',
+                'created_at',
+                'in_wishlist'
+            ),
+            request
+        )
+        
+        return paginator.get_paginated_response(paginated_products)
+    
+    def get(self, request):
+        """
+        Also support GET requests with query parameters
+        GET /filterBasedProductData?type=price&minPrice=0&maxPrice=500&categories[]=Organic&page=1
+        """
+        user = request.user
+        
+        # Get filter parameters from query string
+        sort_type = request.GET.get('type', 'menu_order')
+        min_price = int(request.GET.get('minPrice', 0))
+        max_price = int(request.GET.get('maxPrice', 1000))
+        categories = request.GET.getlist('categories[]')
+        
+        # Build base queryset
+        products = Product.objects.select_related('category').annotate(
+            starting_price=Min('variants__variant_price'),
+            total_stock=Sum('variants__stock'),
+            in_wishlist=Exists(
+                Wishlist.objects.filter(
+                    user_id=user.id if user.is_authenticated else None,
+                    wishlist_products__id=OuterRef('id')
+                )
+            ) if user.is_authenticated else Value(False, output_field=BooleanField())
+        ).filter(
+            is_active=True,
+            category__is_active=True
+        )
+        
+        # Apply filters
+        if categories:
+            products = products.filter(category__name__in=categories)
+        
+        products = products.filter(
+            starting_price__gte=min_price,
+            starting_price__lte=max_price
+        )
+        
+        # Apply sorting
+        sort_mapping = {
+            'menu_order': 'id',
+            'popularity': '-created_at',
+            'rating': 'title',
+            'date': '-created_at',
+            'price': 'starting_price',
+            'price-desc': '-starting_price'
+        }
+        
+        order_by = sort_mapping.get(sort_type, 'id')
+        products = products.order_by(order_by)
+        
+        # Apply pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(
+            products.values(
+                'id',
+                'title',
+                'category__name',
+                'price',
+                'starting_price',
+                'total_stock',
+                'description',
+                'shelf_life',
+                'available_quantity',
+                'product_img1',
+                'product_img2',
+                'product_img3',
+                'created_at',
+                'in_wishlist'
+            ),
+            request
+        )
+        
+        return paginator.get_paginated_response(paginated_products)
