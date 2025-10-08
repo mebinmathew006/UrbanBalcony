@@ -121,38 +121,41 @@ class ProductManage(APIView):
 class AdmineditProduct(APIView):
     permission_classes =[IsAuthenticated]
     def post(self, request):
-        if not (request.user.is_superuser):
+        try:
+            print(request.data)
+            if not (request.user.is_superuser):
+                    return Response(
+                        {"error": "You are not authorized"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            product_id = request.data.get('id')
+            logger.info(request.data.get('category_id'))
+            if not product_id:
                 return Response(
-                    {"error": "You are not authorized"},
-                    status=status.HTTP_403_FORBIDDEN,
+                    {"error": "Product ID is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-        product_id = request.data.get('id')
-        logger.info(request.data.get('category'))
-        if not product_id:
+            
+            product = get_object_or_404(Product, id=int(product_id))
+            
+            serializer = ProductSerializer(product, data=request.data)
+
+            if serializer.is_valid():
+                product = serializer.save()
+                data = {
+                    'id': product.id,
+                    'status': "success"
+                }
+                return Response(data, status=status.HTTP_200_OK)
+
+            # Log errors for debugging
+            logger.info(f"Validation Errors: {serializer.errors}")
             return Response(
-                {"error": "Product ID is required."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": serializer.errors}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
-        
-        product = get_object_or_404(Product, id=int(product_id))
-        
-        serializer = ProductSerializer(product, data=request.data)
-
-        if serializer.is_valid():
-            product = serializer.save()
-            data = {
-                'id': product.id,
-                'status': "success"
-            }
-            return Response(data, status=status.HTTP_200_OK)
-
-        # Log errors for debugging
-        logger.info(f"Validation Errors: {serializer.errors}")
-        return Response(
-            {"error": serializer.errors}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
+        except Exception as e:
+            logger.error(e)
     
 class AdminaddProduct(APIView):
     permission_classes =[IsAuthenticated]
@@ -367,12 +370,15 @@ class AdmingetuserOrders(APIView):
                     orderitem.product_variant.stock = F('stock') + orderitem.quantity
                     orderitem.product_variant.save()
                 
-                elif  action == 'Delivered':
+                elif  action == 'Delivered' and old_status == 'Dispatched':
                     orderitem.status = 'Delivered'
-                elif  action == 'Cancelled':
+                elif  action == 'Cancelled' and (old_status =='pending' or old_status =='Dispatched'):
                     orderitem.status = 'Cancelled'
-                elif  action == 'Dispatched':
+                elif  action == 'Dispatched' and old_status =='pending' :
                     orderitem.status = 'Dispatched'
+                    
+                else:
+                    return Response({'status': 'Failed', 'updated_status': f'You cant change the status from {old_status} to {action}'}, status=status.HTTP_400_BAD_REQUEST)
                     
                 orderitem.save()
             return Response({'status': 'success', 'updated_status': orderitem.status}, status=status.HTTP_200_OK)

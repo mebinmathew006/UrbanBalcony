@@ -17,7 +17,7 @@ from django.conf import settings
 from django.db import transaction
 import random
 import string
-from django.db.models import Avg,F,ExpressionWrapper, FloatField, Value,Sum,Min, Exists, OuterRef,Q,Value, BooleanField
+from django.db.models import F,ExpressionWrapper, FloatField, Value,Sum,Min, Exists, OuterRef,Q,Value, BooleanField
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -35,9 +35,8 @@ from rest_framework.pagination import PageNumberPagination
 import logging
 from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
-from decimal import Decimal
 from decimal import Decimal, ROUND_HALF_UP
-
+import math
 logger = logging.getLogger(__name__)
 
 
@@ -108,7 +107,7 @@ class UserHome(APIView):
 
     def get(self, request):
         user = request.user
-
+        
         products = (
             Product.objects.select_related('category')
             .annotate(
@@ -159,20 +158,25 @@ class IndexPage(APIView):
     pagination_class = ProductPagination
 
     def get(self, request):
-        products = Product.objects.select_related('category'
-                                                  ).annotate(starting_price=Min('variants__variant_price'
-                                                  ),total_stock=Sum('variants__stock')
-                                                  ).filter(is_active=True,category__is_active=True).order_by('id') 
+        products = (
+            Product.objects.select_related('category')
+            .annotate(
+                starting_price=Min('variants__variant_price'),
+                total_stock=Sum('variants__stock'),
+            )
+            .filter(
+                is_active=True,
+                category__is_active=True
+            )
+            .order_by('id')
+        )
         
-        # Apply pagination
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
-        
         return paginator.get_paginated_response(paginated_products)
     
     
 class GetCategories(APIView):
-    # permission_classes=[AllowAny]
     def get(self, request):
         categories = Category.objects.order_by('id')[:5]
         return Response(categories.values(), status.HTTP_200_OK)
@@ -851,13 +855,13 @@ class UserPlaceOrder(APIView):
     def process_wallet_payment(self, total, user_id):
         total=Decimal(str(total)) 
         try:
-            wallet = Wallet.objects.get(user_id=user_id)  # Fetch the Wallet instance
+            wallet = Wallet.objects.get(user_id=user_id)  
             if total > int(wallet.balance):
                 raise ValueError("Insufficient balance")
             wallet.balance -= total
-            wallet.save()  # Save the updated balance
+            wallet.save()  
         except Wallet.DoesNotExist:
-            raise ValueError("Wallet not found")  # Handle case where user has no wallet
+            raise ValueError("Wallet not found") 
 
 
     def _process_card_payment(self, payment_data):
@@ -973,17 +977,17 @@ class UserPlaceOrder(APIView):
 
         price = self.calculate_price_with_offer(variant)
         
-        # Update stock
         ProductVariant.objects.filter(id=variant.id).update(
             stock=F('stock') - quantity
         )
         product_image=Product.objects.values_list('product_img1',flat=True).get(variants__id=variant.id)
+        total_amount = math.ceil(quantity * price)
         order_item = {
             'order': order_id,
             'product_variant': variant.id,
             'quantity': quantity,
             'image_url': product_image,
-            'total_amount': (quantity * price),
+            'total_amount': total_amount,
             'shipping_price_per_order': shipping_charge,
         }
 
@@ -993,10 +997,13 @@ class UserPlaceOrder(APIView):
 
     @staticmethod
     def calculate_price_with_offer(variant):
+        price = None
         offer = variant.product.offers.filter(is_active=True).first()
         if offer:
-            return variant.variant_price * (1 - offer.discount_percentage / 100)
-        return variant.variant_price
+            price= variant.variant_price * (1 - offer.discount_percentage / 100)
+        else:
+            price =variant.variant_price
+        return price
 
     def post(self, request):
         try:
@@ -1034,7 +1041,6 @@ class UserPlaceOrder(APIView):
                     payment.id,
                     request.data.get('addressId'),
                     request.data.get('totalAmount'),
-                    
                     request.data.get('coupon_id')
                 )
                 # Process order items based on type
@@ -1044,8 +1050,8 @@ class UserPlaceOrder(APIView):
                     self.process_direct_order(
                         order.id,
                         request.data.get('productId'),
-                        request.data.get('quantity')
-                        ,order.shipping_charge
+                        request.data.get('quantity'),
+                        order.shipping_charge
                     )
 
                 return Response(

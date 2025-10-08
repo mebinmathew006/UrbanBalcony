@@ -156,11 +156,6 @@ class OrderItem(models.Model):
     image_url = models.CharField(max_length=500, null=True, blank=True)
     shipping_price_per_order=models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
-    def save(self, *args, **kwargs):
-        # Calculate the total amount
-        if self.product_variant:
-            self.total_amount = self.quantity * self.product_variant.variant_price
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Item #{self.id} - Order #{self.order.id} - {self.product_variant}"
