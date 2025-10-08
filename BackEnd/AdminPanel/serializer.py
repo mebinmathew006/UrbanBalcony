@@ -14,7 +14,7 @@ def validate_image(value):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id','name']
+        fields = ['id','name','is_active']
         extra_kwargs = {
             'name': {
                 'required': True,

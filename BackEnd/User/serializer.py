@@ -43,7 +43,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     # SerializerMethodField: get_<field_name>
     def get_profile_picture(self, obj):
         if obj.profile_picture:
-            return obj.profile_picture.url  # Assumes the profile_picture field is an ImageField/FileField
+            return obj.profile_picture.url  
         return None
     
     def create(self, validated_data):
@@ -83,11 +83,13 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model=Address
         fields=['id','address_type','city','state','pin_code','land_mark','alternate_number']
+    
         
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model=Payment
         fields = ['id' ,'pay_method', 'status']
+        
         
 class OrderItemSerializer(serializers.ModelSerializer):
     variant=ProductVariantSerializer(source='product_variant',read_only=True)

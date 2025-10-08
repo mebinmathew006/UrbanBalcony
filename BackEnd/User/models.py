@@ -230,7 +230,7 @@ class Coupon(models.Model):
     is_active = models.BooleanField(default=True)
     code = models.CharField(max_length=50, unique=True)
     coupon_percent = models.PositiveIntegerField()
-    expire_date = models.DateField() 
+    expire_date = models.DateField(auto_now_add=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

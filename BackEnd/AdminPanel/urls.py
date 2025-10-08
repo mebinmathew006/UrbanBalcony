@@ -10,6 +10,7 @@ urlpatterns = [
     path('categorymanage',CategoryManage.as_view(),name='getAllCategory'),
     path('categorymanage/<int:id>',CategoryManage.as_view(),name='categorystatus'),
     path('productmanage',ProductManage.as_view(),name='categorymanage'),
+    path('products',Products.as_view(),name='categorymanage'),
     path('productmanage/<int:id>',ProductManage.as_view(),name='categorystatus'),
     path('admineditProduct',AdmineditProduct.as_view(),name='admineditProduct'),
     path('adminaddProduct',AdminaddProduct.as_view(),name='adminaddProduct'),

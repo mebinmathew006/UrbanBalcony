@@ -118,6 +118,20 @@ class ProductManage(APIView):
         }
         return Response(data,200)
     
+class Products(APIView):
+    permission_classes =[IsAuthenticated]
+    def get (self,request):
+        if not (request.user.is_superuser):
+                return Response(
+                    {"error": "You are not authorized"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+   
+    
 class AdmineditProduct(APIView):
     permission_classes =[IsAuthenticated]
     def post(self, request):
