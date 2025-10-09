@@ -6,9 +6,6 @@ import { X } from "lucide-react";
 const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
-
-  
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -97,7 +94,9 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
               Phone Number
             </label>
             <input
-              {...register("phone_number", { required: "Phone Number is required" })}
+              {...register("phone_number", {
+                required: "Phone Number is required",
+              })}
               type="number"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
             />
@@ -107,7 +106,6 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
               </p>
             )}
           </div>
-          
 
           {/* file field */}
           <div>
@@ -127,7 +125,11 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             {/* Preview */}
             {user.profile_picture && (
               <div className="mt-4">
-                <img src={`${baseurl}${user.profile_picture}`} alt={`Profile Image`} className="w-24 h-24 " />
+                <img
+                  src={`${baseurl}${user.profile_picture}`}
+                  alt={`Profile Image`}
+                  className="w-24 h-24 "
+                />
               </div>
             )}
           </div>
