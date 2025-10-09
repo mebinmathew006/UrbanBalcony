@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axiosInstance from "../../../axiosconfig";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import jsPDF from "jspdf";
+import Swal from "sweetalert2";
 
 const UserSingleOrderDetailsPage = () => {
   const location = useLocation();
@@ -18,6 +18,51 @@ const UserSingleOrderDetailsPage = () => {
 
   const handleCancel = async () => {
     try {
+      const result = await Swal.fire({
+        title: "Cancel Order",
+        text: "Are you sure?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        customClass: {
+          popup: "rounded-2xl shadow-2xl backdrop-blur-sm",
+          header: "border-b-0 pb-2",
+          title: "text-2xl font-bold text-gray-900 mb-2",
+          htmlContainer: "text-gray-600 leading-relaxed text-base",
+          actions: "gap-3 mt-6",
+          confirmButton:
+            "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 border-0",
+          cancelButton:
+            "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 border-0",
+          icon: "border-4 border-blue-100 text-blue-500",
+        },
+
+        // Enhanced button styling
+        buttonsStyling: false, // Disable default styling to use custom classes
+
+        // Animation and backdrop
+        backdrop: `
+      rgba(0,0,0,0.5)
+      left top
+      no-repeat
+    `,
+        showClass: {
+          popup: "animate-fade-in-up",
+        },
+        hideClass: {
+          popup: "animate-fade-out",
+        },
+
+        // Width and padding
+        width: "28rem",
+        padding: "2rem",
+
+        // Color scheme
+        color: "#1f2937",
+        background: "#ffffff",
+      });
+      if (!result.isConfirmed) return;
       await axiosInstance.patch(`userOrders/${orderId}`, {
         action: "Cancelled",
         user_id,
@@ -57,7 +102,7 @@ const UserSingleOrderDetailsPage = () => {
   const fetchOrderDetails = async () => {
     try {
       const response = await axiosInstance.get(`singleOrderDetails/${orderId}`);
-      console.log(response.data)
+      console.log(response.data);
       setProductId(response.data.variant.product.id);
       setOrder(response.data);
     } catch (error) {
