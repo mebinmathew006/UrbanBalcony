@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import (CustomUser,Product,Review,Address,Order,OrderItem,Cart,
                      ProductVariant,CartItem,Payment,OTP,Razorpay,Wishlist,
-                     WishlistProduct,Coupon,Wallet,Category)
+                     WishlistProduct,Coupon,Wallet,Category,WalletTransaction)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import status
@@ -37,6 +37,7 @@ from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
 from decimal import Decimal, ROUND_HALF_UP
 import math
+from django.core.paginator import Paginator
 logger = logging.getLogger(__name__)
 
 
@@ -709,9 +710,16 @@ class UserOrder(APIView):
                 if request.data.get('action') == 'Cancelled' and (orderItem.status =='pending' or orderItem.status =='Dispatched'):
                     payment_status = orderItem.order.payment.status  
                     if payment_status == 'success':
+                        amount = orderItem.shipping_price_per_order + (orderItem.total_amount-(orderItem.total_amount/100*orderItem.order.discout_percentage))
                         wallet = Wallet.objects.get(user=orderItem.order.user)
-                        wallet.balance = F('balance') + orderItem.shipping_price_per_order + (orderItem.total_amount-(orderItem.total_amount/100*orderItem.order.discout_percentage))
+                        wallet.balance = F('balance') + amount
                         wallet.save()
+                        # Create transaction record
+                        WalletTransaction.objects.create(
+                            wallet=wallet,
+                            amount=amount,
+                            order=None  # Set order if applicable
+                        )
                     orderItem.product_variant.stock = F('stock') + orderItem.quantity
                     orderItem.product_variant.save()
                 orderItem.status = request.data.get('action')
@@ -893,6 +901,12 @@ class UserPlaceOrder(APIView):
                 raise ValueError("Insufficient balance")
             wallet.balance -= total
             wallet.save()  
+            # Create transaction record
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                amount=-(total),
+                order=None  # Set order if applicable
+            )
         except Wallet.DoesNotExist:
             raise ValueError("Wallet not found") 
 
@@ -1348,44 +1362,86 @@ class ValidateCoupon(APIView):
             
         
 class UserWallet(APIView):
-    def get(self,request, id):
+    def get(self, request, id):
         try:
             if request.user.id != id:
                 return Response(
-                {"error": "You are not authorized."},
-                status=status.HTTP_403_FORBIDDEN,
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
             # Fetch wallet for the given user_id
-            wallet,created = Wallet.objects.get_or_create(user_id=id)
+            wallet, created = Wallet.objects.get_or_create(user_id=id)
+            
+            # Get pagination parameters
+            page = request.query_params.get('page', 1)
+            page_size = request.query_params.get('page_size', 10)
+            
+            # Fetch transactions with pagination
+            transactions = WalletTransaction.objects.filter(
+                wallet=wallet
+            ).order_by('-created_at')
+            
+            # Paginate transactions
+            paginator = Paginator(transactions, page_size)
+            page_obj = paginator.get_page(page)
+            
+            # Serialize transaction data
+            transaction_data = [
+                {
+                    'id': txn.id,
+                    'amount': str(txn.amount),
+                    'order_id': txn.order.id if txn.order else None,
+                    'created_at': txn.created_at,
+                    'transaction_type': 'credit' if txn.amount > 0 else 'debit'
+                }
+                for txn in page_obj
+            ]
+            
             data = {
                 'balance': str(wallet.balance),
                 'id': wallet.id,
                 'updated_at': wallet.updated_at,
+                'transactions': {
+                    'results': transaction_data,
+                    'count': paginator.count,
+                    'total_pages': paginator.num_pages,
+                    'current_page': page_obj.number,
+                    'page_size': int(page_size),
+                }
             }
             return Response(data, status.HTTP_200_OK)
-
         except Wallet.DoesNotExist:
             return Response({'error': 'Wallet not found'}, status=404)
         
-    def patch(self,request,id):
+    def patch(self, request, id):
         try:
             wallet = Wallet.objects.get(id=id)
             if request.user.id != wallet.user.id:
                 return Response(
-                {"error": "You are not authorized."},
-                status=status.HTTP_403_FORBIDDEN,
+                    {"error": "You are not authorized."},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
-            wallet.balance += request.data.get('totalAmount')
+            
+            amount = request.data.get('totalAmount')
+            wallet.balance += amount
             wallet.save()
+            
+            # Create transaction record
+            WalletTransaction.objects.create(
+                wallet=wallet,
+                amount=amount,
+                order=None  # Set order if applicable
+            )
+            
             data = {
                 'id': wallet.id,
             }
-            return Response(data,status.HTTP_200_OK)
+            return Response(data, status.HTTP_200_OK)
         except:
             data = {
                 'status': 'failed',
             }
-            return Response(data,status.HTTP_400_BAD_REQUEST)
+            return Response(data, status.HTTP_400_BAD_REQUEST)
         
         
 class UserWishlistFromHomePage(APIView):
