@@ -4,14 +4,15 @@ import axiosInstance from "../../../axiosconfig";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Pagination from "../../../Components/Pagination/Pagination";
+import Swal from "sweetalert2";
 
 function UserCart() {
   const navigate = useNavigate();
   // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
-    const [pageSize, setPageSize] = useState(10); // Items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Items per page
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
   const user_id = useSelector((state) => state.userDetails.id);
@@ -21,7 +22,6 @@ function UserCart() {
       // API call to increase quantity
       await axiosInstance.patch(`userCart/${itemId}`, { action: "increase" });
       fetchUserCart(); // Refresh the cart
-      
     } catch (error) {
       console.error("Error increasing quantity:", error);
     }
@@ -50,19 +50,59 @@ function UserCart() {
 
   const handleDelete = async (id) => {
     try {
+      const result = await Swal.fire({
+        title: "Delete From Cart",
+        text: "Are you sure?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        customClass: {
+          popup: "rounded-2xl shadow-2xl backdrop-blur-sm",
+          header: "border-b-0 pb-2",
+          title: "text-2xl font-bold text-gray-900 mb-2",
+          htmlContainer: "text-gray-600 leading-relaxed text-base",
+          actions: "gap-3 mt-6",
+          confirmButton:
+            "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 border-0",
+          cancelButton:
+            "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 border-0",
+          icon: "border-4 border-blue-100 text-blue-500",
+        },
+        buttonsStyling: false,
+        backdrop: `
+                        rgba(0,0,0,0.5)
+                        left top
+                        no-repeat
+                      `,
+        showClass: {
+          popup: "animate-fade-in-up",
+        },
+        hideClass: {
+          popup: "animate-fade-out",
+        },
+        width: "28rem",
+        padding: "2rem",
+        color: "#1f2937",
+        background: "#ffffff",
+      });
+      if (!result.isConfirmed) return;
+
       const response = await axiosInstance.delete(`userCart/${id}`);
       fetchUserCart();
-      toast.success('Deleted Sucessfully',{position:'bottom-center'})
+      toast.success("Deleted Sucessfully", { position: "bottom-center" });
     } catch (error) {}
   };
 
-  const fetchUserCart = async (page=1) => {
+  const fetchUserCart = async (page = 1) => {
     try {
-      const response = await axiosInstance.get(`userCart/${user_id}?page=${page}`);
+      const response = await axiosInstance.get(
+        `userCart/${user_id}?page=${page}`
+      );
       setUserCart(response.data.results);
-    setTotalCount(response.data.count);
-    setTotalPages(Math.ceil(response.data.count / pageSize));
-    setCurrentPage(page);
+      setTotalCount(response.data.count);
+      setTotalPages(Math.ceil(response.data.count / pageSize));
+      setCurrentPage(page);
       console.log(response.data);
       // Calculate the total cart amount
     } catch (error) {}
@@ -90,11 +130,7 @@ function UserCart() {
 
         {userCart ? (
           userCart.map((cart, index) => (
-            <div
-              className="card mb-4 p-4  rounded-lg shadow "
-              key={index}
-              
-            >
+            <div className="card mb-4 p-4  rounded-lg shadow " key={index}>
               {cart.cart_items.map((item, itemIndex) => (
                 <div
                   key={itemIndex}

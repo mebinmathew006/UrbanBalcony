@@ -5,6 +5,7 @@ import UserAddressEdit from "./UserAddressEdit";
 import UserAddressCreate from "./UserAddressCreate";
 import { toast } from "react-toastify";
 import Pagination from "../../../Components/Pagination/Pagination";
+import Swal from "sweetalert2";
 
 function UserAddress() {
   const user_id = useSelector((state) => state.userDetails.id);
@@ -19,8 +20,10 @@ function UserAddress() {
   const [totalCount, setTotalCount] = useState(0);
   const [pageSize, setPageSize] = useState(10); // Items per page
 
-  const fetchUserAddress = async (page=1) => {
-    const response = await axiosInstance.get(`userAddress/${user_id}?page=${page}`);
+  const fetchUserAddress = async (page = 1) => {
+    const response = await axiosInstance.get(
+      `userAddress/${user_id}?page=${page}`
+    );
     // setUserAddress(response.data);
     setUserAddress(response.data.results);
     setTotalCount(response.data.count);
@@ -34,6 +37,44 @@ function UserAddress() {
   };
   const handleDelete = async (id) => {
     try {
+      const result = await Swal.fire({
+        title: "Delete Address",
+        text: "Are you sure?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        customClass: {
+          popup: "rounded-2xl shadow-2xl backdrop-blur-sm",
+          header: "border-b-0 pb-2",
+          title: "text-2xl font-bold text-gray-900 mb-2",
+          htmlContainer: "text-gray-600 leading-relaxed text-base",
+          actions: "gap-3 mt-6",
+          confirmButton:
+            "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 border-0",
+          cancelButton:
+            "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-8 py-3 rounded-xl transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 border-0",
+          icon: "border-4 border-blue-100 text-blue-500",
+        },
+        buttonsStyling: false, 
+        backdrop: `
+            rgba(0,0,0,0.5)
+            left top
+            no-repeat
+          `,
+        showClass: {
+          popup: "animate-fade-in-up",
+        },
+        hideClass: {
+          popup: "animate-fade-out",
+        },
+        width: "28rem",
+        padding: "2rem",
+        color: "#1f2937",
+        background: "#ffffff",
+      });
+      if (!result.isConfirmed) return;
+
       const response = await axiosInstance.patch(`userAddress/${id}`);
       toast.success("Address Deleted Successfully", {
         position: "bottom-center",
@@ -64,7 +105,9 @@ function UserAddress() {
         fetchUserAddress(); // Refresh the address list
         setIsCreateModalOpen(false); // Close the modal
       }
-      toast.success('Address Added Successfully',{position:'bottom-center'})
+      toast.success("Address Added Successfully", {
+        position: "bottom-center",
+      });
     } catch (error) {
       console.error(error);
     }
