@@ -427,6 +427,9 @@ class ResetPassword(APIView):
         if not otp:
             errors['otp'] = 'OTP is required'
             
+        if not len(password)>=8:
+            errors['password']="Password length must be atlest 8."
+            
         if errors:
             return Response({
                 'status': 'error',

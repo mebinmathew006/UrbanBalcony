@@ -47,7 +47,7 @@ function ResetPassword() {
         toast.success('Password Reset Successfull You can Login now!', {position: 'bottom-center'});
         navigate('/login');
       } catch (error) { 
-        toast.error('Unable to Reset Password!', {position: 'bottom-center'});
+        toast.error(`Unable to Reset Password! ${error.response.data.errors.password}`, {position: 'bottom-center'});
         console.log(error);
       }
     } else {
