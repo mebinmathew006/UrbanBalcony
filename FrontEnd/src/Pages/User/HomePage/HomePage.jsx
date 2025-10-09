@@ -11,22 +11,33 @@ import Banner from "../../../Components/Banner/Banner";
 
 function HomePage() {
   const location = useLocation();
-  const initialCategoryId = location.state?.category_id || "";
-
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = Number(searchParams.get("page")) || 1;
   const [filterType, setFilterType] = useState("menu_order");
   const [searchItem, setSearchItem] = useState("");
-  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const [categoryId, setCategoryId] = useState("");
   const [filterDetails, setFilterDetails] = useState({
     type: "menu_order",
     priceRange: [0, 1000],
     categories: [],
   });
+
+  // Update categoryId when location state changes
+  useEffect(() => {
+    if (location.state?.category_id) {
+      setCategoryId(location.state.category_id);
+      setSearchItem(""); // Clear search when category is selected
+      setFilterType("menu_order"); // Reset filter
+      setSearchParams({ page: "1" }); // Reset to page 1
+    }
+  }, [location.state?.category_id, setSearchParams]);
+
   // Handle Search
   const handleSearch = debounce((searchedString) => {
     setSearchItem(searchedString);
+    setCategoryId(""); // Clear category when searching
     setFilterType("");
+    setSearchParams({ page: "1" }); // Reset to page 1
   }, 500);
 
   // Handle filter change
@@ -38,6 +49,7 @@ function HomePage() {
     setFilterDetails(changedFilterDetails);
     setSearchParams({ page: "1" });
   };
+
   const {
     data: productsData,
     isLoading,
@@ -51,7 +63,7 @@ function HomePage() {
       currentPage,
       filterType,
       searchItem,
-      JSON.stringify(filterDetails), // Stringify to properly track changes
+      JSON.stringify(filterDetails),
     ],
     queryFn: async () => {
       let url = "";
@@ -61,8 +73,8 @@ function HomePage() {
       // Priority: search > category > filter > default
       if (searchItem) {
         url = `/searchBasedProductData/${searchItem}?page=${currentPage}`;
-      } else if (initialCategoryId) {
-        url = `/categoryBasedProductData/${initialCategoryId}?page=${currentPage}`;
+      } else if (categoryId) {
+        url = `/categoryBasedProductData/${categoryId}?page=${currentPage}`;
       } else if (
         filterType !== "menu_order" ||
         filterDetails.categories.length > 0 ||
@@ -76,12 +88,13 @@ function HomePage() {
       } else {
         url = `indexPage?page=${currentPage}`;
       }
+
       const response =
         method === "post"
           ? await axiosInstance.post(url, requestData)
           : await axiosInstance.get(url);
 
-      console.log(response)
+      console.log(response);
       return response.data;
     },
     keepPreviousData: true,

@@ -2,18 +2,22 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import publicaxiosconfig from "../../Publicaxiosconfig";
 import { useSelector } from "react-redux";
+
 function Header(props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const user_id = useSelector((state) => state.userDetails.id);
-  const [search, setSearch] = useState(props.searchValue);
+  const [search, setSearch] = useState(props.searchValue || "");
   const navigate = useNavigate();
   
+  // Sync search state with props
+  useEffect(() => {
+    setSearch(props.searchValue || "");
+  }, [props.searchValue]);
   
   async function fetchCategories() {
     try {
       const response = await publicaxiosconfig.get("/getCategories");
-
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -23,11 +27,18 @@ function Header(props) {
   useEffect(() => {
     fetchCategories();
   }, []);
+
   const profileIconHandler = (event) => {
     navigate(user_id ? "/userProfile" : "/login");
   };
+
+  const handleSearch = (searchValue) => {
+    if (props.handleSearch) {
+      props.handleSearch(searchValue);
+    }
+  };
+
   return (
-    
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -77,9 +88,6 @@ function Header(props) {
                 {category.name}
               </Link>
             ))}
-            <Link to="/offers" className="text-gray-700 hover:text-green-700 px-3 py-2 text-sm font-medium">
-              Offers
-            </Link>
           </nav>
 
           {/* User Actions */}
@@ -92,26 +100,22 @@ function Header(props) {
                   </svg>
                 </button>
 
-                {user_id && (
-                  <>
-                    <button 
-                      className="p-2 ml-2 rounded-full text-gray-500 hover:text-green-600 focus:outline-none"
-                      onClick={() => navigate("/userProfile", { state: { tab: "cart" } })}
-                    >
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                      </svg>
-                    </button>
-                    <button 
-                      className="p-2 ml-2 rounded-full text-gray-500 hover:text-green-600 focus:outline-none"
-                      onClick={() => navigate("/userProfile", { state: { tab: "wishlist" } })}
-                    >
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                      </svg>
-                    </button>
-                  </>
-                )}
+                <button 
+                  className="p-2 ml-2 rounded-full text-gray-500 hover:text-green-600 focus:outline-none"
+                  onClick={() => navigate("/userProfile", { state: { tab: "cart" } })}
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                  </svg>
+                </button>
+                <button 
+                  className="p-2 ml-2 rounded-full text-gray-500 hover:text-green-600 focus:outline-none"
+                  onClick={() => navigate("/userProfile", { state: { tab: "wishlist" } })}
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  </svg>
+                </button>
               </>
             )}
             
