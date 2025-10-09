@@ -40,6 +40,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not re.match(r"^\d{10}$", value):
             raise serializers.ValidationError("Phone number must be 10 digits.")
         return value
+    
+    def validate_password(self, value):
+        if not len(value)>=8:
+            raise serializers.ValidationError("Password length must be atlest 8.")
+        return value
     # SerializerMethodField: get_<field_name>
     def get_profile_picture(self, obj):
         if obj.profile_picture:

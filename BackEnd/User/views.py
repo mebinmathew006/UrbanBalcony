@@ -313,7 +313,37 @@ class UserSignup(APIView):
             except Exception as e:
                 return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
+class ResendOTP(APIView):
+    def post (self,request):
+        try:
+            email = request.data.get('email')
+            otp = ''.join(random.choices(string.digits, k=6))
+                    
+            # Save OTP to database
+            OTP.objects.filter(email=email).delete()  
+            otp_obj = OTP.objects.create(email=email, otp=otp)
+            
+            # Send email
+            try:
+                send_mail(
+                    'Your OTP for Verification',
+                    f'Your OTP is: {otp}. Valid for 10 minutes.',
+                    'care@spicelush.com',  # FROM
+                    [email],  # TO
+                    fail_silently=False,
+                )
+                return Response({'message': 'OTP sent successfully','email':email}, 
+                            status=status.HTTP_200_OK)
+            except Exception as e:
+                otp_obj.delete()
+                return Response({'error': str(e)}, 
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        except Exception as e:
+            return Response({'error': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class ForgetPassword(APIView):
     permission_classes = [AllowAny]
     
