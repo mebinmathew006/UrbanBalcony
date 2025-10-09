@@ -7,11 +7,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
 
-  const [preview, setPreview] = useState(
-    `${baseurl}${user.profile_picture}`
-  );
- 
-
+  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -23,7 +19,6 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
       setPreview(null); // Reset preview if no file is selected
     }
   };
-  // setting default values for form fields
   const {
     register,
     handleSubmit,
@@ -112,28 +107,7 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
               </p>
             )}
           </div>
-          {/* Email Field */}
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                  message: "Invalid email format",
-                },
-              })}
-              type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.email.message}
-              </p>
-            )}
-          </div> */}
+          
 
           {/* file field */}
           <div>
@@ -151,9 +125,9 @@ const UserEditDetails = ({ isOpen, onClose, user, onSave }) => {
             />
 
             {/* Preview */}
-            {preview && (
+            {user.profile_picture && (
               <div className="mt-4">
-                <img src={preview} alt="Preview" className="w-24 h-24 " />
+                <img src={`${baseurl}${user.profile_picture}`} alt={`Profile Image`} className="w-24 h-24 " />
               </div>
             )}
           </div>
