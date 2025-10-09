@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import adminaxiosInstance from "../../../adminaxiosconfig";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import Sidebar from "../../../Components/Admin/Sidebar/Sidebar";
 
 function CouponAdd() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ function CouponAdd() {
   };
 
   return (
+    <div className="d-flex vh-100 bg-light">
+      <Sidebar />
     <div className="container-fluid d-flex justify-content-center align-items-center bg-light-custom">
       <div
         className="card p-4 shadow"
@@ -62,7 +65,7 @@ function CouponAdd() {
               <p className="text-danger">{validationErrors.coupon_percent.message}</p>
             )}
           </div>
-          <div className="mb-3">
+          {/* <div className="mb-3">
             <input
               {...register("expire_date", { required: "Expire date is required" })}
               type="date"
@@ -71,15 +74,22 @@ function CouponAdd() {
             {validationErrors.expire_date && (
               <p className="text-danger">{validationErrors.expire_date.message}</p>
             )}
-          </div>
+          </div> */}
           {errorsFromBackend.commonError && (
             <p className="text-danger">{errorsFromBackend.commonError}</p>
           )}
-          <button type="submit" className="btn btn-primary w-100">
-            ADD
-          </button>
+          
+          <div className="d-flex">
+              <button type="submit" className="btn btn-primary w-100 m-2">
+              ADD
+            </button>
+            <button type="button" onClick={()=>navigate(-1)} className="btn btn-primary w-100 m-2">
+               Cancel
+            </button>
+            </div>
         </form>
       </div>
+    </div>
     </div>
   );
 }

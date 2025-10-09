@@ -19,7 +19,7 @@ function CouponManage() {
   const toggleCouponStatus = async (id) => {
     try {
       await adminaxiosInstance.patch(`/couponManage/${id}`);
-      fetchCoupons(page);
+      fetchCoupons(currentPage);
     } catch (error) {
       console.error("Error toggling coupon status:", error);
     }
@@ -62,9 +62,8 @@ function CouponManage() {
                   <th scope="col">#</th>
                   <th scope="col">Code</th>
                   <th scope="col">Coupon Percentage</th>
-                  <th scope="col">Expire Date</th>
+                  {/* <th scope="col">Expire Date</th> */}
                   <th scope="col">Status</th>
-                  <th scope="col">Created At</th>
                   <th scope="col">Block/Unblock</th>
                   <th scope="col">Edit</th>
                 </tr>
@@ -76,9 +75,8 @@ function CouponManage() {
                       <th scope="row">{index + 1}</th>
                       <td>{coupon.code}</td>
                       <td>{coupon.coupon_percent}%</td>
-                      <td>{coupon.expire_date}</td>
+                      {/* <td>{coupon.expire_date}</td> */}
                       <td>{coupon.is_active ? "Active" : "Inactive"}</td>
-                      <td>{new Date(coupon.created_at).toLocaleDateString()}</td>
                       <td>
                         <button
                           className={`btn ${

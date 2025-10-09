@@ -72,7 +72,7 @@ function ReturnedProducts() {
               <h3 className="text-2xl font-semibold">Return Requests</h3>
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                onClick={() => navigate("/admin/orders")}
+                onClick={() => navigate("/orderManagement")}
               >
                 Back to Orders
               </button>
@@ -148,7 +148,7 @@ function ReturnedProducts() {
                       </tr>
                     </thead>
                     <tbody>
-                      {order.order_items
+                      {order.order_items && order.order_items
                         .filter(
                           (item) => item.status === "Requested for Return"
                         )

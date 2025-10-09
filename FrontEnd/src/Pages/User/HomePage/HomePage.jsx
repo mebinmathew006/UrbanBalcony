@@ -80,6 +80,8 @@ function HomePage() {
         method === "post"
           ? await axiosInstance.post(url, requestData)
           : await axiosInstance.get(url);
+
+      console.log(response)
       return response.data;
     },
     keepPreviousData: true,
