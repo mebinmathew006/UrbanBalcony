@@ -4,6 +4,8 @@ import adminaxiosInstance from "../../../adminaxiosconfig";
 import Pagination from "../../../Components/Pagination/Pagination";
 
 function UserManage() {
+  const [users, setUsers] = useState();
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -12,7 +14,7 @@ function UserManage() {
   const fetchUsers = async (page = 1) => {
     try {
       const response = await adminaxiosInstance.get(`/usermanage?page=${page}`);
-      console.log(response.data)
+      console.log(response.data);
       setUsers(response.data.results);
       setTotalCount(response.data.count);
       setTotalPages(Math.ceil(response.data.count / pageSize));
@@ -34,7 +36,6 @@ function UserManage() {
       console.log(error);
     }
   };
-  const [users, setUsers] = useState();
 
   useEffect(() => {
     fetchUsers();
