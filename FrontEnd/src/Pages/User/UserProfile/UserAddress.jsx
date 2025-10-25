@@ -24,7 +24,6 @@ function UserAddress() {
     const response = await axiosInstance.get(
       `userAddress/${user_id}?page=${page}`
     );
-    // setUserAddress(response.data);
     setUserAddress(response.data.results);
     setTotalCount(response.data.count);
     setTotalPages(Math.ceil(response.data.count / pageSize));

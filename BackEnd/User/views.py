@@ -749,7 +749,7 @@ class UserOrder(APIView):
                 'order_items__product_variant__product',  
                 'payment',
                 'address'
-            ).order_by('created_at')  
+            ).order_by('-created_at')  
         
             paginator = self.pagination_class()
             paginated_orders = paginator.paginate_queryset(orders, request)
@@ -1346,7 +1346,7 @@ class ValidateCoupon(APIView):
                 {"error": "You are not authorized."},
                 status=status.HTTP_403_FORBIDDEN,
                 )
-            coupon = get_object_or_404(Coupon, code=coupon_code)
+            coupon = get_object_or_404(Coupon, code=coupon_code,is_active=True)
             try:
                 pay = Payment.objects.get(user=user_id, coupon=coupon)
                 return Response({'error': 'Coupon is already used'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1519,7 +1519,7 @@ class CategoryBasedProductData(APIView):
                     user_id=user.id if user.is_authenticated else None,
                     wishlist_products__id=OuterRef('id')
                 )
-            ) if user.is_authenticated else False
+            ) if user.is_authenticated else Value(False, output_field=BooleanField())
         ).filter(
             is_active=True,
             category__is_active=True,
@@ -1568,7 +1568,7 @@ class SearchBasedProductData(APIView):
                     user_id=user.id if user.is_authenticated else None,
                     wishlist_products__id=OuterRef('id')
                 )
-            ) if user.is_authenticated else False
+            ) if user.is_authenticated else Value(False, output_field=BooleanField())
         ).filter(
             is_active=True,
             category__is_active=True,
@@ -1626,7 +1626,7 @@ class FilterBasedProductData(APIView):
         products = Product.objects.select_related('category').annotate(
             starting_price=Min('variants__variant_price'),
             total_stock=Sum('variants__stock'),
-            in_wishlist=Exists(
+                in_wishlist=Exists(
                 Wishlist.objects.filter(
                     user_id=user.id if user.is_authenticated else None,
                     wishlist_products__id=OuterRef('id')
