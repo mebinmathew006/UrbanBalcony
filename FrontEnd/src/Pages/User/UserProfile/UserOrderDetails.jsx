@@ -159,7 +159,7 @@ const UserOrderDetails = () => {
       item.variant?.product?.title || "N/A",
       item.variant?.weight || "N/A",
       item.quantity || 0,
-      `₹${item.total_amount || 0}`,
+      `₹${(item.total_amount - (item.total_amount/100 * order.discout_percentage)).toFixed(2)}`,
       `₹${item.shipping_price_per_order || 0}`,
       item.status || "N/A",
     ]);
@@ -172,11 +172,8 @@ const UserOrderDetails = () => {
       headStyles: { fillColor: [66, 139, 202] },
     });
 
-    // Calculate totals
-    const totalItemAmount = order.order_items.reduce(
-      (sum, item) => sum + parseFloat(item.total_amount || 0),
-      0
-    );
+    // Calculate totals - use the same calculation as shown in UI
+    const totalItemAmount = order.net_amount - (order.net_amount/100 * order.discout_percentage);
     const totalShipping = order.order_items.reduce(
       (sum, item) => sum + parseFloat(item.shipping_price_per_order || 0),
       0
@@ -297,7 +294,7 @@ const UserOrderDetails = () => {
                     Download Invoice
                   </button>
                 </div>
-                {order.payment_details.status == "pending" && (
+                {/* {order.payment_details.status == "pending" && (
                   <div className="me-5">
                     <button
                       onClick={() => handlePayment(order)}
@@ -306,7 +303,7 @@ const UserOrderDetails = () => {
                       Pay Now
                     </button>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           </div>
