@@ -34,44 +34,57 @@ axiosInstance.interceptors.response.use(
   (response) => response, // Pass successful responses directly
   async (error) => {
     const originalRequest = error.config;
-    // Check if the error is due to an expired access token
+
+    // ===== Case 1: Access token expired (your existing flow) =====
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // Attempt to refresh the access token using the refresh token stored in an HttpOnly cookie
         const response = await refreshAxios.post(
           `refresh_token`,
           {},
           {
             withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           }
         );
         const userDetails = response.data.user;
         store.dispatch(setUserDetails(userDetails));
-        // Update the original request's Authorization header with the new token
+
         originalRequest.headers[
           "Authorization"
         ] = `Bearer ${userDetails.access_token}`;
 
-        // Retry the original request with the refreshed token
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         toast.error("Session expired. Please log in again", {
           position: "bottom-center",
         });
-        // If refresh fails, clear Redux state and redirect to login
         store.dispatch(destroyDetails());
-        const response = await axios.post(`${baseurl}/user/userLogout`);
+        await axios.post(`${baseurl}/user/userLogout`);
         history.push("/login");
         return Promise.reject(refreshError);
       }
     }
 
+    // ===== Case 2: User blocked by admin =====
+    // Assume backend returns 403 Forbidden with { detail: "User blocked" }
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.detail === "User blocked"
+    ) {
+      toast.error("Your account has been blocked by admin.", {
+        position: "bottom-center",
+      });
+      // Clear Redux state & logout
+      store.dispatch(destroyDetails());
+      await axios.post(`${baseurl}/user/userLogout`);
+      history.push("/login");
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   }
 );
+
 
 export default axiosInstance;

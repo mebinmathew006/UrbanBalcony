@@ -37,6 +37,7 @@ from django.core.files.base import ContentFile
 from google.auth.transport import requests as google_requests 
 from decimal import Decimal, ROUND_HALF_UP
 import math
+from .permissions import IsActiveUser
 from django.core.paginator import Paginator
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ def getUserDetailsAgainWhenRefreshing(request):
 
 
 class UserHome(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsActiveUser]
     pagination_class = ProductPagination
 
     def get(self, request):
@@ -130,6 +131,9 @@ class UserHome(APIView):
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
         return paginator.get_paginated_response(paginated_products)
+
+
+
     
     
 class RelatedProductData(APIView):
@@ -153,6 +157,9 @@ class RelatedProductData(APIView):
         paginated_products = paginator.paginate_queryset(products.values(), request)
         return paginator.get_paginated_response(paginated_products)
 
+
+
+
     
 class IndexPage(APIView):
     permission_classes = [AllowAny]
@@ -175,7 +182,9 @@ class IndexPage(APIView):
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(products.values(), request)
         return paginator.get_paginated_response(paginated_products)
-    
+
+
+
     
 class GetCategories(APIView):
     def get(self, request):
@@ -241,7 +250,7 @@ class UserLogin(APIView):
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
    
 class UserDetails(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsActiveUser]
 
     def get(self, request, id):
         try:
@@ -277,6 +286,7 @@ class UserDetails(APIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     
 class UserSignup(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)  
 
@@ -317,6 +327,7 @@ class UserSignup(APIView):
 
 
 class ResendOTP(APIView):
+    permission_classes = [AllowAny]
     def post (self,request):
         try:
             email = request.data.get('email')
@@ -586,7 +597,7 @@ class ReviewAndRating(APIView):
     
     
 class AddReviewAndRating(APIView):
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated, IsActiveUser]
     def post(self, request):
         logger.info(request.data)
         serializer = ReviewAndRatingSerializer(data=request.data)
@@ -600,7 +611,7 @@ class AddReviewAndRating(APIView):
         
 class UserAddress(APIView):
     pagination_class = ProductPagination
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated, IsActiveUser]
     def get(self,request,id):
         if request.user.id != id:
                 return Response(
@@ -672,7 +683,7 @@ class UserAddress(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class ChangePaymentstatus(APIView):
-        
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def patch(self, request):
         try:
             payment_id =request.data.get('payment_id')
@@ -695,7 +706,7 @@ class ChangePaymentstatus(APIView):
 
 class UserOrder(APIView):
     pagination_class = ProductPagination
-    
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def patch(self, request, id):
         try:
             orderItem = OrderItem.objects.get(id=id)
@@ -760,7 +771,7 @@ class UserOrder(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
     
 class UserCart(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsActiveUser]
     pagination_class = ProductPagination
     def get(self, request, id):
         try:
@@ -886,6 +897,7 @@ class UserCart(APIView):
             
 
 class UserPlaceOrder(APIView):
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def validate_input(self, data):
         required_fields = ['user_id', 'addressId', 'paymentMethod', 'totalAmount']
         missing_fields = [field for field in required_fields if not data.get(field)]
@@ -1176,6 +1188,7 @@ class TokenRefreshFromCookieView(APIView):
             
             
 class CreateRazorpayOrder(APIView):
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def post(self, request):
         try:
             user_id = request.data.get("user_id")
@@ -1243,7 +1256,7 @@ class SingleOrderDetails(APIView):
             return Response({'error': 'Orders not found'}, status=status.HTTP_404_NOT_FOUND)
             
 class UserWishlist(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsActiveUser]
     pagination_class = ProductPagination
     def post(self, request):
         user = request.data.get('user_id')
@@ -1337,6 +1350,7 @@ class VarientForUser(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class ValidateCoupon(APIView):
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def post(self, request):
         try:
             coupon_code = request.data.get('code')
@@ -1362,6 +1376,7 @@ class ValidateCoupon(APIView):
             
         
 class UserWallet(APIView):
+    permission_classes = [IsAuthenticated, IsActiveUser]
     def get(self, request, id):
         try:
             if request.user.id != id:
@@ -1445,7 +1460,8 @@ class UserWallet(APIView):
         
         
 class UserWishlistFromHomePage(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsActiveUser]
+
     def post(self, request, product_id):
         try:
             user = request.user  
@@ -1550,6 +1566,8 @@ class CategoryBasedProductData(APIView):
         return paginator.get_paginated_response(paginated_products)
 
 
+
+
 class SearchBasedProductData(APIView):
     """
     Search-based filtering - GET /searchBasedProductData/<search_term>?page=1
@@ -1597,6 +1615,7 @@ class SearchBasedProductData(APIView):
         )
         
         return paginator.get_paginated_response(paginated_products)
+
 
 
 class FilterBasedProductData(APIView):
@@ -1683,77 +1702,76 @@ class FilterBasedProductData(APIView):
         )
         
         return paginator.get_paginated_response(paginated_products)
+
+
+
+class CheckCartProducts(APIView):
+    """
+    Validate cart products before checkout
+    Checks if all products are active and have sufficient stock
+    """
+    permission_classes = [IsAuthenticated, IsActiveUser]
     
     def get(self, request):
-        """
-        Also support GET requests with query parameters
-        GET /filterBasedProductData?type=price&minPrice=0&maxPrice=500&categories[]=Organic&page=1
-        """
-        user = request.user
-        
-        # Get filter parameters from query string
-        sort_type = request.GET.get('type', 'menu_order')
-        min_price = int(request.GET.get('minPrice', 0))
-        max_price = int(request.GET.get('maxPrice', 1000))
-        categories = request.GET.getlist('categories[]')
-        
-        # Build base queryset
-        products = Product.objects.select_related('category').annotate(
-            starting_price=Min('variants__variant_price'),
-            total_stock=Sum('variants__stock'),
-            in_wishlist=Exists(
-                Wishlist.objects.filter(
-                    user_id=user.id if user.is_authenticated else None,
-                    wishlist_products__id=OuterRef('id')
-                )
-            ) if user.is_authenticated else Value(False, output_field=BooleanField())
-        ).filter(
-            is_active=True,
-            category__is_active=True
-        )
-        
-        # Apply filters
-        if categories:
-            products = products.filter(category__name__in=categories)
-        
-        products = products.filter(
-            starting_price__gte=min_price,
-            starting_price__lte=max_price
-        )
-        
-        # Apply sorting
-        sort_mapping = {
-            'menu_order': 'id',
-            'popularity': '-created_at',
-            'rating': 'title',
-            'date': '-created_at',
-            'price': 'starting_price',
-            'price-desc': '-starting_price'
-        }
-        
-        order_by = sort_mapping.get(sort_type, 'id')
-        products = products.order_by(order_by)
-        
-        # Apply pagination
-        paginator = self.pagination_class()
-        paginated_products = paginator.paginate_queryset(
-            products.values(
-                'id',
-                'title',
-                'category__name',
-                'price',
-                'starting_price',
-                'total_stock',
-                'description',
-                'shelf_life',
-                'available_quantity',
-                'product_img1',
-                'product_img2',
-                'product_img3',
-                'created_at',
-                'in_wishlist'
-            ),
-            request
-        )
-        
-        return paginator.get_paginated_response(paginated_products)
+        try:
+            user_id = request.user.id
+            
+            # Get all cart items for the user
+            cart_items = CartItem.objects.filter(
+                cart__user_id=user_id
+            ).select_related(
+                'product_variant',
+                'product_variant__product'
+            )
+            
+            if not cart_items.exists():
+                return Response({
+                    'valid': False,
+                    'message': 'Your cart is empty',
+                    'invalid_items': []
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+            for item in cart_items:
+                variant = item.product_variant
+                product = variant.product
+                
+                # Check if product is active
+                if not product.is_active:
+                    return Response({
+                    'valid': False,
+                    'message': f'{product.title} is no longer available ',
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if variant is active
+                if not variant.is_active:
+                    return Response({
+                    'valid': False,
+                    'message': f'{product.title}- {variant.weight} is no longer available ',
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check stock availability
+                if variant.stock < item.quantity:
+                    return Response({
+                    'valid': False,
+                    'message': f'{product.title}- {variant.weight} is out of stock ',
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Calculate price with offers
+               
+            
+            
+            return Response({
+                'valid': True,
+                'message': 'All cart items are valid',
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error validating cart: {str(e)}")
+            return Response({
+                'valid': False,
+                'message': 'An error occurred while validating your cart',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+ 

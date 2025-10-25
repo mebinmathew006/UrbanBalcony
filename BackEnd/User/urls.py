@@ -56,6 +56,7 @@ urlpatterns = [
     path('varientForUser/<int:id>', VarientForUser.as_view(), name='VarientForUser'),
     path('userWallet/<int:id>', UserWallet.as_view(), name='userWallet'),
     path('wishlist/<int:product_id>', UserWishlistFromHomePage.as_view(), name='user_wishlist_from_home'),
+    path('checkCartProducts', CheckCartProducts.as_view(), name='checkCartProducts'),
     
 ]
 

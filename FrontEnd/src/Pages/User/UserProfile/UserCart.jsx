@@ -12,7 +12,7 @@ function UserCart() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [pageSize, setPageSize] = useState(10); // Items per page
+  const [pageSize, setPageSize] = useState(10); 
   const baseurl = import.meta.env.VITE_BASE_URL_FOR_IMAGE;
 
   const user_id = useSelector((state) => state.userDetails.id);
@@ -37,16 +37,51 @@ function UserCart() {
     }
   };
 
-  const handleCheckout = () => {
-    navigate("/checkoutPage", {
-      state: { totalAmount, type: "cart" },
-    });
+  const handleCheckout = async () => {
+    try {
+      const response = await axiosInstance.get(`checkCartProducts`);
+      
+        navigate("/checkoutPage", {
+          state: { totalAmount: response.data.total_amount, type: "cart" },
+        });
+       
+    } catch (error) {
+      console.error("Error checking cart:", error);
+      toast.error(error.response.data.message || "Some items in your cart are no longer available.", {
+        position: "bottom-center",
+      });
+    }
   };
   useEffect(() => {
     fetchUserCart();
   }, []);
 
   const [userCart, setUserCart] = useState();
+  const [invalidItems, setInvalidItems] = useState([]);
+  const [showInvalidItems, setShowInvalidItems] = useState(false);
+
+  const handleRemoveInvalidItems = async () => {
+    try {
+      // Remove all invalid items from cart
+      for (const item of invalidItems) {
+        await axiosInstance.delete(`userCart/${item.id}`);
+      }
+      
+      // Refresh cart and hide invalid items
+      fetchUserCart();
+      setInvalidItems([]);
+      setShowInvalidItems(false);
+      
+      toast.success("Invalid items removed from cart", {
+        position: "bottom-center",
+      });
+    } catch (error) {
+      console.error("Error removing invalid items:", error);
+      toast.error("Failed to remove invalid items. Please try again.", {
+        position: "bottom-center",
+      });
+    }
+  };
 
   const handleDelete = async (id) => {
     try {
@@ -202,6 +237,55 @@ function UserCart() {
                 Proceed to Checkout
               </button>
             )}
+          </div>
+        )}
+
+        {/* Invalid Items Section */}
+        {showInvalidItems && invalidItems.length > 0 && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg shadow">
+            <h2 className="text-lg font-semibold mb-4 text-red-800">
+              ⚠️ Items No Longer Available
+            </h2>
+            <p className="text-red-700 mb-4">
+              The following items in your cart are no longer available or have insufficient stock:
+            </p>
+            
+            <div className="space-y-3">
+              {invalidItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-white border border-red-200 rounded-lg">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800">{item.product_name}</h3>
+                    <p className="text-sm text-gray-600">{item.variant_name}</p>
+                    <p className="text-sm text-red-600 font-medium">{item.reason}</p>
+                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                    {item.available_stock !== undefined && (
+                      <p className="text-sm text-gray-600">Available: {item.available_stock}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={handleRemoveInvalidItems}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Remove Invalid Items
+              </button>
+              <button
+                onClick={() => setShowInvalidItems(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+            
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-700 text-sm">
+                💡 <strong>Tip:</strong> After removing invalid items, you can try checkout again with the remaining valid items.
+              </p>
+            </div>
           </div>
         )}
       </div>

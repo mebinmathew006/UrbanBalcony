@@ -324,7 +324,7 @@ class AdmingetuserOrders(APIView):
                     'address'
                 ).filter(
                     order_items__status='Requested for Return'
-                ).distinct()  
+                ).distinct().order_by('-created_at')
             else:
                 orders = Order.objects.prefetch_related(
                     'order_items__product_variant',  
@@ -333,7 +333,7 @@ class AdmingetuserOrders(APIView):
                     'address'
                 ).exclude(
                     order_items__status='Requested for Return'
-                ).distinct()  # IMPORTANT: Remove duplicates
+                ).distinct().order_by('-created_at')  # IMPORTANT: Remove duplicates
             
             paginator = self.pagination_class()
             paginated_orders = paginator.paginate_queryset(orders, request)
