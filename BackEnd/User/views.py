@@ -38,6 +38,7 @@ from google.auth.transport import requests as google_requests
 from decimal import Decimal, ROUND_HALF_UP
 import math
 from .permissions import IsActiveUser
+from rest_framework.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ def getUserDetailsAgainWhenRefreshing(request):
 
 
 class UserHome(APIView):
-    permission_classes = [IsAuthenticated, IsActiveUser]
+    permission_classes = [ IsActiveUser,IsAuthenticated]
     pagination_class = ProductPagination
 
     def get(self, request):
@@ -158,9 +159,6 @@ class RelatedProductData(APIView):
         return paginator.get_paginated_response(paginated_products)
 
 
-
-
-    
 class IndexPage(APIView):
     permission_classes = [AllowAny]
     pagination_class = ProductPagination
@@ -1145,6 +1143,7 @@ class UserLogout(APIView):
 class TokenRefreshFromCookieView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
+        
         # Extract the refresh token from cookies
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
@@ -1166,6 +1165,10 @@ class TokenRefreshFromCookieView(APIView):
                 user = CustomUser.objects.get(id=user_id)
             except CustomUser.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            if  user.is_active==False:
+                print('kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',request.user.is_active)
+                raise PermissionDenied(detail="User blocked")
 
             # Create response with access token and user details in body
             response = Response({
