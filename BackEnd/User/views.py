@@ -773,7 +773,6 @@ class UserCart(APIView):
     pagination_class = ProductPagination
     def get(self, request, id):
         try:
-            print(request.user.id,id)
             if int(request.user.id) != int(id):
                 return Response(
                     {"error": "You are not authorized."},
@@ -1167,7 +1166,6 @@ class TokenRefreshFromCookieView(APIView):
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
             if  user.is_active==False:
-                print('kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',request.user.is_active)
                 raise PermissionDenied(detail="User blocked")
 
             # Create response with access token and user details in body
@@ -1264,7 +1262,6 @@ class UserWishlist(APIView):
     def post(self, request):
         user = request.data.get('user_id')
         product_variant_id = request.data.get('id')
-        print(user,request.user.id)
         if int(request.user.id) != int(user):
             return Response(
                 {"error": "You are not authorized."},
