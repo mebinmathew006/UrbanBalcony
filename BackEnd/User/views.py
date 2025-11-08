@@ -1336,7 +1336,7 @@ class VarientForUser(APIView):
     def get(self, request, id):
         try:
             product_variants = ProductVariant.objects.select_related(
-                'product').prefetch_related('product__offers').filter(product_id=id).annotate(
+                'product').prefetch_related('product__offers').filter(product_id=id,is_active=True).annotate(
                 price_after_offer=ExpressionWrapper(F('variant_price') - (F('variant_price'
                 ) * Coalesce(F('product__offers__discount_percentage'), Value(0)) / 100),
                 output_field=FloatField()
